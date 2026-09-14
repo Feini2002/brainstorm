@@ -1,0 +1,90 @@
+/**
+ * Provider error classification.
+ *
+ * HTTP status and transport failures are mapped onto contract error codes. No
+ * provider response body is ever forwarded to the browser or written to logs:
+ * only a bounded, redacted summary the user can act on.
+ */
+import { AppError, type ErrorCode } from '@/domain/errors';
+
+export interface ProviderErrorContext {
+  /** Provider-supplied Retry-After, validated before display. */
+  retryAfterSeconds?: number;
+  /** Short, redacted provider hint (never the full body, never headers). */
+  providerHint?: string;
+}
+
+export function classifyHttpStatus(status: number, context: ProviderErrorContext = {}): AppError {
+  const hint = sanitizeHint(context.providerHint);
+  const suffix = hint ? `（服务商提示：${hint}）` : '';
+
+  if (status === 401 || status === 403) {
+    return new AppError('PROVIDER_AUTH', `服务商拒绝凭据，请检查 API Key 权限和模型访问${suffix}`);
+  }
+  if (status === 404) {
+    return new AppError('PROVIDER_ENDPOINT', `地址或模型接口不匹配${suffix}`);
+  }
+  if (status === 408 || status === 504) {
+    return new AppError('PROVIDER_TIMEOUT', `服务商请求超时${suffix}`);
+  }
+  if (status === 429) {
+    const retry =
+      context.retryAfterSeconds !== undefined
+        ? `，建议 ${context.retryAfterSeconds} 秒后显式重试`
+        : '';
+    return new AppError('PROVIDER_RATE_LIMIT', `服务商限流${retry}${suffix}`);
+  }
+  if (status >= 500) {
+    return new AppError('PROVIDER_UNAVAILABLE', `服务商暂时不可用（HTTP ${status}）${suffix}`);
+  }
+  if (status === 400) {
+    return new AppError('PROVIDER_PROTOCOL', `服务商拒绝了请求参数${suffix}`);
+  }
+  return new AppError('PROVIDER_PROTOCOL', `服务商返回了未预期的状态码 ${status}${suffix}`);
+}
+
+/**
+ * Keep at most a short, single-line hint. Provider bodies can echo request
+ * content or credentials, so this is bounded and control characters removed.
+ */
+export function sanitizeHint(value: string | undefined): string {
+  if (!value) return '';
+  const singleLine = value.replace(/[\r\n\t]+/gu, ' ').replace(/\s+/gu, ' ').trim();
+  const withoutSecrets = singleLine
+    .replace(/Bearer\s+[A-Za-z0-9._\-]+/giu, 'Bearer [redacted]')
+    .replace(/sk-[A-Za-z0-9._\-]{8,}/gu, '[redacted]');
+  return withoutSecrets.length > 200 ? `${withoutSecrets.slice(0, 200)}…` : withoutSecrets;
+}
+
+/** Read a validated Retry-After header; malformed values are ignored. */
+export function parseRetryAfter(header: string | null): number | undefined {
+  if (!header) return undefined;
+  const seconds = Number.parseInt(header, 10);
+  if (Number.isFinite(seconds) && seconds >= 0 && seconds <= 3600) return seconds;
+  const date = Date.parse(header);
+  if (Number.isFinite(date)) {
+    const delta = Math.round((date - Date.now()) / 1000);
+    if (delta >= 0 && delta <= 3600) return delta;
+  }
+  return undefined;
+}
+
+/** Map an outbound transport exception (pre-response) to a safe code. */
+export function classifyTransportError(error: unknown): AppError {
+  if (error instanceof AppError) return error;
+  const name = error instanceof Error ? error.name : '';
+  const message = error instanceof Error ? error.message : '';
+
+  if (name === 'AbortError' || /aborted|timed? ?out/iu.test(message)) {
+    return new AppError('PROVIDER_TIMEOUT', '等待服务商响应超时，本次请求可能已到达服务商');
+  }
+  if (/redirect/iu.test(message)) {
+    return new AppError('PROVIDER_ENDPOINT', '服务商返回了重定向，已按安全设置拒绝跟随');
+  }
+  return new AppError('PROVIDER_NETWORK', '无法连接服务商，本次请求可能已到达服务商');
+}
+
+/** True for codes that mean "the request may have been billed". */
+export function mayHaveBeenBilled(code: ErrorCode): boolean {
+  return code === 'PROVIDER_NETWORK' || code === 'PROVIDER_TIMEOUT';
+}

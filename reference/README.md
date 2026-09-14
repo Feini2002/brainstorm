@@ -1,0 +1,12 @@
+# 参考材料的使用方式与可信边界
+
+
+本目录不是已完成的应用源码。SQL是初始数据库契约；JSON Schema与样例是接口/生成数据的参考；prompts是服务端提示词模板；scripts为目标环境预检样例。应用实现需要把这些材料映射到真实代码并执行各Gate测试。
+
+严格JSON Schema解决字段、类型、枚举、数组上限和未知字段；环检测、来源合法性、证据逐字匹配、因果依据、端点规范化和版本并发必须由额外业务验证器完成。不要看到jsonschema通过就直接写数据库。
+
+knowledge_samples.json是四条合成材料的**简化示例**，不是完整ItemDTO或备份Bundle。example_organize、example_mindmap、example_flow对应生成输出。名字含invalid的fixtures用于确认拒绝路径，不应进入正式演示数据。所有示例秘密必须使用不可用的测试字符串，不放真实凭据。
+
+SQL与规范契约共同阅读。首次执行迁移前打开foreign_keys并设置WAL/busy_timeout；数据库版本管理在迁移事务内更新user_version。参考包的SQL约束测试不能代替Node目标版本上的真实数据库行为、应用API和浏览器验收。
+
+程序编译器参考算法与安全策略见docs/03_contracts/09_view_schemas_and_compilers.md。第三方库的具体导入方式以锁定包版本的官方文档与Spike为准，不把文档中描述的接口名字直接当所有未来版本兼容保证。

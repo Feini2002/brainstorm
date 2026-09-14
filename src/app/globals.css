@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens (docs/02_architecture/03_ui_information_design.md §1).
+ *
+ * Every page shares these; there is no per-page palette. Status is never
+ * communicated by colour alone — each colour has a paired text label in the UI.
+ */
+@theme inline {
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-line: var(--line);
+  --color-focus: var(--focus);
+  --color-warn: var(--warn);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+  --color-suggested: var(--suggested);
+  --color-accepted: var(--accepted);
+  --color-warn-ink: var(--warn-ink);
+  --font-sans: var(--font-sans-stack);
+  --font-mono: var(--font-mono-stack);
+}
+
+:root {
+  --background: #f7f7f6;
+  --surface: #ffffff;
+  --surface-raised: #fbfbfa;
+  --ink: #1b1b1a;
+  --ink-muted: #6a6a66;
+  --line: #e2e1dd;
+  --focus: #1f6feb;
+  --warn: #a15c00;
+  --danger: #b3261e;
+  --success: #146c2e;
+  --suggested: #7a4bd0;
+  --accepted: #146c2e;
+  /* Warning text on a raised surface; readable in both themes. */
+  --warn-ink: #8a4f00;
+  /* Entirely local font stacks: no remote font request (T024-R01). */
+  --font-sans-stack: system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", "PingFang SC",
+    "Noto Sans CJK SC", sans-serif;
+  --font-mono-stack: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #16171a;
+    --surface: #1d1f23;
+    --surface-raised: #23262b;
+    --ink: #ecebe7;
+    --ink-muted: #a3a29c;
+    --line: #33363c;
+    --focus: #6ea8fe;
+    --warn: #e2b34a;
+    --danger: #f2857c;
+    --success: #6cc78a;
+    --suggested: #b79df0;
+    --accepted: #6cc78a;
+    --warn-ink: #e2b34a;
+  }
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--background);
+  color: var(--ink);
+  font-family: var(--font-sans-stack);
+}
+
+/* One visible focus treatment for every interactive element (T005-R06). */
+:where(a, button, input, textarea, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Graph containers must never collapse to zero height (T005-R05). */
+.view-canvas {
+  min-height: 420px;
+}

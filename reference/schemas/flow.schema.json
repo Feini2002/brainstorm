@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "flow result v1",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "direction": {
+      "enum": [
+        "LR",
+        "TB"
+      ]
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "itemIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "maxItems": 40,
+            "minItems": 1
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "itemIds"
+        ],
+        "additionalProperties": false
+      },
+      "maxItems": 40,
+      "minItems": 1
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "kind": {
+            "enum": [
+              "sequence",
+              "dependency",
+              "association",
+              "causal",
+              "hypothesis"
+            ]
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "itemIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "maxItems": 40,
+            "minItems": 1
+          },
+          "relationIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "maxItems": 8,
+            "minItems": 0
+          }
+        },
+        "required": [
+          "source",
+          "target",
+          "kind",
+          "label",
+          "itemIds",
+          "relationIds"
+        ],
+        "additionalProperties": false
+      },
+      "maxItems": 80,
+      "minItems": 0
+    }
+  },
+  "required": [
+    "title",
+    "direction",
+    "nodes",
+    "edges"
+  ],
+  "additionalProperties": false
+}

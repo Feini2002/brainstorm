@@ -1,0 +1,49 @@
+{
+  "name": "feini-brain",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Feini Brain - local single-user knowledge fragment tool with AI-assisted organization and multiple controlled views",
+  "engines": {
+    "node": ">=24.15.0 <25"
+  },
+  "scripts": {
+    "doctor": "node scripts/doctor.mjs",
+    "contracts": "node scripts/check-contracts.mjs",
+    "dev": "node scripts/doctor.mjs && node scripts/start-local.mjs dev",
+    "build": "next build",
+    "start": "node scripts/doctor.mjs && node scripts/start-local.mjs start",
+    "lint": "eslint .",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test:unit": "vitest run --project unit",
+    "test:integration": "vitest run --project integration",
+    "test:contracts": "vitest run --project contracts",
+    "test:e2e": "playwright test",
+    "test": "vitest run",
+    "check": "npm run contracts && npm run lint && npm run typecheck && npm run test && npm run build"
+  },
+  "dependencies": {
+    "@dagrejs/dagre": "^2",
+    "@xyflow/react": "^12",
+    "dompurify": "^3",
+    "markmap-lib": "^0.18",
+    "markmap-view": "^0.18",
+    "mermaid": "^11",
+    "next": "16.3.5",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "server-only": "^0.0.1",
+    "zod": "^4"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^24",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.5",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "vitest": "^3"
+  }
+}

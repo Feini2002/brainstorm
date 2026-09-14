@@ -1,0 +1,230 @@
+{
+  "protocolVersion": 1,
+  "baseOrigin": "http://127.0.0.1:3000",
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/api/health",
+      "request": "fixed health",
+      "response": "Health",
+      "security": "none"
+    },
+    {
+      "method": "GET",
+      "path": "/api/session",
+      "request": "bootstrap origin checks",
+      "response": "Session",
+      "security": "none"
+    },
+    {
+      "method": "GET",
+      "path": "/api/items",
+      "request": "ListQuery",
+      "response": "ItemPage",
+      "security": "token"
+    },
+    {
+      "method": "POST",
+      "path": "/api/items",
+      "request": "CaptureRequest",
+      "response": "ItemDTO",
+      "security": "origin+token"
+    },
+    {
+      "method": "GET",
+      "path": "/api/items/{id}",
+      "request": "UUID",
+      "response": "ItemDTO",
+      "security": "token"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/items/{id}",
+      "request": "EditItemRequest",
+      "response": "ItemDTO",
+      "security": "origin+token"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/items/{id}",
+      "request": "ExpectedRevision",
+      "response": "DeletedId",
+      "security": "origin+token"
+    },
+    {
+      "method": "GET",
+      "path": "/api/tags",
+      "request": "TagQuery",
+      "response": "TagDTO[]",
+      "security": "token"
+    },
+    {
+      "method": "GET",
+      "path": "/api/selection",
+      "request": "SelectionQuery",
+      "response": "SelectionResolution",
+      "security": "token"
+    },
+    {
+      "method": "GET",
+      "path": "/api/relations",
+      "request": "RelationQuery",
+      "response": "RelationDTO[]",
+      "security": "token"
+    },
+    {
+      "method": "POST",
+      "path": "/api/relations",
+      "request": "ManualRelationRequest",
+      "response": "RelationDTO",
+      "security": "origin+token"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/relations/{id}",
+      "request": "ReviewRelationRequest",
+      "response": "RelationDTO",
+      "security": "origin+token"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/relations/{id}",
+      "request": "ExpectedRevision",
+      "response": "DeletedId",
+      "security": "origin+token"
+    },
+    {
+      "method": "GET",
+      "path": "/api/settings/llm",
+      "request": "none",
+      "response": "PublicLlmConfig",
+      "security": "token"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/settings/llm",
+      "request": "SaveLlmConfig",
+      "response": "PublicLlmConfig",
+      "security": "origin+token"
+    },
+    {
+      "method": "POST",
+      "path": "/api/settings/llm/test",
+      "request": "TestLlmDraft",
+      "response": "RunResult",
+      "security": "origin+token"
+    },
+    {
+      "method": "POST",
+      "path": "/api/items/{id}/organize",
+      "request": "OrganizeRequest",
+      "response": "RunResult",
+      "security": "origin+token"
+    },
+    {
+      "method": "GET",
+      "path": "/api/runs/{id}",
+      "request": "UUID",
+      "response": "RunDTO",
+      "security": "token"
+    },
+    {
+      "method": "POST",
+      "path": "/api/runs/recover",
+      "request": "empty JSON",
+      "response": "RecoveredIds",
+      "security": "origin+token"
+    },
+    {
+      "method": "POST",
+      "path": "/api/graph",
+      "request": "GraphQuery",
+      "response": "GraphData",
+      "security": "origin+token"
+    },
+    {
+      "method": "GET",
+      "path": "/api/views",
+      "request": "ViewQuery",
+      "response": "ViewPage",
+      "security": "token"
+    },
+    {
+      "method": "POST",
+      "path": "/api/views",
+      "request": "CreateGraphView",
+      "response": "ViewDTO",
+      "security": "origin+token"
+    },
+    {
+      "method": "GET",
+      "path": "/api/views/{id}",
+      "request": "UUID",
+      "response": "ViewDTO",
+      "security": "token"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/views/{id}",
+      "request": "EditView",
+      "response": "ViewDTO",
+      "security": "origin+token"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/views/{id}",
+      "request": "ExpectedRevision",
+      "response": "DeletedId",
+      "security": "origin+token"
+    },
+    {
+      "method": "POST",
+      "path": "/api/views/mindmap/generate",
+      "request": "MindmapRequest",
+      "response": "RunResult",
+      "security": "origin+token"
+    },
+    {
+      "method": "POST",
+      "path": "/api/views/mermaid/generate",
+      "request": "FlowRequest",
+      "response": "RunResult",
+      "security": "origin+token"
+    },
+    {
+      "method": "GET",
+      "path": "/api/views/{id}/export",
+      "request": "FormatQuery",
+      "response": "File",
+      "security": "token"
+    },
+    {
+      "method": "GET",
+      "path": "/api/export",
+      "request": "none",
+      "response": "BundleFile",
+      "security": "token"
+    },
+    {
+      "method": "POST",
+      "path": "/api/import/validate",
+      "request": "Bundle",
+      "response": "ImportValidation",
+      "security": "origin+token"
+    },
+    {
+      "method": "POST",
+      "path": "/api/import",
+      "request": "ConfirmBundle",
+      "response": "ImportResult",
+      "security": "origin+token"
+    },
+    {
+      "method": "GET",
+      "path": "/api/diagnostics",
+      "request": "none",
+      "response": "Diagnostics",
+      "security": "token"
+    }
+  ]
+}

@@ -1,0 +1,251 @@
+{
+  "schemaVersion": 1,
+  "exportedAt": "2026-09-14T00:00:00.000Z",
+  "data": {
+    "knowledgeItems": [
+      {
+        "id": "11111111-1111-4111-8111-111111111111",
+        "captureRequestId": "a0000000-0000-4000-8000-000000000001",
+        "captureRequestHash": "c9a62307f568b5f006212546bed6bca4b9b9b1226ad2f729117f9bbed2b9c112",
+        "capturedText": "模型越擅长写代码，开发者越需要清楚地定义问题和验收结果。",
+        "rawText": "模型越擅长写代码，开发者越需要清楚地定义问题和验收结果。",
+        "rawVersion": 1,
+        "revision": 1,
+        "structuredBaseRawVersion": 1,
+        "title": "从写代码到定义问题",
+        "summary": "提出编码自动化可能提升问题定义与验收能力的重要性。",
+        "type": "idea",
+        "keywords": [],
+        "importance": 3,
+        "manualFields": [],
+        "sourceType": "chatgpt",
+        "sourceRef": null,
+        "createdAt": "2026-09-14T00:00:00.000Z",
+        "updatedAt": "2026-09-14T00:00:00.000Z"
+      },
+      {
+        "id": "22222222-2222-4222-8222-222222222222",
+        "captureRequestId": "a0000000-0000-4000-8000-000000000002",
+        "captureRequestHash": "b310a381883cbeddcc3259b2462fe208604f6a157ae0cfa3e5cdeb637ed445ae",
+        "capturedText": "需求不清楚时，自动化会更快地产生不需要的结果。",
+        "rawText": "补充条件：需求不清楚时，自动化会更快地产生不需要的结果。",
+        "rawVersion": 2,
+        "revision": 3,
+        "structuredBaseRawVersion": 1,
+        "title": "自动化不能替代需求澄清",
+        "summary": "这是人工保留的摘要。",
+        "type": "observation",
+        "keywords": [],
+        "importance": 3,
+        "manualFields": [
+          "summary"
+        ],
+        "sourceType": "chatgpt",
+        "sourceRef": "https://example.invalid/source-note",
+        "createdAt": "2026-09-14T00:00:00.000Z",
+        "updatedAt": "2026-09-14T00:00:00.000Z"
+      },
+      {
+        "id": "33333333-3333-4333-8333-333333333333",
+        "captureRequestId": "a0000000-0000-4000-8000-000000000003",
+        "captureRequestHash": "c7f05d55be0e9fa16ae2dd0e31f30dc7813e90e5c08ab41d2a9939d8693fe98f",
+        "capturedText": "我今天记录了咖啡的冲泡比例，这条和软件职业没有直接关系。",
+        "rawText": "我今天记录了咖啡的冲泡比例，这条和软件职业没有直接关系。",
+        "rawVersion": 1,
+        "revision": 1,
+        "structuredBaseRawVersion": 1,
+        "title": "咖啡冲泡记录",
+        "summary": "独立的日常记录，不应强行关联软件职业主题。",
+        "type": "observation",
+        "keywords": [],
+        "importance": 3,
+        "manualFields": [],
+        "sourceType": "myself",
+        "sourceRef": null,
+        "createdAt": "2026-09-14T00:00:00.000Z",
+        "updatedAt": "2026-09-14T00:00:00.000Z"
+      },
+      {
+        "id": "44444444-4444-4444-8444-444444444444",
+        "captureRequestId": "a0000000-0000-4000-8000-000000000004",
+        "captureRequestHash": "f15d82fc813cd419ac8fca3007f6b1e1d37480a12bfee61d784061bdad145589",
+        "capturedText": "有人认为模型越强，人类越不需要理解需求；我尚未判断这个说法。",
+        "rawText": "有人认为模型越强，人类越不需要理解需求；我尚未判断这个说法。",
+        "rawVersion": 1,
+        "revision": 1,
+        "structuredBaseRawVersion": 1,
+        "title": "关于需求理解的一种相反主张",
+        "summary": "记录相反说法但未表示认同，不应改写成用户自身的结论。",
+        "type": "quote",
+        "keywords": [],
+        "importance": 3,
+        "manualFields": [],
+        "sourceType": "chatgpt",
+        "sourceRef": null,
+        "createdAt": "2026-09-14T00:00:00.000Z",
+        "updatedAt": "2026-09-14T00:00:00.000Z"
+      }
+    ],
+    "tags": [
+      {
+        "id": "b0000000-0000-4000-8000-000000000001",
+        "label": "AI开发",
+        "normalized": "ai开发",
+        "createdAt": "2026-09-14T00:00:00.000Z"
+      },
+      {
+        "id": "b0000000-0000-4000-8000-000000000002",
+        "label": "职业",
+        "normalized": "职业",
+        "createdAt": "2026-09-14T00:00:00.000Z"
+      },
+      {
+        "id": "b0000000-0000-4000-8000-000000000003",
+        "label": "需求",
+        "normalized": "需求",
+        "createdAt": "2026-09-14T00:00:00.000Z"
+      },
+      {
+        "id": "b0000000-0000-4000-8000-000000000004",
+        "label": "生活",
+        "normalized": "生活",
+        "createdAt": "2026-09-14T00:00:00.000Z"
+      }
+    ],
+    "itemTags": [
+      {
+        "itemId": "11111111-1111-4111-8111-111111111111",
+        "tagId": "b0000000-0000-4000-8000-000000000001",
+        "position": 0
+      },
+      {
+        "itemId": "11111111-1111-4111-8111-111111111111",
+        "tagId": "b0000000-0000-4000-8000-000000000002",
+        "position": 1
+      },
+      {
+        "itemId": "22222222-2222-4222-8222-222222222222",
+        "tagId": "b0000000-0000-4000-8000-000000000003",
+        "position": 0
+      },
+      {
+        "itemId": "22222222-2222-4222-8222-222222222222",
+        "tagId": "b0000000-0000-4000-8000-000000000001",
+        "position": 1
+      },
+      {
+        "itemId": "33333333-3333-4333-8333-333333333333",
+        "tagId": "b0000000-0000-4000-8000-000000000004",
+        "position": 0
+      },
+      {
+        "itemId": "44444444-4444-4444-8444-444444444444",
+        "tagId": "b0000000-0000-4000-8000-000000000001",
+        "position": 0
+      },
+      {
+        "itemId": "44444444-4444-4444-8444-444444444444",
+        "tagId": "b0000000-0000-4000-8000-000000000003",
+        "position": 1
+      }
+    ],
+    "relations": [
+      {
+        "id": "c0000000-0000-4000-8000-000000000001",
+        "sourceId": "11111111-1111-4111-8111-111111111111",
+        "targetId": "22222222-2222-4222-8222-222222222222",
+        "type": "related_to",
+        "origin": "ai",
+        "reviewStatus": "accepted",
+        "score": 0.78,
+        "reason": "共同讨论问题澄清与自动化产出。",
+        "evidence": [
+          {
+            "itemId": "11111111-1111-4111-8111-111111111111",
+            "rawVersion": 1,
+            "quote": "清楚地定义问题和验收结果"
+          },
+          {
+            "itemId": "22222222-2222-4222-8222-222222222222",
+            "rawVersion": 1,
+            "quote": "需求不清楚时"
+          }
+        ],
+        "sourceRawVersion": 1,
+        "targetRawVersion": 1,
+        "revision": 1,
+        "createdAt": "2026-09-14T00:00:00.000Z",
+        "updatedAt": "2026-09-14T00:00:00.000Z"
+      }
+    ],
+    "views": [
+      {
+        "id": "d0000000-0000-4000-8000-000000000001",
+        "name": "需求与自动化",
+        "kind": "mindmap",
+        "selection": {
+          "mode": "explicit",
+          "itemIds": [
+            "11111111-1111-4111-8111-111111111111",
+            "22222222-2222-4222-8222-222222222222"
+          ]
+        },
+        "sourceSnapshot": {
+          "items": [
+            {
+              "id": "11111111-1111-4111-8111-111111111111",
+              "revision": 1,
+              "rawVersion": 1
+            },
+            {
+              "id": "22222222-2222-4222-8222-222222222222",
+              "revision": 1,
+              "rawVersion": 1
+            }
+          ],
+          "relations": []
+        },
+        "content": {
+          "title": "需求与自动化",
+          "nodes": [
+            {
+              "id": "m1",
+              "parentId": null,
+              "label": "需求与自动化",
+              "itemIds": [
+                "11111111-1111-4111-8111-111111111111",
+                "22222222-2222-4222-8222-222222222222"
+              ],
+              "kind": "group"
+            },
+            {
+              "id": "m2",
+              "parentId": "m1",
+              "label": "问题定义的重要性",
+              "itemIds": [
+                "11111111-1111-4111-8111-111111111111"
+              ],
+              "kind": "note"
+            },
+            {
+              "id": "m3",
+              "parentId": "m1",
+              "label": "自动化的前提",
+              "itemIds": [
+                "22222222-2222-4222-8222-222222222222"
+              ],
+              "kind": "note"
+            }
+          ]
+        },
+        "contentHash": "2a77159db2a85dc3a9084d28293db6cd49db2768bec44770dfde2896f0241ecf",
+        "rendererVersion": "mindmap-compiler-v1",
+        "revision": 1,
+        "generatedAt": "2026-09-14T00:00:00.000Z",
+        "createdAt": "2026-09-14T00:00:00.000Z",
+        "updatedAt": "2026-09-14T00:00:00.000Z",
+        "promptVersion": "mindmap-v1"
+      }
+    ]
+  }
+}

@@ -1,0 +1,1 @@
+NODE_UNSUPPORTED: install Node 24 LTS >=24.15 and reopen the terminal.

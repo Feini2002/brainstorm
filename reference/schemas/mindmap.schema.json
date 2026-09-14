@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "mindmap result v1",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "parentId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "itemIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "maxItems": 40,
+            "minItems": 1
+          },
+          "kind": {
+            "enum": [
+              "group",
+              "note"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "parentId",
+          "label",
+          "itemIds",
+          "kind"
+        ],
+        "additionalProperties": false
+      },
+      "maxItems": 120,
+      "minItems": 1
+    }
+  },
+  "required": [
+    "title",
+    "nodes"
+  ],
+  "additionalProperties": false
+}

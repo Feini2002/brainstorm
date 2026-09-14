@@ -1,0 +1,164 @@
+[
+  {
+    "code": "VALIDATION",
+    "httpStatus": 400,
+    "retryable": false,
+    "meaning": "字段或JSON格式不合法；定位到字段，不丢原始草稿"
+  },
+  {
+    "code": "BODY_TOO_LARGE",
+    "httpStatus": 413,
+    "retryable": false,
+    "meaning": "请求超过该路由字节上限"
+  },
+  {
+    "code": "LOCAL_ORIGIN_REJECTED",
+    "httpStatus": 403,
+    "retryable": false,
+    "meaning": "Host/Origin/请求元数据不满足本地保护"
+  },
+  {
+    "code": "SESSION_EXPIRED",
+    "httpStatus": 403,
+    "retryable": false,
+    "meaning": "重新取得本地会话；不自动重放付费操作"
+  },
+  {
+    "code": "NOT_FOUND",
+    "httpStatus": 404,
+    "retryable": false,
+    "meaning": "实体已不存在，刷新相关列表"
+  },
+  {
+    "code": "REVISION_CONFLICT",
+    "httpStatus": 409,
+    "retryable": false,
+    "meaning": "保留草稿，重新读取并比较版本"
+  },
+  {
+    "code": "CAPTURE_KEY_CONFLICT",
+    "httpStatus": 409,
+    "retryable": false,
+    "meaning": "同一采集动作的内容已变化，需明确新动作"
+  },
+  {
+    "code": "RUN_KEY_CONFLICT",
+    "httpStatus": 409,
+    "retryable": false,
+    "meaning": "同幂等键对应不同输入或配置"
+  },
+  {
+    "code": "RUN_BUSY",
+    "httpStatus": 409,
+    "retryable": true,
+    "meaning": "已有模型操作进行中，不自动排队"
+  },
+  {
+    "code": "MODEL_NOT_CONFIGURED",
+    "httpStatus": 422,
+    "retryable": false,
+    "meaning": "到设置页填写模型配置；离线笔记仍可用"
+  },
+  {
+    "code": "ENDPOINT_REJECTED",
+    "httpStatus": 422,
+    "retryable": false,
+    "meaning": "地址未满足HTTPS/路径/凭据转移规则"
+  },
+  {
+    "code": "PROVIDER_AUTH",
+    "httpStatus": 502,
+    "retryable": false,
+    "meaning": "服务商拒绝凭据；检查Key权限和模型访问"
+  },
+  {
+    "code": "PROVIDER_ENDPOINT",
+    "httpStatus": 502,
+    "retryable": false,
+    "meaning": "地址或模型接口不匹配"
+  },
+  {
+    "code": "PROVIDER_RATE_LIMIT",
+    "httpStatus": 502,
+    "retryable": true,
+    "meaning": "服务商限流，用户稍后显式重试"
+  },
+  {
+    "code": "PROVIDER_UNAVAILABLE",
+    "httpStatus": 502,
+    "retryable": true,
+    "meaning": "服务商5xx或不可用"
+  },
+  {
+    "code": "PROVIDER_NETWORK",
+    "httpStatus": 502,
+    "retryable": true,
+    "meaning": "请求可能已到达服务商，不能承诺未计费"
+  },
+  {
+    "code": "PROVIDER_TIMEOUT",
+    "httpStatus": 504,
+    "retryable": true,
+    "meaning": "达到绝对期限，保留已保存知识"
+  },
+  {
+    "code": "PROVIDER_REFUSAL",
+    "httpStatus": 422,
+    "retryable": false,
+    "meaning": "模型拒绝生成，不执行格式修复"
+  },
+  {
+    "code": "PROVIDER_TRUNCATED",
+    "httpStatus": 422,
+    "retryable": false,
+    "meaning": "输出不完整，检查输出预算或缩小材料范围"
+  },
+  {
+    "code": "PROVIDER_PROTOCOL",
+    "httpStatus": 502,
+    "retryable": false,
+    "meaning": "返回格式不符合chat completions协议"
+  },
+  {
+    "code": "STRUCTURED_INVALID",
+    "httpStatus": 422,
+    "retryable": true,
+    "meaning": "完整输出未通过schema或业务来源验证"
+  },
+  {
+    "code": "SOURCE_CHANGED",
+    "httpStatus": 409,
+    "retryable": true,
+    "meaning": "生成期间资料发生变化，旧结果不覆盖"
+  },
+  {
+    "code": "RUN_INTERRUPTED",
+    "httpStatus": 409,
+    "retryable": true,
+    "meaning": "进程或操作中断，用户决定新一轮整理"
+  },
+  {
+    "code": "IMPORT_NONEMPTY",
+    "httpStatus": 409,
+    "retryable": false,
+    "meaning": "MVP只支持空知识库恢复"
+  },
+  {
+    "code": "IMPORT_INVALID",
+    "httpStatus": 422,
+    "retryable": false,
+    "meaning": "备份版本、字段或引用关系不合法"
+  },
+  {
+    "code": "DATABASE_BUSY",
+    "httpStatus": 409,
+    "retryable": true,
+    "meaning": "数据库短暂写竞争，不能无限循环"
+  },
+  {
+    "code": "INTERNAL",
+    "httpStatus": 500,
+    "retryable": false,
+    "meaning": "安全摘要与requestId，完整秘密不出现在错误里"
+  }
+]

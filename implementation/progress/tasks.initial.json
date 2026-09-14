@@ -1,0 +1,510 @@
+{
+  "specVersion": "2.0",
+  "note": "All statuses describe application implementation, not document-package audit.",
+  "tasks": [
+    {
+      "id": "T001",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T002",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T003",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T004",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T005",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T006",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T007",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T008",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T009",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T010",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T011",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T012",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T013",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T014",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T015",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T016",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T017",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T018",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T019",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T020",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T021",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T022",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T023",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T024",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T025",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T026",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T027",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T028",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T029",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T030",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T031",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T032",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T033",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T034",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T035",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T036",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T037",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T038",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T039",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T040",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T041",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T042",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T043",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T044",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T045",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T046",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T047",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T048",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T049",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T050",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T051",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T052",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T053",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T054",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T055",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T056",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T057",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T058",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T059",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T060",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T061",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T062",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T063",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T064",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T065",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T066",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T067",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T068",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T069",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T070",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T071",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T072",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T073",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T074",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T075",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T076",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T077",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T078",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T079",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T080",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T081",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T082",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T083",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T084",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    }
+  ]
+}

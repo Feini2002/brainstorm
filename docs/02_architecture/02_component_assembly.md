@@ -1,0 +1,44 @@
+# 车轮装配矩阵：组件接口、生命期和替换边界
+
+
+## 1. 系统不是把多个软件放进iframe
+
+本方案复用的是不同抽象层的库：Next.js负责应用路由和服务器入口；React负责界面状态；SQLite负责可事务的数据持久化；Zod负责边界校验；React Flow负责关系图交互；Dagre负责坐标；Markmap负责层级脑图；Mermaid负责流程表达；DOMPurify负责特殊渲染结果净化。它们不是九份各自带用户系统的应用。
+
+如果整体部署Memos存碎片，再部署AFFiNE存画布，再写同步脚本，第一版很快会遇到两套ID、两个备份、两个权限和删除传播。这里借鉴它们的交互，不把它们当运行时依赖。BlockSuite解决复杂文档块编辑，而当前输入只要textarea；没有块级协同需求就不引入它的数据模型。
+
+## 2. 可直接复用的具体部分
+
+React部分复用函数组件、useState/useReducer、context和标准表单；不引入Redux/Zustand不是规则信仰，而是当前状态分三类即可：服务器领域数据、页面草稿、渲染器实例。领域数据从API读取；草稿局部保存；实例在ref里。不要把SQLite数据复制为一个全局可任意修改的大对象。
+
+Next部分使用App Router的page/layout和Route Handlers。共享Sidebar在layout，六个功能页面各自动态导入大图库。服务端模块显式import server-only。所有数据库路由使用Node runtime，不得设edge。服务端可共享验证器但不能让Client组件经barrel export间接导入node:sqlite。
+
+SQLite部分只需要DatabaseSync、预编译语句、事务和PRAGMA；不用ORM，不用独立数据库容器。实现Repository函数如findItem、createCapture、patchItemCas、upsertRelation、createRunIfFree、saveViewCas，它们的输入输出都是纯领域对象。SQL不能散落在页面或LLMAdapter中。
+
+Zod部分复用strict object、enum、array、refinement与safeParse，定义HTTP请求、模型输出、导入Bundle三个不同信任边界。Typescript静态类型不能验证网络输入；数据库列CHECK不能代替图环检测。多个校验层保护不同风险，不是无意义重复。
+
+React Flow部分复用ReactFlow容器、Background、Controls、MiniMap、自定义Node和受控onNodesChange。节点数据是Item的只读缩略DTO，边数据是Relation的语义DTO。deleteKeyCode禁用默认破坏性行为，边的审核动作走自己的React控件；节点点击打开统一详情，不新建一份图专属详情数据。
+
+Dagre部分只调用图结构和layout运算，作为纯函数layoutGraph({nodes,edges,direction})。不存数据库连接、不发请求、不注册UI状态。测试给固定输入验证端点坐标有限、矩形不重叠的基本情况和无节点边界；Dagre不是语义聚类工具，不凭布局接近判断知识相关。
+
+Markmap部分拆为Transformer与View实例。服务器输出已验证AST，浏览器编译/转换后渲染SVG；若库只能在浏览器使用某个能力，就通过动态import隔离，不为了复用改成服务器伪造DOM。来源回跳由旁边ReactOutline提供，避免首版深耦合SVG内部实现。
+
+Mermaid部分用显式initialize/parse/render，不用全页扫描自动执行任意mermaid代码块。每次渲染的唯一ID、异步序号和净化都由MermaidView管理。编辑器不用Monaco，源码替代视图使用普通pre文本足够。DOMPurify只接触需进入DOM的渲染产物，不替代其上游AST约束。
+
+## 3. 接缝比单库功能更重要
+
+Browser→API接缝包含DTO、令牌、错误码和乐观版本；API→Service接缝包含已验证输入和requestId；Service→Repository接缝包含短事务与CAS；Service→LLM接缝包含来源快照、预算和期限；Domain→Renderer接缝包含稳定ID与只读projection。每个接缝需要至少一个独立测试，单库demo运行不代表接缝可用。
+
+例如React Flow画出了三个框，只证明渲染器有宽高和合法nodes；还不能证明关系来自数据库、删除不会丢原文、刷新后坐标仍在、过期边被过滤。Markmap出现漂亮脑图也不能证明来源没有编造。这些系统能力由本项目的接缝代码提供，正是需要自己写的最小核心。
+
+## 4. 替换成本可控
+
+以后换React Flow为Sigma，只改Graph Adapter和Graph组件，Item/Relation/Run不变。以后换模型供应商，只增Adapter或兼容profile，不重写Inbox和数据表。以后加入Embedding，只替换CandidateSelector，保留候选ID约束和关系审核。以后加入更强编辑器，先定义是否改变rawText/Item粒度，不让编辑器默认块ID直接接管知识身份。
+
+这种可替换性不是提前写十层抽象。每个边界一个清楚接口足够，不建立插件注册中心、事件总线、通用低代码schema或动态renderer市场。当前真实只有三个Renderer和一个ProviderAdapter，就明确写三个组件和一个适配器。
+
+## 5. 必须执行的最小Spike
+
+在正式整合前用最小页验证：Node目标版本打开/重开SQLite；ReactFlow两个自定义节点及样式；Dagre布局后位置正确；Markmap中文字和特殊字符不会触发远端资源；Mermaid纯AST编译结果在strict下显示；DOMPurify净化后仍保留必要SVG。每个Spike记录精确包版本、入口API、成功截图或命令。
+
+Spike只能进入测试或临时页，验证后移除或隔离；不能把spike中的硬编码三节点冒充正式Graph数据。任何API差异以官方文档和安装版本为准，修改对应适配层并记录ADR，不以“库坏了”为理由删掉安全契约或替换整个架构。

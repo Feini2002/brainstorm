@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "organize result v1",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "type": {
+      "enum": [
+        "idea",
+        "concept",
+        "question",
+        "decision",
+        "quote",
+        "todo",
+        "observation"
+      ]
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 32
+      },
+      "maxItems": 8,
+      "minItems": 0
+    },
+    "keywords": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 32
+      },
+      "maxItems": 10,
+      "minItems": 0
+    },
+    "importance": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5
+    },
+    "relations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "targetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "enum": [
+              "similar_to",
+              "extends",
+              "supports",
+              "contradicts",
+              "causes",
+              "depends_on",
+              "example_of",
+              "related_to"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          },
+          "score": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "itemId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "quote": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 120
+                }
+              },
+              "required": [
+                "itemId",
+                "quote"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 4,
+            "minItems": 2
+          }
+        },
+        "required": [
+          "targetId",
+          "type",
+          "reason",
+          "score",
+          "evidence"
+        ],
+        "additionalProperties": false
+      },
+      "maxItems": 5,
+      "minItems": 0
+    }
+  },
+  "required": [
+    "title",
+    "summary",
+    "type",
+    "tags",
+    "keywords",
+    "importance",
+    "relations"
+  ],
+  "additionalProperties": false
+}

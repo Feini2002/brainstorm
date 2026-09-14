@@ -1,0 +1,2877 @@
+{
+  "specVersion": "2.0",
+  "gates": {
+    "0": "基础环境与安全存储",
+    "1": "离线知识库闭环",
+    "2": "LLM整理与可靠运行",
+    "3": "关系图与布局",
+    "4": "脑图投影",
+    "5": "流程投影",
+    "6": "恢复、安全与交付"
+  },
+  "tasks": [
+    {
+      "id": "T001",
+      "title": "运行时预检与系统边界",
+      "gate": 0,
+      "area": "foundation",
+      "dependsOn": [],
+      "specPath": "docs/04_tasks/G0/T001_runtime.md",
+      "casePath": "docs/05_tests/G0/T001_cases.md",
+      "targetFiles": [
+        "scripts/doctor.mjs",
+        ".node-version",
+        "docs/runtime-report.md"
+      ],
+      "ruleIds": [
+        "T001-R01",
+        "T001-R02",
+        "T001-R03",
+        "T001-R04",
+        "T001-R05",
+        "T001-R06"
+      ],
+      "caseIds": [
+        "T001-C01",
+        "T001-C02",
+        "T001-C03",
+        "T001-C04",
+        "T001-C05",
+        "T001-C06"
+      ]
+    },
+    {
+      "id": "T002",
+      "title": "依赖解析、锁定与下载",
+      "gate": 0,
+      "area": "foundation",
+      "dependsOn": [
+        "T001"
+      ],
+      "specPath": "docs/04_tasks/G0/T002_dependencies.md",
+      "casePath": "docs/05_tests/G0/T002_cases.md",
+      "targetFiles": [
+        "package.json",
+        "package-lock.json",
+        ".npmrc",
+        "docs/dependency-report.md"
+      ],
+      "ruleIds": [
+        "T002-R01",
+        "T002-R02",
+        "T002-R03",
+        "T002-R04",
+        "T002-R05",
+        "T002-R06"
+      ],
+      "caseIds": [
+        "T002-C01",
+        "T002-C02",
+        "T002-C03",
+        "T002-C04",
+        "T002-C05",
+        "T002-C06"
+      ]
+    },
+    {
+      "id": "T003",
+      "title": "工程目录与服务端隔离",
+      "gate": 0,
+      "area": "foundation",
+      "dependsOn": [
+        "T002"
+      ],
+      "specPath": "docs/04_tasks/G0/T003_repo_boundaries.md",
+      "casePath": "docs/05_tests/G0/T003_cases.md",
+      "targetFiles": [
+        "src/domain/",
+        "src/server/",
+        "src/features/",
+        "src/components/",
+        "src/app/",
+        "eslint.config.mjs"
+      ],
+      "ruleIds": [
+        "T003-R01",
+        "T003-R02",
+        "T003-R03",
+        "T003-R04",
+        "T003-R05",
+        "T003-R06"
+      ],
+      "caseIds": [
+        "T003-C01",
+        "T003-C02",
+        "T003-C03",
+        "T003-C04",
+        "T003-C05",
+        "T003-C06"
+      ]
+    },
+    {
+      "id": "T004",
+      "title": "启动脚本、回环监听与退出",
+      "gate": 0,
+      "area": "foundation",
+      "dependsOn": [
+        "T003"
+      ],
+      "specPath": "docs/04_tasks/G0/T004_startup_scripts.md",
+      "casePath": "docs/05_tests/G0/T004_cases.md",
+      "targetFiles": [
+        "package.json",
+        "scripts/start-local.mjs",
+        "README.md",
+        "src/server/runtime/config.ts"
+      ],
+      "ruleIds": [
+        "T004-R01",
+        "T004-R02",
+        "T004-R03",
+        "T004-R04",
+        "T004-R05",
+        "T004-R06"
+      ],
+      "caseIds": [
+        "T004-C01",
+        "T004-C02",
+        "T004-C03",
+        "T004-C04",
+        "T004-C05",
+        "T004-C06"
+      ]
+    },
+    {
+      "id": "T005",
+      "title": "六页应用骨架与导航状态",
+      "gate": 0,
+      "area": "ui",
+      "dependsOn": [
+        "T004"
+      ],
+      "specPath": "docs/04_tasks/G0/T005_app_shell.md",
+      "casePath": "docs/05_tests/G0/T005_cases.md",
+      "targetFiles": [
+        "src/app/layout.tsx",
+        "src/app/page.tsx",
+        "src/components/AppShell.tsx",
+        "src/app/(workspace)/"
+      ],
+      "ruleIds": [
+        "T005-R01",
+        "T005-R02",
+        "T005-R03",
+        "T005-R04",
+        "T005-R05",
+        "T005-R06"
+      ],
+      "caseIds": [
+        "T005-C01",
+        "T005-C02",
+        "T005-C03",
+        "T005-C04",
+        "T005-C05",
+        "T005-C06"
+      ]
+    },
+    {
+      "id": "T006",
+      "title": "统一响应、错误与前端请求器",
+      "gate": 0,
+      "area": "http",
+      "dependsOn": [
+        "T003",
+        "T005"
+      ],
+      "specPath": "docs/04_tasks/G0/T006_api_envelope.md",
+      "casePath": "docs/05_tests/G0/T006_cases.md",
+      "targetFiles": [
+        "src/domain/api.ts",
+        "src/server/http/errors.ts",
+        "src/features/shared/apiClient.ts"
+      ],
+      "ruleIds": [
+        "T006-R01",
+        "T006-R02",
+        "T006-R03",
+        "T006-R04",
+        "T006-R05",
+        "T006-R06"
+      ],
+      "caseIds": [
+        "T006-C01",
+        "T006-C02",
+        "T006-C03",
+        "T006-C04",
+        "T006-C05",
+        "T006-C06"
+      ]
+    },
+    {
+      "id": "T007",
+      "title": "本地请求令牌与来源防护",
+      "gate": 0,
+      "area": "security",
+      "dependsOn": [
+        "T004",
+        "T006"
+      ],
+      "specPath": "docs/04_tasks/G0/T007_local_security.md",
+      "casePath": "docs/05_tests/G0/T007_cases.md",
+      "targetFiles": [
+        "src/server/security/localGuard.ts",
+        "src/app/api/session/route.ts",
+        "src/features/shared/session.ts"
+      ],
+      "ruleIds": [
+        "T007-R01",
+        "T007-R02",
+        "T007-R03",
+        "T007-R04",
+        "T007-R05",
+        "T007-R06"
+      ],
+      "caseIds": [
+        "T007-C01",
+        "T007-C02",
+        "T007-C03",
+        "T007-C04",
+        "T007-C05",
+        "T007-C06"
+      ]
+    },
+    {
+      "id": "T008",
+      "title": "数据路径、连接与文件生命周期",
+      "gate": 0,
+      "area": "storage",
+      "dependsOn": [
+        "T001",
+        "T003",
+        "T007"
+      ],
+      "specPath": "docs/04_tasks/G0/T008_database_runtime.md",
+      "casePath": "docs/05_tests/G0/T008_cases.md",
+      "targetFiles": [
+        "src/server/db/database.ts",
+        "src/server/runtime/dataDir.ts",
+        "tests/integration/database-runtime.test.ts"
+      ],
+      "ruleIds": [
+        "T008-R01",
+        "T008-R02",
+        "T008-R03",
+        "T008-R04",
+        "T008-R05",
+        "T008-R06"
+      ],
+      "caseIds": [
+        "T008-C01",
+        "T008-C02",
+        "T008-C03",
+        "T008-C04",
+        "T008-C05",
+        "T008-C06"
+      ]
+    },
+    {
+      "id": "T009",
+      "title": "初始迁移与数据库约束",
+      "gate": 0,
+      "area": "storage",
+      "dependsOn": [
+        "T008"
+      ],
+      "specPath": "docs/04_tasks/G0/T009_migrations.md",
+      "casePath": "docs/05_tests/G0/T009_cases.md",
+      "targetFiles": [
+        "src/server/db/migrations.ts",
+        "src/server/db/migrations/001_initial.sql",
+        "tests/integration/migrations.test.ts"
+      ],
+      "ruleIds": [
+        "T009-R01",
+        "T009-R02",
+        "T009-R03",
+        "T009-R04",
+        "T009-R05",
+        "T009-R06"
+      ],
+      "caseIds": [
+        "T009-C01",
+        "T009-C02",
+        "T009-C03",
+        "T009-C04",
+        "T009-C05",
+        "T009-C06"
+      ]
+    },
+    {
+      "id": "T010",
+      "title": "Repository 与 DTO 解码",
+      "gate": 0,
+      "area": "storage",
+      "dependsOn": [
+        "T006",
+        "T009"
+      ],
+      "specPath": "docs/04_tasks/G0/T010_repositories.md",
+      "casePath": "docs/05_tests/G0/T010_cases.md",
+      "targetFiles": [
+        "src/server/repositories/",
+        "src/domain/dto.ts",
+        "tests/integration/repositories.test.ts"
+      ],
+      "ruleIds": [
+        "T010-R01",
+        "T010-R02",
+        "T010-R03",
+        "T010-R04",
+        "T010-R05",
+        "T010-R06"
+      ],
+      "caseIds": [
+        "T010-C01",
+        "T010-C02",
+        "T010-C03",
+        "T010-C04",
+        "T010-C05",
+        "T010-C06"
+      ]
+    },
+    {
+      "id": "T011",
+      "title": "隔离测试环境与模型替身",
+      "gate": 0,
+      "area": "testing",
+      "dependsOn": [
+        "T002",
+        "T008",
+        "T010"
+      ],
+      "specPath": "docs/04_tasks/G0/T011_test_harness.md",
+      "casePath": "docs/05_tests/G0/T011_cases.md",
+      "targetFiles": [
+        "vitest.config.ts",
+        "playwright.config.ts",
+        "tests/helpers/",
+        "tests/fixtures/",
+        "src/server/llm/transport.ts"
+      ],
+      "ruleIds": [
+        "T011-R01",
+        "T011-R02",
+        "T011-R03",
+        "T011-R04",
+        "T011-R05",
+        "T011-R06"
+      ],
+      "caseIds": [
+        "T011-C01",
+        "T011-C02",
+        "T011-C03",
+        "T011-C04",
+        "T011-C05",
+        "T011-C06"
+      ]
+    },
+    {
+      "id": "T012",
+      "title": "契约一致性与第一阶段验收",
+      "gate": 0,
+      "area": "testing",
+      "dependsOn": [
+        "T001",
+        "T002",
+        "T003",
+        "T004",
+        "T005",
+        "T006",
+        "T007",
+        "T008",
+        "T009",
+        "T010",
+        "T011"
+      ],
+      "specPath": "docs/04_tasks/G0/T012_contract_guard.md",
+      "casePath": "docs/05_tests/G0/T012_cases.md",
+      "targetFiles": [
+        "scripts/check-contracts.mjs",
+        "docs/progress/G0.md",
+        "tests/contracts/"
+      ],
+      "ruleIds": [
+        "T012-R01",
+        "T012-R02",
+        "T012-R03",
+        "T012-R04",
+        "T012-R05",
+        "T012-R06"
+      ],
+      "caseIds": [
+        "T012-C01",
+        "T012-C02",
+        "T012-C03",
+        "T012-C04",
+        "T012-C05",
+        "T012-C06"
+      ]
+    },
+    {
+      "id": "T013",
+      "title": "极简输入框与中文输入体验",
+      "gate": 1,
+      "area": "ui",
+      "dependsOn": [
+        "T005",
+        "T006",
+        "T012"
+      ],
+      "specPath": "docs/04_tasks/G1/T013_capture_ui.md",
+      "casePath": "docs/05_tests/G1/T013_cases.md",
+      "targetFiles": [
+        "src/features/inbox/CaptureBox.tsx",
+        "src/features/inbox/useCapture.ts",
+        "tests/e2e/capture.spec.ts"
+      ],
+      "ruleIds": [
+        "T013-R01",
+        "T013-R02",
+        "T013-R03",
+        "T013-R04",
+        "T013-R05",
+        "T013-R06"
+      ],
+      "caseIds": [
+        "T013-C01",
+        "T013-C02",
+        "T013-C03",
+        "T013-C04",
+        "T013-C05",
+        "T013-C06"
+      ]
+    },
+    {
+      "id": "T014",
+      "title": "保存接口与采集幂等",
+      "gate": 1,
+      "area": "http",
+      "dependsOn": [
+        "T010",
+        "T013"
+      ],
+      "specPath": "docs/04_tasks/G1/T014_capture_api.md",
+      "casePath": "docs/05_tests/G1/T014_cases.md",
+      "targetFiles": [
+        "src/app/api/items/route.ts",
+        "src/server/services/captureItem.ts",
+        "tests/integration/capture.test.ts"
+      ],
+      "ruleIds": [
+        "T014-R01",
+        "T014-R02",
+        "T014-R03",
+        "T014-R04",
+        "T014-R05",
+        "T014-R06"
+      ],
+      "caseIds": [
+        "T014-C01",
+        "T014-C02",
+        "T014-C03",
+        "T014-C04",
+        "T014-C05",
+        "T014-C06"
+      ]
+    },
+    {
+      "id": "T015",
+      "title": "收件箱时间线与知识卡片",
+      "gate": 1,
+      "area": "ui",
+      "dependsOn": [
+        "T014"
+      ],
+      "specPath": "docs/04_tasks/G1/T015_timeline_cards.md",
+      "casePath": "docs/05_tests/G1/T015_cases.md",
+      "targetFiles": [
+        "src/features/inbox/RecentItems.tsx",
+        "src/features/shared/KnowledgeCard.tsx",
+        "src/features/shared/formatTime.ts"
+      ],
+      "ruleIds": [
+        "T015-R01",
+        "T015-R02",
+        "T015-R03",
+        "T015-R04",
+        "T015-R05",
+        "T015-R06"
+      ],
+      "caseIds": [
+        "T015-C01",
+        "T015-C02",
+        "T015-C03",
+        "T015-C04",
+        "T015-C05",
+        "T015-C06"
+      ]
+    },
+    {
+      "id": "T016",
+      "title": "资料库搜索、过滤与分页",
+      "gate": 1,
+      "area": "search",
+      "dependsOn": [
+        "T010",
+        "T015"
+      ],
+      "specPath": "docs/04_tasks/G1/T016_library_query.md",
+      "casePath": "docs/05_tests/G1/T016_cases.md",
+      "targetFiles": [
+        "src/server/services/queryItems.ts",
+        "src/features/library/LibraryPage.tsx",
+        "src/domain/query.ts"
+      ],
+      "ruleIds": [
+        "T016-R01",
+        "T016-R02",
+        "T016-R03",
+        "T016-R04",
+        "T016-R05",
+        "T016-R06"
+      ],
+      "caseIds": [
+        "T016-C01",
+        "T016-C02",
+        "T016-C03",
+        "T016-C04",
+        "T016-C05",
+        "T016-C06"
+      ]
+    },
+    {
+      "id": "T017",
+      "title": "标签规范化与关联维护",
+      "gate": 1,
+      "area": "storage",
+      "dependsOn": [
+        "T010",
+        "T016"
+      ],
+      "specPath": "docs/04_tasks/G1/T017_tag_dictionary.md",
+      "casePath": "docs/05_tests/G1/T017_cases.md",
+      "targetFiles": [
+        "src/domain/tags.ts",
+        "src/server/repositories/tags.ts",
+        "src/features/shared/TagInput.tsx"
+      ],
+      "ruleIds": [
+        "T017-R01",
+        "T017-R02",
+        "T017-R03",
+        "T017-R04",
+        "T017-R05",
+        "T017-R06"
+      ],
+      "caseIds": [
+        "T017-C01",
+        "T017-C02",
+        "T017-C03",
+        "T017-C04",
+        "T017-C05",
+        "T017-C06"
+      ]
+    },
+    {
+      "id": "T018",
+      "title": "详情抽屉、原文和来源回溯",
+      "gate": 1,
+      "area": "ui",
+      "dependsOn": [
+        "T015",
+        "T016",
+        "T017"
+      ],
+      "specPath": "docs/04_tasks/G1/T018_item_details.md",
+      "casePath": "docs/05_tests/G1/T018_cases.md",
+      "targetFiles": [
+        "src/features/shared/KnowledgeDrawer.tsx",
+        "src/features/shared/SourceReference.tsx",
+        "src/app/api/items/[id]/route.ts"
+      ],
+      "ruleIds": [
+        "T018-R01",
+        "T018-R02",
+        "T018-R03",
+        "T018-R04",
+        "T018-R05",
+        "T018-R06"
+      ],
+      "caseIds": [
+        "T018-C01",
+        "T018-C02",
+        "T018-C03",
+        "T018-C04",
+        "T018-C05",
+        "T018-C06"
+      ]
+    },
+    {
+      "id": "T019",
+      "title": "人工编辑、版本冲突与字段保护",
+      "gate": 1,
+      "area": "domain",
+      "dependsOn": [
+        "T018"
+      ],
+      "specPath": "docs/04_tasks/G1/T019_edit_versions.md",
+      "casePath": "docs/05_tests/G1/T019_cases.md",
+      "targetFiles": [
+        "src/server/services/editItem.ts",
+        "src/features/library/EditItemForm.tsx",
+        "src/domain/manualFields.ts"
+      ],
+      "ruleIds": [
+        "T019-R01",
+        "T019-R02",
+        "T019-R03",
+        "T019-R04",
+        "T019-R05",
+        "T019-R06"
+      ],
+      "caseIds": [
+        "T019-C01",
+        "T019-C02",
+        "T019-C03",
+        "T019-C04",
+        "T019-C05",
+        "T019-C06"
+      ]
+    },
+    {
+      "id": "T020",
+      "title": "删除确认与引用失效",
+      "gate": 1,
+      "area": "domain",
+      "dependsOn": [
+        "T019"
+      ],
+      "specPath": "docs/04_tasks/G1/T020_delete_item.md",
+      "casePath": "docs/05_tests/G1/T020_cases.md",
+      "targetFiles": [
+        "src/server/services/deleteItem.ts",
+        "src/features/shared/DeleteItemDialog.tsx",
+        "tests/integration/delete.test.ts"
+      ],
+      "ruleIds": [
+        "T020-R01",
+        "T020-R02",
+        "T020-R03",
+        "T020-R04",
+        "T020-R05",
+        "T020-R06"
+      ],
+      "caseIds": [
+        "T020-C01",
+        "T020-C02",
+        "T020-C03",
+        "T020-C04",
+        "T020-C05",
+        "T020-C06"
+      ]
+    },
+    {
+      "id": "T021",
+      "title": "跨视图材料选择与数量预算",
+      "gate": 1,
+      "area": "ui",
+      "dependsOn": [
+        "T016",
+        "T018",
+        "T020"
+      ],
+      "specPath": "docs/04_tasks/G1/T021_selection.md",
+      "casePath": "docs/05_tests/G1/T021_cases.md",
+      "targetFiles": [
+        "src/features/shared/SelectionTray.tsx",
+        "src/domain/selection.ts",
+        "src/features/shared/useSelection.ts"
+      ],
+      "ruleIds": [
+        "T021-R01",
+        "T021-R02",
+        "T021-R03",
+        "T021-R04",
+        "T021-R05",
+        "T021-R06"
+      ],
+      "caseIds": [
+        "T021-C01",
+        "T021-C02",
+        "T021-C03",
+        "T021-C04",
+        "T021-C05",
+        "T021-C06"
+      ]
+    },
+    {
+      "id": "T022",
+      "title": "人工关系创建与方向语义",
+      "gate": 1,
+      "area": "domain",
+      "dependsOn": [
+        "T017",
+        "T018",
+        "T019"
+      ],
+      "specPath": "docs/04_tasks/G1/T022_manual_relations.md",
+      "casePath": "docs/05_tests/G1/T022_cases.md",
+      "targetFiles": [
+        "src/domain/relations.ts",
+        "src/server/services/createRelation.ts",
+        "src/features/shared/RelationEditor.tsx"
+      ],
+      "ruleIds": [
+        "T022-R01",
+        "T022-R02",
+        "T022-R03",
+        "T022-R04",
+        "T022-R05",
+        "T022-R06"
+      ],
+      "caseIds": [
+        "T022-C01",
+        "T022-C02",
+        "T022-C03",
+        "T022-C04",
+        "T022-C05",
+        "T022-C06"
+      ]
+    },
+    {
+      "id": "T023",
+      "title": "关系审核、拒绝记忆与人工优先",
+      "gate": 1,
+      "area": "domain",
+      "dependsOn": [
+        "T022"
+      ],
+      "specPath": "docs/04_tasks/G1/T023_relation_review.md",
+      "casePath": "docs/05_tests/G1/T023_cases.md",
+      "targetFiles": [
+        "src/server/services/reviewRelation.ts",
+        "src/features/shared/RelationReviewPanel.tsx",
+        "tests/integration/review.test.ts"
+      ],
+      "ruleIds": [
+        "T023-R01",
+        "T023-R02",
+        "T023-R03",
+        "T023-R04",
+        "T023-R05",
+        "T023-R06"
+      ],
+      "caseIds": [
+        "T023-C01",
+        "T023-C02",
+        "T023-C03",
+        "T023-C04",
+        "T023-C05",
+        "T023-C06"
+      ]
+    },
+    {
+      "id": "T024",
+      "title": "无Key与断网可用路径",
+      "gate": 1,
+      "area": "integration",
+      "dependsOn": [
+        "T014",
+        "T016",
+        "T019",
+        "T020",
+        "T022"
+      ],
+      "specPath": "docs/04_tasks/G1/T024_offline_crud.md",
+      "casePath": "docs/05_tests/G1/T024_cases.md",
+      "targetFiles": [
+        "tests/e2e/offline-crud.spec.ts",
+        "src/features/shared/ConnectionNotice.tsx",
+        "docs/offline-capabilities.md"
+      ],
+      "ruleIds": [
+        "T024-R01",
+        "T024-R02",
+        "T024-R03",
+        "T024-R04",
+        "T024-R05",
+        "T024-R06"
+      ],
+      "caseIds": [
+        "T024-C01",
+        "T024-C02",
+        "T024-C03",
+        "T024-C04",
+        "T024-C05",
+        "T024-C06"
+      ]
+    },
+    {
+      "id": "T025",
+      "title": "保存反馈、草稿与未知完成状态",
+      "gate": 1,
+      "area": "ui",
+      "dependsOn": [
+        "T013",
+        "T014",
+        "T019",
+        "T024"
+      ],
+      "specPath": "docs/04_tasks/G1/T025_save_feedback.md",
+      "casePath": "docs/05_tests/G1/T025_cases.md",
+      "targetFiles": [
+        "src/features/inbox/useCapture.ts",
+        "src/features/shared/MutationStatus.tsx",
+        "tests/e2e/save-races.spec.ts"
+      ],
+      "ruleIds": [
+        "T025-R01",
+        "T025-R02",
+        "T025-R03",
+        "T025-R04",
+        "T025-R05",
+        "T025-R06"
+      ],
+      "caseIds": [
+        "T025-C01",
+        "T025-C02",
+        "T025-C03",
+        "T025-C04",
+        "T025-C05",
+        "T025-C06"
+      ]
+    },
+    {
+      "id": "T026",
+      "title": "离线知识库闭环验收",
+      "gate": 1,
+      "area": "testing",
+      "dependsOn": [
+        "T013",
+        "T014",
+        "T015",
+        "T016",
+        "T017",
+        "T018",
+        "T019",
+        "T020",
+        "T021",
+        "T022",
+        "T023",
+        "T024",
+        "T025"
+      ],
+      "specPath": "docs/04_tasks/G1/T026_crud_acceptance.md",
+      "casePath": "docs/05_tests/G1/T026_cases.md",
+      "targetFiles": [
+        "tests/e2e/gate1.spec.ts",
+        "docs/progress/G1.md",
+        "tests/fixtures/crud-seed.json"
+      ],
+      "ruleIds": [
+        "T026-R01",
+        "T026-R02",
+        "T026-R03",
+        "T026-R04",
+        "T026-R05",
+        "T026-R06"
+      ],
+      "caseIds": [
+        "T026-C01",
+        "T026-C02",
+        "T026-C03",
+        "T026-C04",
+        "T026-C05",
+        "T026-C06"
+      ]
+    },
+    {
+      "id": "T027",
+      "title": "模型设置表单与Key输入口",
+      "gate": 2,
+      "area": "ui",
+      "dependsOn": [
+        "T007",
+        "T026"
+      ],
+      "specPath": "docs/04_tasks/G2/T027_settings_ui.md",
+      "casePath": "docs/05_tests/G2/T027_cases.md",
+      "targetFiles": [
+        "src/features/settings/LlmSettingsForm.tsx",
+        "src/domain/llmConfig.ts",
+        "src/features/settings/KeyField.tsx"
+      ],
+      "ruleIds": [
+        "T027-R01",
+        "T027-R02",
+        "T027-R03",
+        "T027-R04",
+        "T027-R05",
+        "T027-R06"
+      ],
+      "caseIds": [
+        "T027-C01",
+        "T027-C02",
+        "T027-C03",
+        "T027-C04",
+        "T027-C05",
+        "T027-C06"
+      ]
+    },
+    {
+      "id": "T028",
+      "title": "Base URL规范化与出站信任边界",
+      "gate": 2,
+      "area": "security",
+      "dependsOn": [
+        "T027"
+      ],
+      "specPath": "docs/04_tasks/G2/T028_endpoint_policy.md",
+      "casePath": "docs/05_tests/G2/T028_cases.md",
+      "targetFiles": [
+        "src/server/llm/endpointPolicy.ts",
+        "src/domain/llmConfig.ts",
+        "tests/unit/endpoint-policy.test.ts"
+      ],
+      "ruleIds": [
+        "T028-R01",
+        "T028-R02",
+        "T028-R03",
+        "T028-R04",
+        "T028-R05",
+        "T028-R06"
+      ],
+      "caseIds": [
+        "T028-C01",
+        "T028-C02",
+        "T028-C03",
+        "T028-C04",
+        "T028-C05",
+        "T028-C06"
+      ]
+    },
+    {
+      "id": "T029",
+      "title": "设置事务、秘密隔离与读取白名单",
+      "gate": 2,
+      "area": "storage",
+      "dependsOn": [
+        "T010",
+        "T027",
+        "T028"
+      ],
+      "specPath": "docs/04_tasks/G2/T029_secret_storage.md",
+      "casePath": "docs/05_tests/G2/T029_cases.md",
+      "targetFiles": [
+        "src/server/repositories/settings.ts",
+        "src/server/repositories/secrets.ts",
+        "src/app/api/settings/llm/route.ts"
+      ],
+      "ruleIds": [
+        "T029-R01",
+        "T029-R02",
+        "T029-R03",
+        "T029-R04",
+        "T029-R05",
+        "T029-R06"
+      ],
+      "caseIds": [
+        "T029-C01",
+        "T029-C02",
+        "T029-C03",
+        "T029-C04",
+        "T029-C05",
+        "T029-C06"
+      ]
+    },
+    {
+      "id": "T030",
+      "title": "模型错误脱敏与安全日志",
+      "gate": 2,
+      "area": "security",
+      "dependsOn": [
+        "T006",
+        "T029"
+      ],
+      "specPath": "docs/04_tasks/G2/T030_redaction.md",
+      "casePath": "docs/05_tests/G2/T030_cases.md",
+      "targetFiles": [
+        "src/server/observability/redact.ts",
+        "src/server/observability/logger.ts",
+        "tests/unit/redaction.test.ts"
+      ],
+      "ruleIds": [
+        "T030-R01",
+        "T030-R02",
+        "T030-R03",
+        "T030-R04",
+        "T030-R05",
+        "T030-R06"
+      ],
+      "caseIds": [
+        "T030-C01",
+        "T030-C02",
+        "T030-C03",
+        "T030-C04",
+        "T030-C05",
+        "T030-C06"
+      ]
+    },
+    {
+      "id": "T031",
+      "title": "OpenAI兼容HTTP适配器",
+      "gate": 2,
+      "area": "llm",
+      "dependsOn": [
+        "T028",
+        "T029",
+        "T030"
+      ],
+      "specPath": "docs/04_tasks/G2/T031_llm_transport.md",
+      "casePath": "docs/05_tests/G2/T031_cases.md",
+      "targetFiles": [
+        "src/server/llm/adapters/openaiCompatible.ts",
+        "src/server/llm/types.ts",
+        "tests/unit/llm-transport.test.ts"
+      ],
+      "ruleIds": [
+        "T031-R01",
+        "T031-R02",
+        "T031-R03",
+        "T031-R04",
+        "T031-R05",
+        "T031-R06"
+      ],
+      "caseIds": [
+        "T031-C01",
+        "T031-C02",
+        "T031-C03",
+        "T031-C04",
+        "T031-C05",
+        "T031-C06"
+      ]
+    },
+    {
+      "id": "T032",
+      "title": "连接测试与能力验证",
+      "gate": 2,
+      "area": "llm",
+      "dependsOn": [
+        "T031"
+      ],
+      "specPath": "docs/04_tasks/G2/T032_connection_test.md",
+      "casePath": "docs/05_tests/G2/T032_cases.md",
+      "targetFiles": [
+        "src/app/api/settings/llm/test/route.ts",
+        "src/server/services/testConnection.ts",
+        "src/features/settings/TestResult.tsx"
+      ],
+      "ruleIds": [
+        "T032-R01",
+        "T032-R02",
+        "T032-R03",
+        "T032-R04",
+        "T032-R05",
+        "T032-R06"
+      ],
+      "caseIds": [
+        "T032-C01",
+        "T032-C02",
+        "T032-C03",
+        "T032-C04",
+        "T032-C05",
+        "T032-C06"
+      ]
+    },
+    {
+      "id": "T033",
+      "title": "整理提示词与不可信材料隔离",
+      "gate": 2,
+      "area": "llm",
+      "dependsOn": [
+        "T031",
+        "T032"
+      ],
+      "specPath": "docs/04_tasks/G2/T033_prompts.md",
+      "casePath": "docs/05_tests/G2/T033_cases.md",
+      "targetFiles": [
+        "src/server/llm/prompts/organize.ts",
+        "src/server/llm/prompts/shared.ts",
+        "tests/fixtures/prompt-injection.json"
+      ],
+      "ruleIds": [
+        "T033-R01",
+        "T033-R02",
+        "T033-R03",
+        "T033-R04",
+        "T033-R05",
+        "T033-R06"
+      ],
+      "caseIds": [
+        "T033-C01",
+        "T033-C02",
+        "T033-C03",
+        "T033-C04",
+        "T033-C05",
+        "T033-C06"
+      ]
+    },
+    {
+      "id": "T034",
+      "title": "中文候选召回与上下文预算",
+      "gate": 2,
+      "area": "search",
+      "dependsOn": [
+        "T016",
+        "T017",
+        "T033"
+      ],
+      "specPath": "docs/04_tasks/G2/T034_candidate_search.md",
+      "casePath": "docs/05_tests/G2/T034_cases.md",
+      "targetFiles": [
+        "src/server/services/findCandidates.ts",
+        "src/domain/searchRanking.ts",
+        "tests/unit/candidate-search.test.ts"
+      ],
+      "ruleIds": [
+        "T034-R01",
+        "T034-R02",
+        "T034-R03",
+        "T034-R04",
+        "T034-R05",
+        "T034-R06"
+      ],
+      "caseIds": [
+        "T034-C01",
+        "T034-C02",
+        "T034-C03",
+        "T034-C04",
+        "T034-C05",
+        "T034-C06"
+      ]
+    },
+    {
+      "id": "T035",
+      "title": "运行注册、幂等和并发占用",
+      "gate": 2,
+      "area": "domain",
+      "dependsOn": [
+        "T029",
+        "T034"
+      ],
+      "specPath": "docs/04_tasks/G2/T035_run_registration.md",
+      "casePath": "docs/05_tests/G2/T035_cases.md",
+      "targetFiles": [
+        "src/server/services/runs/registerRun.ts",
+        "src/server/repositories/runs.ts",
+        "tests/integration/run-lock.test.ts"
+      ],
+      "ruleIds": [
+        "T035-R01",
+        "T035-R02",
+        "T035-R03",
+        "T035-R04",
+        "T035-R05",
+        "T035-R06"
+      ],
+      "caseIds": [
+        "T035-C01",
+        "T035-C02",
+        "T035-C03",
+        "T035-C04",
+        "T035-C05",
+        "T035-C06"
+      ]
+    },
+    {
+      "id": "T036",
+      "title": "整理主流程与事务切点",
+      "gate": 2,
+      "area": "llm",
+      "dependsOn": [
+        "T033",
+        "T034",
+        "T035"
+      ],
+      "specPath": "docs/04_tasks/G2/T036_organize_orchestration.md",
+      "casePath": "docs/05_tests/G2/T036_cases.md",
+      "targetFiles": [
+        "src/server/services/organizeItem.ts",
+        "src/app/api/items/[id]/organize/route.ts",
+        "tests/integration/organize-service.test.ts"
+      ],
+      "ruleIds": [
+        "T036-R01",
+        "T036-R02",
+        "T036-R03",
+        "T036-R04",
+        "T036-R05",
+        "T036-R06"
+      ],
+      "caseIds": [
+        "T036-C01",
+        "T036-C02",
+        "T036-C03",
+        "T036-C04",
+        "T036-C05",
+        "T036-C06"
+      ]
+    },
+    {
+      "id": "T037",
+      "title": "结构化解析、限长与一次修复",
+      "gate": 2,
+      "area": "llm",
+      "dependsOn": [
+        "T031",
+        "T033",
+        "T036"
+      ],
+      "specPath": "docs/04_tasks/G2/T037_structured_parse.md",
+      "casePath": "docs/05_tests/G2/T037_cases.md",
+      "targetFiles": [
+        "src/server/llm/parseStructured.ts",
+        "src/domain/schemas/organize.ts",
+        "tests/unit/structured-output.test.ts"
+      ],
+      "ruleIds": [
+        "T037-R01",
+        "T037-R02",
+        "T037-R03",
+        "T037-R04",
+        "T037-R05",
+        "T037-R06"
+      ],
+      "caseIds": [
+        "T037-C01",
+        "T037-C02",
+        "T037-C03",
+        "T037-C04",
+        "T037-C05",
+        "T037-C06"
+      ]
+    },
+    {
+      "id": "T038",
+      "title": "整理字段应用与人工保护",
+      "gate": 2,
+      "area": "domain",
+      "dependsOn": [
+        "T019",
+        "T037"
+      ],
+      "specPath": "docs/04_tasks/G2/T038_metadata_apply.md",
+      "casePath": "docs/05_tests/G2/T038_cases.md",
+      "targetFiles": [
+        "src/server/services/applyOrganizeMetadata.ts",
+        "src/domain/itemStatus.ts",
+        "tests/integration/metadata-apply.test.ts"
+      ],
+      "ruleIds": [
+        "T038-R01",
+        "T038-R02",
+        "T038-R03",
+        "T038-R04",
+        "T038-R05",
+        "T038-R06"
+      ],
+      "caseIds": [
+        "T038-C01",
+        "T038-C02",
+        "T038-C03",
+        "T038-C04",
+        "T038-C05",
+        "T038-C06"
+      ]
+    },
+    {
+      "id": "T039",
+      "title": "AI关系证据、去重与拒绝保护",
+      "gate": 2,
+      "area": "domain",
+      "dependsOn": [
+        "T023",
+        "T034",
+        "T037",
+        "T038"
+      ],
+      "specPath": "docs/04_tasks/G2/T039_relation_apply.md",
+      "casePath": "docs/05_tests/G2/T039_cases.md",
+      "targetFiles": [
+        "src/server/services/applyRelationSuggestions.ts",
+        "src/domain/evidence.ts",
+        "tests/integration/ai-relations.test.ts"
+      ],
+      "ruleIds": [
+        "T039-R01",
+        "T039-R02",
+        "T039-R03",
+        "T039-R04",
+        "T039-R05",
+        "T039-R06"
+      ],
+      "caseIds": [
+        "T039-C01",
+        "T039-C02",
+        "T039-C03",
+        "T039-C04",
+        "T039-C05",
+        "T039-C06"
+      ]
+    },
+    {
+      "id": "T040",
+      "title": "运行恢复、迟到响应与局部轮询",
+      "gate": 2,
+      "area": "domain",
+      "dependsOn": [
+        "T035",
+        "T036",
+        "T039"
+      ],
+      "specPath": "docs/04_tasks/G2/T040_run_recovery.md",
+      "casePath": "docs/05_tests/G2/T040_cases.md",
+      "targetFiles": [
+        "src/server/services/runs/recoverExpiredRuns.ts",
+        "src/app/api/runs/[id]/route.ts",
+        "src/features/shared/useRunStatus.ts"
+      ],
+      "ruleIds": [
+        "T040-R01",
+        "T040-R02",
+        "T040-R03",
+        "T040-R04",
+        "T040-R05",
+        "T040-R06"
+      ],
+      "caseIds": [
+        "T040-C01",
+        "T040-C02",
+        "T040-C03",
+        "T040-C04",
+        "T040-C05",
+        "T040-C06"
+      ]
+    },
+    {
+      "id": "T041",
+      "title": "模型用量、输入范围与错误诊断",
+      "gate": 2,
+      "area": "observability",
+      "dependsOn": [
+        "T030",
+        "T032",
+        "T040"
+      ],
+      "specPath": "docs/04_tasks/G2/T041_llm_diagnostics.md",
+      "casePath": "docs/05_tests/G2/T041_cases.md",
+      "targetFiles": [
+        "src/features/settings/RunDiagnostics.tsx",
+        "src/server/services/getRunDiagnostics.ts",
+        "src/domain/runDto.ts"
+      ],
+      "ruleIds": [
+        "T041-R01",
+        "T041-R02",
+        "T041-R03",
+        "T041-R04",
+        "T041-R05",
+        "T041-R06"
+      ],
+      "caseIds": [
+        "T041-C01",
+        "T041-C02",
+        "T041-C03",
+        "T041-C04",
+        "T041-C05",
+        "T041-C06"
+      ]
+    },
+    {
+      "id": "T042",
+      "title": "AI闭环与真实连接验收",
+      "gate": 2,
+      "area": "testing",
+      "dependsOn": [
+        "T027",
+        "T028",
+        "T029",
+        "T030",
+        "T031",
+        "T032",
+        "T033",
+        "T034",
+        "T035",
+        "T036",
+        "T037",
+        "T038",
+        "T039",
+        "T040",
+        "T041"
+      ],
+      "specPath": "docs/04_tasks/G2/T042_ai_acceptance.md",
+      "casePath": "docs/05_tests/G2/T042_cases.md",
+      "targetFiles": [
+        "tests/e2e/gate2.spec.ts",
+        "tests/fixtures/semantic-cases.json",
+        "docs/progress/G2.md"
+      ],
+      "ruleIds": [
+        "T042-R01",
+        "T042-R02",
+        "T042-R03",
+        "T042-R04",
+        "T042-R05",
+        "T042-R06"
+      ],
+      "caseIds": [
+        "T042-C01",
+        "T042-C02",
+        "T042-C03",
+        "T042-C04",
+        "T042-C05",
+        "T042-C06"
+      ]
+    },
+    {
+      "id": "T043",
+      "title": "图谱读取接口与子图范围",
+      "gate": 3,
+      "area": "graph",
+      "dependsOn": [
+        "T022",
+        "T023",
+        "T039",
+        "T042"
+      ],
+      "specPath": "docs/04_tasks/G3/T043_graph_query.md",
+      "casePath": "docs/05_tests/G3/T043_cases.md",
+      "targetFiles": [
+        "src/app/api/graph/route.ts",
+        "src/server/services/getGraphData.ts",
+        "src/domain/graph.ts"
+      ],
+      "ruleIds": [
+        "T043-R01",
+        "T043-R02",
+        "T043-R03",
+        "T043-R04",
+        "T043-R05",
+        "T043-R06"
+      ],
+      "caseIds": [
+        "T043-C01",
+        "T043-C02",
+        "T043-C03",
+        "T043-C04",
+        "T043-C05",
+        "T043-C06"
+      ]
+    },
+    {
+      "id": "T044",
+      "title": "领域图到React Flow适配",
+      "gate": 3,
+      "area": "graph",
+      "dependsOn": [
+        "T043"
+      ],
+      "specPath": "docs/04_tasks/G3/T044_graph_adapter.md",
+      "casePath": "docs/05_tests/G3/T044_cases.md",
+      "targetFiles": [
+        "src/features/graph/graphAdapter.ts",
+        "src/features/graph/types.ts",
+        "tests/unit/graph-adapter.test.ts"
+      ],
+      "ruleIds": [
+        "T044-R01",
+        "T044-R02",
+        "T044-R03",
+        "T044-R04",
+        "T044-R05",
+        "T044-R06"
+      ],
+      "caseIds": [
+        "T044-C01",
+        "T044-C02",
+        "T044-C03",
+        "T044-C04",
+        "T044-C05",
+        "T044-C06"
+      ]
+    },
+    {
+      "id": "T045",
+      "title": "关系画布、自定义节点与容器",
+      "gate": 3,
+      "area": "graph",
+      "dependsOn": [
+        "T044"
+      ],
+      "specPath": "docs/04_tasks/G3/T045_reactflow_canvas.md",
+      "casePath": "docs/05_tests/G3/T045_cases.md",
+      "targetFiles": [
+        "src/features/graph/KnowledgeGraph.tsx",
+        "src/features/graph/KnowledgeNode.tsx",
+        "src/app/(workspace)/graph/page.tsx"
+      ],
+      "ruleIds": [
+        "T045-R01",
+        "T045-R02",
+        "T045-R03",
+        "T045-R04",
+        "T045-R05",
+        "T045-R06"
+      ],
+      "caseIds": [
+        "T045-C01",
+        "T045-C02",
+        "T045-C03",
+        "T045-C04",
+        "T045-C05",
+        "T045-C06"
+      ]
+    },
+    {
+      "id": "T046",
+      "title": "Dagre布局、尺寸与坐标转换",
+      "gate": 3,
+      "area": "graph",
+      "dependsOn": [
+        "T045"
+      ],
+      "specPath": "docs/04_tasks/G3/T046_dagre_layout.md",
+      "casePath": "docs/05_tests/G3/T046_cases.md",
+      "targetFiles": [
+        "src/features/graph/layoutGraph.ts",
+        "tests/unit/dagre-layout.test.ts",
+        "src/features/graph/LayoutControls.tsx"
+      ],
+      "ruleIds": [
+        "T046-R01",
+        "T046-R02",
+        "T046-R03",
+        "T046-R04",
+        "T046-R05",
+        "T046-R06"
+      ],
+      "caseIds": [
+        "T046-C01",
+        "T046-C02",
+        "T046-C03",
+        "T046-C04",
+        "T046-C05",
+        "T046-C06"
+      ]
+    },
+    {
+      "id": "T047",
+      "title": "图位置保存与布局版本冲突",
+      "gate": 3,
+      "area": "graph",
+      "dependsOn": [
+        "T010",
+        "T046"
+      ],
+      "specPath": "docs/04_tasks/G3/T047_layout_persistence.md",
+      "casePath": "docs/05_tests/G3/T047_cases.md",
+      "targetFiles": [
+        "src/server/services/saveGraphLayout.ts",
+        "src/app/api/views/[id]/layout/route.ts",
+        "src/features/graph/useLayoutPersistence.ts"
+      ],
+      "ruleIds": [
+        "T047-R01",
+        "T047-R02",
+        "T047-R03",
+        "T047-R04",
+        "T047-R05",
+        "T047-R06"
+      ],
+      "caseIds": [
+        "T047-C01",
+        "T047-C02",
+        "T047-C03",
+        "T047-C04",
+        "T047-C05",
+        "T047-C06"
+      ]
+    },
+    {
+      "id": "T048",
+      "title": "图筛选、关系阈值与选择稳定性",
+      "gate": 3,
+      "area": "graph",
+      "dependsOn": [
+        "T043",
+        "T047"
+      ],
+      "specPath": "docs/04_tasks/G3/T048_graph_filters.md",
+      "casePath": "docs/05_tests/G3/T048_cases.md",
+      "targetFiles": [
+        "src/features/graph/GraphFilters.tsx",
+        "src/features/graph/useGraphQuery.ts",
+        "tests/e2e/graph-filters.spec.ts"
+      ],
+      "ruleIds": [
+        "T048-R01",
+        "T048-R02",
+        "T048-R03",
+        "T048-R04",
+        "T048-R05",
+        "T048-R06"
+      ],
+      "caseIds": [
+        "T048-C01",
+        "T048-C02",
+        "T048-C03",
+        "T048-C04",
+        "T048-C05",
+        "T048-C06"
+      ]
+    },
+    {
+      "id": "T049",
+      "title": "节点详情与关系审核交互",
+      "gate": 3,
+      "area": "graph",
+      "dependsOn": [
+        "T018",
+        "T023",
+        "T048"
+      ],
+      "specPath": "docs/04_tasks/G3/T049_graph_interactions.md",
+      "casePath": "docs/05_tests/G3/T049_cases.md",
+      "targetFiles": [
+        "src/features/graph/GraphInspector.tsx",
+        "src/features/graph/RelationEdge.tsx",
+        "tests/e2e/graph-inspector.spec.ts"
+      ],
+      "ruleIds": [
+        "T049-R01",
+        "T049-R02",
+        "T049-R03",
+        "T049-R04",
+        "T049-R05",
+        "T049-R06"
+      ],
+      "caseIds": [
+        "T049-C01",
+        "T049-C02",
+        "T049-C03",
+        "T049-C04",
+        "T049-C05",
+        "T049-C06"
+      ]
+    },
+    {
+      "id": "T050",
+      "title": "大图降级、无障碍与可读性",
+      "gate": 3,
+      "area": "graph",
+      "dependsOn": [
+        "T049"
+      ],
+      "specPath": "docs/04_tasks/G3/T050_graph_readability.md",
+      "casePath": "docs/05_tests/G3/T050_cases.md",
+      "targetFiles": [
+        "src/features/graph/GraphSummary.tsx",
+        "src/features/graph/GraphEmptyState.tsx",
+        "tests/e2e/graph-accessibility.spec.ts"
+      ],
+      "ruleIds": [
+        "T050-R01",
+        "T050-R02",
+        "T050-R03",
+        "T050-R04",
+        "T050-R05",
+        "T050-R06"
+      ],
+      "caseIds": [
+        "T050-C01",
+        "T050-C02",
+        "T050-C03",
+        "T050-C04",
+        "T050-C05",
+        "T050-C06"
+      ]
+    },
+    {
+      "id": "T051",
+      "title": "关系依据失效与图视图一致性",
+      "gate": 3,
+      "area": "domain",
+      "dependsOn": [
+        "T019",
+        "T039",
+        "T050"
+      ],
+      "specPath": "docs/04_tasks/G3/T051_graph_staleness.md",
+      "casePath": "docs/05_tests/G3/T051_cases.md",
+      "targetFiles": [
+        "src/domain/staleness.ts",
+        "src/server/services/deriveGraphFreshness.ts",
+        "tests/integration/graph-stale.test.ts"
+      ],
+      "ruleIds": [
+        "T051-R01",
+        "T051-R02",
+        "T051-R03",
+        "T051-R04",
+        "T051-R05",
+        "T051-R06"
+      ],
+      "caseIds": [
+        "T051-C01",
+        "T051-C02",
+        "T051-C03",
+        "T051-C04",
+        "T051-C05",
+        "T051-C06"
+      ]
+    },
+    {
+      "id": "T052",
+      "title": "关系图集成验收与组件替换边界",
+      "gate": 3,
+      "area": "testing",
+      "dependsOn": [
+        "T043",
+        "T044",
+        "T045",
+        "T046",
+        "T047",
+        "T048",
+        "T049",
+        "T050",
+        "T051"
+      ],
+      "specPath": "docs/04_tasks/G3/T052_graph_acceptance.md",
+      "casePath": "docs/05_tests/G3/T052_cases.md",
+      "targetFiles": [
+        "tests/e2e/gate3.spec.ts",
+        "docs/progress/G3.md",
+        "tests/fixtures/graph-cases.json"
+      ],
+      "ruleIds": [
+        "T052-R01",
+        "T052-R02",
+        "T052-R03",
+        "T052-R04",
+        "T052-R05",
+        "T052-R06"
+      ],
+      "caseIds": [
+        "T052-C01",
+        "T052-C02",
+        "T052-C03",
+        "T052-C04",
+        "T052-C05",
+        "T052-C06"
+      ]
+    },
+    {
+      "id": "T053",
+      "title": "保存视图的公共API与类型契约",
+      "gate": 4,
+      "area": "projection",
+      "dependsOn": [
+        "T010",
+        "T047",
+        "T052"
+      ],
+      "specPath": "docs/04_tasks/G4/T053_view_repository.md",
+      "casePath": "docs/05_tests/G4/T053_cases.md",
+      "targetFiles": [
+        "src/server/services/views/",
+        "src/app/api/views/route.ts",
+        "src/app/api/views/[id]/route.ts",
+        "src/domain/view.ts"
+      ],
+      "ruleIds": [
+        "T053-R01",
+        "T053-R02",
+        "T053-R03",
+        "T053-R04",
+        "T053-R05",
+        "T053-R06"
+      ],
+      "caseIds": [
+        "T053-C01",
+        "T053-C02",
+        "T053-C03",
+        "T053-C04",
+        "T053-C05",
+        "T053-C06"
+      ]
+    },
+    {
+      "id": "T054",
+      "title": "来源选择快照、版本和哈希",
+      "gate": 4,
+      "area": "projection",
+      "dependsOn": [
+        "T021",
+        "T051",
+        "T053"
+      ],
+      "specPath": "docs/04_tasks/G4/T054_source_snapshot.md",
+      "casePath": "docs/05_tests/G4/T054_cases.md",
+      "targetFiles": [
+        "src/server/services/views/captureSources.ts",
+        "src/domain/sourceSnapshot.ts",
+        "tests/unit/source-hash.test.ts"
+      ],
+      "ruleIds": [
+        "T054-R01",
+        "T054-R02",
+        "T054-R03",
+        "T054-R04",
+        "T054-R05",
+        "T054-R06"
+      ],
+      "caseIds": [
+        "T054-C01",
+        "T054-C02",
+        "T054-C03",
+        "T054-C04",
+        "T054-C05",
+        "T054-C06"
+      ]
+    },
+    {
+      "id": "T055",
+      "title": "脑图生成任务与树结构提示词",
+      "gate": 4,
+      "area": "llm",
+      "dependsOn": [
+        "T033",
+        "T035",
+        "T037",
+        "T054"
+      ],
+      "specPath": "docs/04_tasks/G4/T055_mindmap_generation.md",
+      "casePath": "docs/05_tests/G4/T055_cases.md",
+      "targetFiles": [
+        "src/server/services/generateMindmap.ts",
+        "src/server/llm/prompts/mindmap.ts",
+        "src/app/api/views/mindmap/generate/route.ts"
+      ],
+      "ruleIds": [
+        "T055-R01",
+        "T055-R02",
+        "T055-R03",
+        "T055-R04",
+        "T055-R05",
+        "T055-R06"
+      ],
+      "caseIds": [
+        "T055-C01",
+        "T055-C02",
+        "T055-C03",
+        "T055-C04",
+        "T055-C05",
+        "T055-C06"
+      ]
+    },
+    {
+      "id": "T056",
+      "title": "树校验与安全Markdown编译",
+      "gate": 4,
+      "area": "projection",
+      "dependsOn": [
+        "T055"
+      ],
+      "specPath": "docs/04_tasks/G4/T056_mindmap_compiler.md",
+      "casePath": "docs/05_tests/G4/T056_cases.md",
+      "targetFiles": [
+        "src/domain/schemas/mindmap.ts",
+        "src/domain/compileMindmap.ts",
+        "tests/unit/mindmap-compiler.test.ts"
+      ],
+      "ruleIds": [
+        "T056-R01",
+        "T056-R02",
+        "T056-R03",
+        "T056-R04",
+        "T056-R05",
+        "T056-R06"
+      ],
+      "caseIds": [
+        "T056-C01",
+        "T056-C02",
+        "T056-C03",
+        "T056-C04",
+        "T056-C05",
+        "T056-C06"
+      ]
+    },
+    {
+      "id": "T057",
+      "title": "Markmap挂载、净化与本地资源",
+      "gate": 4,
+      "area": "projection",
+      "dependsOn": [
+        "T056"
+      ],
+      "specPath": "docs/04_tasks/G4/T057_markmap_renderer.md",
+      "casePath": "docs/05_tests/G4/T057_cases.md",
+      "targetFiles": [
+        "src/features/mindmap/MindmapRenderer.tsx",
+        "src/features/mindmap/sanitizeContent.ts",
+        "tests/e2e/markmap.spec.ts"
+      ],
+      "ruleIds": [
+        "T057-R01",
+        "T057-R02",
+        "T057-R03",
+        "T057-R04",
+        "T057-R05",
+        "T057-R06"
+      ],
+      "caseIds": [
+        "T057-C01",
+        "T057-C02",
+        "T057-C03",
+        "T057-C04",
+        "T057-C05",
+        "T057-C06"
+      ]
+    },
+    {
+      "id": "T058",
+      "title": "脑图大纲、来源映射与回跳",
+      "gate": 4,
+      "area": "ui",
+      "dependsOn": [
+        "T018",
+        "T057"
+      ],
+      "specPath": "docs/04_tasks/G4/T058_mindmap_sources.md",
+      "casePath": "docs/05_tests/G4/T058_cases.md",
+      "targetFiles": [
+        "src/features/mindmap/MindmapOutline.tsx",
+        "src/features/shared/SourceList.tsx",
+        "tests/e2e/mindmap-sources.spec.ts"
+      ],
+      "ruleIds": [
+        "T058-R01",
+        "T058-R02",
+        "T058-R03",
+        "T058-R04",
+        "T058-R05",
+        "T058-R06"
+      ],
+      "caseIds": [
+        "T058-C01",
+        "T058-C02",
+        "T058-C03",
+        "T058-C04",
+        "T058-C05",
+        "T058-C06"
+      ]
+    },
+    {
+      "id": "T059",
+      "title": "视图过期、再生成与历史保留",
+      "gate": 4,
+      "area": "projection",
+      "dependsOn": [
+        "T053",
+        "T054",
+        "T058"
+      ],
+      "specPath": "docs/04_tasks/G4/T059_view_regeneration.md",
+      "casePath": "docs/05_tests/G4/T059_cases.md",
+      "targetFiles": [
+        "src/server/services/views/getFreshness.ts",
+        "src/features/shared/ViewFreshnessBanner.tsx",
+        "src/features/mindmap/RegenerateAction.tsx"
+      ],
+      "ruleIds": [
+        "T059-R01",
+        "T059-R02",
+        "T059-R03",
+        "T059-R04",
+        "T059-R05",
+        "T059-R06"
+      ],
+      "caseIds": [
+        "T059-C01",
+        "T059-C02",
+        "T059-C03",
+        "T059-C04",
+        "T059-C05",
+        "T059-C06"
+      ]
+    },
+    {
+      "id": "T060",
+      "title": "脑图Markdown与JSON导出",
+      "gate": 4,
+      "area": "export",
+      "dependsOn": [
+        "T056",
+        "T059"
+      ],
+      "specPath": "docs/04_tasks/G4/T060_mindmap_export.md",
+      "casePath": "docs/05_tests/G4/T060_cases.md",
+      "targetFiles": [
+        "src/features/mindmap/ExportMindmap.tsx",
+        "src/server/services/exportView.ts",
+        "tests/unit/view-export.test.ts"
+      ],
+      "ruleIds": [
+        "T060-R01",
+        "T060-R02",
+        "T060-R03",
+        "T060-R04",
+        "T060-R05",
+        "T060-R06"
+      ],
+      "caseIds": [
+        "T060-C01",
+        "T060-C02",
+        "T060-C03",
+        "T060-C04",
+        "T060-C05",
+        "T060-C06"
+      ]
+    },
+    {
+      "id": "T061",
+      "title": "脑图从材料到导出的闭环验收",
+      "gate": 4,
+      "area": "testing",
+      "dependsOn": [
+        "T053",
+        "T054",
+        "T055",
+        "T056",
+        "T057",
+        "T058",
+        "T059",
+        "T060"
+      ],
+      "specPath": "docs/04_tasks/G4/T061_mindmap_acceptance.md",
+      "casePath": "docs/05_tests/G4/T061_cases.md",
+      "targetFiles": [
+        "tests/e2e/gate4.spec.ts",
+        "docs/progress/G4.md",
+        "tests/fixtures/mindmap-cases.json"
+      ],
+      "ruleIds": [
+        "T061-R01",
+        "T061-R02",
+        "T061-R03",
+        "T061-R04",
+        "T061-R05",
+        "T061-R06"
+      ],
+      "caseIds": [
+        "T061-C01",
+        "T061-C02",
+        "T061-C03",
+        "T061-C04",
+        "T061-C05",
+        "T061-C06"
+      ]
+    },
+    {
+      "id": "T062",
+      "title": "流程视图意图输入与材料确认",
+      "gate": 5,
+      "area": "ui",
+      "dependsOn": [
+        "T021",
+        "T053",
+        "T061"
+      ],
+      "specPath": "docs/04_tasks/G5/T062_flow_intent.md",
+      "casePath": "docs/05_tests/G5/T062_cases.md",
+      "targetFiles": [
+        "src/features/flow/FlowIntentForm.tsx",
+        "src/features/flow/FlowPage.tsx",
+        "src/domain/flowIntent.ts"
+      ],
+      "ruleIds": [
+        "T062-R01",
+        "T062-R02",
+        "T062-R03",
+        "T062-R04",
+        "T062-R05",
+        "T062-R06"
+      ],
+      "caseIds": [
+        "T062-C01",
+        "T062-C02",
+        "T062-C03",
+        "T062-C04",
+        "T062-C05",
+        "T062-C06"
+      ]
+    },
+    {
+      "id": "T063",
+      "title": "流程节点、边类型与证据契约",
+      "gate": 5,
+      "area": "llm",
+      "dependsOn": [
+        "T054",
+        "T062"
+      ],
+      "specPath": "docs/04_tasks/G5/T063_flow_document.md",
+      "casePath": "docs/05_tests/G5/T063_cases.md",
+      "targetFiles": [
+        "src/domain/schemas/flow.ts",
+        "src/server/llm/prompts/flow.ts",
+        "src/server/services/generateFlow.ts"
+      ],
+      "ruleIds": [
+        "T063-R01",
+        "T063-R02",
+        "T063-R03",
+        "T063-R04",
+        "T063-R05",
+        "T063-R06"
+      ],
+      "caseIds": [
+        "T063-C01",
+        "T063-C02",
+        "T063-C03",
+        "T063-C04",
+        "T063-C05",
+        "T063-C06"
+      ]
+    },
+    {
+      "id": "T064",
+      "title": "受限Flow到Mermaid编译器",
+      "gate": 5,
+      "area": "projection",
+      "dependsOn": [
+        "T063"
+      ],
+      "specPath": "docs/04_tasks/G5/T064_flow_compiler.md",
+      "casePath": "docs/05_tests/G5/T064_cases.md",
+      "targetFiles": [
+        "src/domain/compileFlow.ts",
+        "src/domain/validateFlow.ts",
+        "tests/unit/flow-compiler.test.ts"
+      ],
+      "ruleIds": [
+        "T064-R01",
+        "T064-R02",
+        "T064-R03",
+        "T064-R04",
+        "T064-R05",
+        "T064-R06"
+      ],
+      "caseIds": [
+        "T064-C01",
+        "T064-C02",
+        "T064-C03",
+        "T064-C04",
+        "T064-C05",
+        "T064-C06"
+      ]
+    },
+    {
+      "id": "T065",
+      "title": "Mermaid严格渲染与SVG净化",
+      "gate": 5,
+      "area": "projection",
+      "dependsOn": [
+        "T064"
+      ],
+      "specPath": "docs/04_tasks/G5/T065_mermaid_renderer.md",
+      "casePath": "docs/05_tests/G5/T065_cases.md",
+      "targetFiles": [
+        "src/features/flow/MermaidRenderer.tsx",
+        "src/features/flow/sanitizeSvg.ts",
+        "tests/e2e/mermaid-security.spec.ts"
+      ],
+      "ruleIds": [
+        "T065-R01",
+        "T065-R02",
+        "T065-R03",
+        "T065-R04",
+        "T065-R05",
+        "T065-R06"
+      ],
+      "caseIds": [
+        "T065-C01",
+        "T065-C02",
+        "T065-C03",
+        "T065-C04",
+        "T065-C05",
+        "T065-C06"
+      ]
+    },
+    {
+      "id": "T066",
+      "title": "异步渲染竞争、尺寸和降级",
+      "gate": 5,
+      "area": "projection",
+      "dependsOn": [
+        "T065"
+      ],
+      "specPath": "docs/04_tasks/G5/T066_flow_lifecycle.md",
+      "casePath": "docs/05_tests/G5/T066_cases.md",
+      "targetFiles": [
+        "src/features/flow/useMermaidRender.ts",
+        "src/features/flow/FlowFallback.tsx",
+        "tests/e2e/flow-lifecycle.spec.ts"
+      ],
+      "ruleIds": [
+        "T066-R01",
+        "T066-R02",
+        "T066-R03",
+        "T066-R04",
+        "T066-R05",
+        "T066-R06"
+      ],
+      "caseIds": [
+        "T066-C01",
+        "T066-C02",
+        "T066-C03",
+        "T066-C04",
+        "T066-C05",
+        "T066-C06"
+      ]
+    },
+    {
+      "id": "T067",
+      "title": "流程视图保存、来源和新鲜度",
+      "gate": 5,
+      "area": "projection",
+      "dependsOn": [
+        "T053",
+        "T054",
+        "T059",
+        "T066"
+      ],
+      "specPath": "docs/04_tasks/G5/T067_flow_history.md",
+      "casePath": "docs/05_tests/G5/T067_cases.md",
+      "targetFiles": [
+        "src/features/flow/SavedFlowList.tsx",
+        "src/features/flow/FlowSourcePanel.tsx",
+        "tests/e2e/flow-history.spec.ts"
+      ],
+      "ruleIds": [
+        "T067-R01",
+        "T067-R02",
+        "T067-R03",
+        "T067-R04",
+        "T067-R05",
+        "T067-R06"
+      ],
+      "caseIds": [
+        "T067-C01",
+        "T067-C02",
+        "T067-C03",
+        "T067-C04",
+        "T067-C05",
+        "T067-C06"
+      ]
+    },
+    {
+      "id": "T068",
+      "title": "流程源码、JSON与安全SVG导出",
+      "gate": 5,
+      "area": "export",
+      "dependsOn": [
+        "T060",
+        "T065",
+        "T067"
+      ],
+      "specPath": "docs/04_tasks/G5/T068_flow_export.md",
+      "casePath": "docs/05_tests/G5/T068_cases.md",
+      "targetFiles": [
+        "src/features/flow/ExportFlow.tsx",
+        "src/server/services/exportView.ts",
+        "tests/e2e/flow-export.spec.ts"
+      ],
+      "ruleIds": [
+        "T068-R01",
+        "T068-R02",
+        "T068-R03",
+        "T068-R04",
+        "T068-R05",
+        "T068-R06"
+      ],
+      "caseIds": [
+        "T068-C01",
+        "T068-C02",
+        "T068-C03",
+        "T068-C04",
+        "T068-C05",
+        "T068-C06"
+      ]
+    },
+    {
+      "id": "T069",
+      "title": "流程可视化与逻辑保真验收",
+      "gate": 5,
+      "area": "testing",
+      "dependsOn": [
+        "T062",
+        "T063",
+        "T064",
+        "T065",
+        "T066",
+        "T067",
+        "T068"
+      ],
+      "specPath": "docs/04_tasks/G5/T069_flow_acceptance.md",
+      "casePath": "docs/05_tests/G5/T069_cases.md",
+      "targetFiles": [
+        "tests/e2e/gate5.spec.ts",
+        "docs/progress/G5.md",
+        "tests/fixtures/flow-cases.json"
+      ],
+      "ruleIds": [
+        "T069-R01",
+        "T069-R02",
+        "T069-R03",
+        "T069-R04",
+        "T069-R05",
+        "T069-R06"
+      ],
+      "caseIds": [
+        "T069-C01",
+        "T069-C02",
+        "T069-C03",
+        "T069-C04",
+        "T069-C05",
+        "T069-C06"
+      ]
+    },
+    {
+      "id": "T070",
+      "title": "整库逻辑导出与秘密白名单",
+      "gate": 6,
+      "area": "export",
+      "dependsOn": [
+        "T010",
+        "T053",
+        "T069"
+      ],
+      "specPath": "docs/04_tasks/G6/T070_full_export.md",
+      "casePath": "docs/05_tests/G6/T070_cases.md",
+      "targetFiles": [
+        "src/app/api/export/route.ts",
+        "src/server/services/exportKnowledge.ts",
+        "src/domain/exportBundle.ts"
+      ],
+      "ruleIds": [
+        "T070-R01",
+        "T070-R02",
+        "T070-R03",
+        "T070-R04",
+        "T070-R05",
+        "T070-R06"
+      ],
+      "caseIds": [
+        "T070-C01",
+        "T070-C02",
+        "T070-C03",
+        "T070-C04",
+        "T070-C05",
+        "T070-C06"
+      ]
+    },
+    {
+      "id": "T071",
+      "title": "恢复文件校验与空库策略",
+      "gate": 6,
+      "area": "export",
+      "dependsOn": [
+        "T070"
+      ],
+      "specPath": "docs/04_tasks/G6/T071_import_validation.md",
+      "casePath": "docs/05_tests/G6/T071_cases.md",
+      "targetFiles": [
+        "src/app/api/import/validate/route.ts",
+        "src/server/services/validateImport.ts",
+        "src/domain/importBundle.ts"
+      ],
+      "ruleIds": [
+        "T071-R01",
+        "T071-R02",
+        "T071-R03",
+        "T071-R04",
+        "T071-R05",
+        "T071-R06"
+      ],
+      "caseIds": [
+        "T071-C01",
+        "T071-C02",
+        "T071-C03",
+        "T071-C04",
+        "T071-C05",
+        "T071-C06"
+      ]
+    },
+    {
+      "id": "T072",
+      "title": "恢复事务、引用重建与回滚",
+      "gate": 6,
+      "area": "export",
+      "dependsOn": [
+        "T071"
+      ],
+      "specPath": "docs/04_tasks/G6/T072_import_commit.md",
+      "casePath": "docs/05_tests/G6/T072_cases.md",
+      "targetFiles": [
+        "src/app/api/import/route.ts",
+        "src/server/services/importKnowledge.ts",
+        "tests/integration/import.test.ts"
+      ],
+      "ruleIds": [
+        "T072-R01",
+        "T072-R02",
+        "T072-R03",
+        "T072-R04",
+        "T072-R05",
+        "T072-R06"
+      ],
+      "caseIds": [
+        "T072-C01",
+        "T072-C02",
+        "T072-C03",
+        "T072-C04",
+        "T072-C05",
+        "T072-C06"
+      ]
+    },
+    {
+      "id": "T073",
+      "title": "WAL备份、数据搬迁与损坏恢复说明",
+      "gate": 6,
+      "area": "operations",
+      "dependsOn": [
+        "T070",
+        "T072"
+      ],
+      "specPath": "docs/04_tasks/G6/T073_backup_recovery.md",
+      "casePath": "docs/05_tests/G6/T073_cases.md",
+      "targetFiles": [
+        "docs/operations/backup-recovery.md",
+        "scripts/inspect-data.mjs",
+        "tests/integration/recovery.test.ts"
+      ],
+      "ruleIds": [
+        "T073-R01",
+        "T073-R02",
+        "T073-R03",
+        "T073-R04",
+        "T073-R05",
+        "T073-R06"
+      ],
+      "caseIds": [
+        "T073-C01",
+        "T073-C02",
+        "T073-C03",
+        "T073-C04",
+        "T073-C05",
+        "T073-C06"
+      ]
+    },
+    {
+      "id": "T074",
+      "title": "本地诊断与可观测性",
+      "gate": 6,
+      "area": "observability",
+      "dependsOn": [
+        "T030",
+        "T041",
+        "T073"
+      ],
+      "specPath": "docs/04_tasks/G6/T074_diagnostics.md",
+      "casePath": "docs/05_tests/G6/T074_cases.md",
+      "targetFiles": [
+        "src/app/api/diagnostics/route.ts",
+        "src/server/observability/diagnostics.ts",
+        "src/features/settings/DiagnosticsPanel.tsx"
+      ],
+      "ruleIds": [
+        "T074-R01",
+        "T074-R02",
+        "T074-R03",
+        "T074-R04",
+        "T074-R05",
+        "T074-R06"
+      ],
+      "caseIds": [
+        "T074-C01",
+        "T074-C02",
+        "T074-C03",
+        "T074-C04",
+        "T074-C05",
+        "T074-C06"
+      ]
+    },
+    {
+      "id": "T075",
+      "title": "密钥、跨站与渲染安全回归",
+      "gate": 6,
+      "area": "security",
+      "dependsOn": [
+        "T007",
+        "T028",
+        "T030",
+        "T057",
+        "T065",
+        "T070",
+        "T074"
+      ],
+      "specPath": "docs/04_tasks/G6/T075_security_regression.md",
+      "casePath": "docs/05_tests/G6/T075_cases.md",
+      "targetFiles": [
+        "tests/security/",
+        "tests/e2e/security.spec.ts",
+        "docs/security-checklist.md"
+      ],
+      "ruleIds": [
+        "T075-R01",
+        "T075-R02",
+        "T075-R03",
+        "T075-R04",
+        "T075-R05",
+        "T075-R06"
+      ],
+      "caseIds": [
+        "T075-C01",
+        "T075-C02",
+        "T075-C03",
+        "T075-C04",
+        "T075-C05",
+        "T075-C06"
+      ]
+    },
+    {
+      "id": "T076",
+      "title": "领域单元测试与边界矩阵",
+      "gate": 6,
+      "area": "testing",
+      "dependsOn": [
+        "T037",
+        "T056",
+        "T064",
+        "T075"
+      ],
+      "specPath": "docs/04_tasks/G6/T076_unit_suite.md",
+      "casePath": "docs/05_tests/G6/T076_cases.md",
+      "targetFiles": [
+        "tests/unit/",
+        "tests/contracts/",
+        "vitest.config.ts",
+        "docs/test-coverage-map.md"
+      ],
+      "ruleIds": [
+        "T076-R01",
+        "T076-R02",
+        "T076-R03",
+        "T076-R04",
+        "T076-R05",
+        "T076-R06"
+      ],
+      "caseIds": [
+        "T076-C01",
+        "T076-C02",
+        "T076-C03",
+        "T076-C04",
+        "T076-C05",
+        "T076-C06"
+      ]
+    },
+    {
+      "id": "T077",
+      "title": "API与SQLite集成测试",
+      "gate": 6,
+      "area": "testing",
+      "dependsOn": [
+        "T070",
+        "T071",
+        "T072",
+        "T076"
+      ],
+      "specPath": "docs/04_tasks/G6/T077_api_suite.md",
+      "casePath": "docs/05_tests/G6/T077_cases.md",
+      "targetFiles": [
+        "tests/integration/",
+        "tests/helpers/database.ts",
+        "docs/api-test-map.md"
+      ],
+      "ruleIds": [
+        "T077-R01",
+        "T077-R02",
+        "T077-R03",
+        "T077-R04",
+        "T077-R05",
+        "T077-R06"
+      ],
+      "caseIds": [
+        "T077-C01",
+        "T077-C02",
+        "T077-C03",
+        "T077-C04",
+        "T077-C05",
+        "T077-C06"
+      ]
+    },
+    {
+      "id": "T078",
+      "title": "六页浏览器端到端验收",
+      "gate": 6,
+      "area": "testing",
+      "dependsOn": [
+        "T077"
+      ],
+      "specPath": "docs/04_tasks/G6/T078_e2e_suite.md",
+      "casePath": "docs/05_tests/G6/T078_cases.md",
+      "targetFiles": [
+        "tests/e2e/",
+        "playwright.config.ts",
+        "docs/browser-test-map.md"
+      ],
+      "ruleIds": [
+        "T078-R01",
+        "T078-R02",
+        "T078-R03",
+        "T078-R04",
+        "T078-R05",
+        "T078-R06"
+      ],
+      "caseIds": [
+        "T078-C01",
+        "T078-C02",
+        "T078-C03",
+        "T078-C04",
+        "T078-C05",
+        "T078-C06"
+      ]
+    },
+    {
+      "id": "T079",
+      "title": "加载、查询与图形性能预算",
+      "gate": 6,
+      "area": "performance",
+      "dependsOn": [
+        "T050",
+        "T057",
+        "T066",
+        "T078"
+      ],
+      "specPath": "docs/04_tasks/G6/T079_performance.md",
+      "casePath": "docs/05_tests/G6/T079_cases.md",
+      "targetFiles": [
+        "scripts/seed-benchmark.mjs",
+        "tests/performance/",
+        "docs/performance-report.md"
+      ],
+      "ruleIds": [
+        "T079-R01",
+        "T079-R02",
+        "T079-R03",
+        "T079-R04",
+        "T079-R05",
+        "T079-R06"
+      ],
+      "caseIds": [
+        "T079-C01",
+        "T079-C02",
+        "T079-C03",
+        "T079-C04",
+        "T079-C05",
+        "T079-C06"
+      ]
+    },
+    {
+      "id": "T080",
+      "title": "Windows安装、启动与故障手册",
+      "gate": 6,
+      "area": "operations",
+      "dependsOn": [
+        "T001",
+        "T002",
+        "T004",
+        "T073",
+        "T079"
+      ],
+      "specPath": "docs/04_tasks/G6/T080_windows_runbook.md",
+      "casePath": "docs/05_tests/G6/T080_cases.md",
+      "targetFiles": [
+        "docs/operations/windows-setup.md",
+        "docs/operations/common-failures.md",
+        "scripts/doctor.mjs"
+      ],
+      "ruleIds": [
+        "T080-R01",
+        "T080-R02",
+        "T080-R03",
+        "T080-R04",
+        "T080-R05",
+        "T080-R06"
+      ],
+      "caseIds": [
+        "T080-C01",
+        "T080-C02",
+        "T080-C03",
+        "T080-C04",
+        "T080-C05",
+        "T080-C06"
+      ]
+    },
+    {
+      "id": "T081",
+      "title": "生产构建、依赖审计与发布材料",
+      "gate": 6,
+      "area": "operations",
+      "dependsOn": [
+        "T075",
+        "T078",
+        "T079",
+        "T080"
+      ],
+      "specPath": "docs/04_tasks/G6/T081_production_audit.md",
+      "casePath": "docs/05_tests/G6/T081_cases.md",
+      "targetFiles": [
+        "docs/release/build-report.md",
+        "docs/release/dependency-audit.md",
+        "package.json",
+        "README.md"
+      ],
+      "ruleIds": [
+        "T081-R01",
+        "T081-R02",
+        "T081-R03",
+        "T081-R04",
+        "T081-R05",
+        "T081-R06"
+      ],
+      "caseIds": [
+        "T081-C01",
+        "T081-C02",
+        "T081-C03",
+        "T081-C04",
+        "T081-C05",
+        "T081-C06"
+      ]
+    },
+    {
+      "id": "T082",
+      "title": "中文文案、状态与无障碍终审",
+      "gate": 6,
+      "area": "ui",
+      "dependsOn": [
+        "T078",
+        "T081"
+      ],
+      "specPath": "docs/04_tasks/G6/T082_ux_quality.md",
+      "casePath": "docs/05_tests/G6/T082_cases.md",
+      "targetFiles": [
+        "docs/ux/copybook.md",
+        "docs/ux/accessibility.md",
+        "src/features/shared/StatusLabel.tsx"
+      ],
+      "ruleIds": [
+        "T082-R01",
+        "T082-R02",
+        "T082-R03",
+        "T082-R04",
+        "T082-R05",
+        "T082-R06"
+      ],
+      "caseIds": [
+        "T082-C01",
+        "T082-C02",
+        "T082-C03",
+        "T082-C04",
+        "T082-C05",
+        "T082-C06"
+      ]
+    },
+    {
+      "id": "T083",
+      "title": "任务证据、缺陷清单与交付状态",
+      "gate": 6,
+      "area": "testing",
+      "dependsOn": [
+        "T076",
+        "T077",
+        "T078",
+        "T079",
+        "T080",
+        "T081",
+        "T082"
+      ],
+      "specPath": "docs/04_tasks/G6/T083_release_evidence.md",
+      "casePath": "docs/05_tests/G6/T083_cases.md",
+      "targetFiles": [
+        "docs/progress/",
+        "docs/release/acceptance-report.md",
+        "docs/release/known-issues.md"
+      ],
+      "ruleIds": [
+        "T083-R01",
+        "T083-R02",
+        "T083-R03",
+        "T083-R04",
+        "T083-R05",
+        "T083-R06"
+      ],
+      "caseIds": [
+        "T083-C01",
+        "T083-C02",
+        "T083-C03",
+        "T083-C04",
+        "T083-C05",
+        "T083-C06"
+      ]
+    },
+    {
+      "id": "T084",
+      "title": "最终用户旅程与MVP完成定义",
+      "gate": 6,
+      "area": "testing",
+      "dependsOn": [
+        "T083"
+      ],
+      "specPath": "docs/04_tasks/G6/T084_final_acceptance.md",
+      "casePath": "docs/05_tests/G6/T084_cases.md",
+      "targetFiles": [
+        "tests/e2e/final-journey.spec.ts",
+        "docs/release/final-acceptance.md",
+        "README.md"
+      ],
+      "ruleIds": [
+        "T084-R01",
+        "T084-R02",
+        "T084-R03",
+        "T084-R04",
+        "T084-R05",
+        "T084-R06"
+      ],
+      "caseIds": [
+        "T084-C01",
+        "T084-C02",
+        "T084-C03",
+        "T084-C04",
+        "T084-C05",
+        "T084-C06"
+      ]
+    }
+  ]
+}

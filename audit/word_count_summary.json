@@ -1,0 +1,72 @@
+{
+  "method": "Han code points; fenced code excluded from prose; audit/index and non-Markdown excluded",
+  "han_prose": 261223,
+  "han_all": 262394,
+  "by_group": {
+    "[root]": {
+      "files": 3,
+      "han_prose": 2001,
+      "han_all": 2001
+    },
+    "docs/00_product": {
+      "files": 1,
+      "han_prose": 1650,
+      "han_all": 1650
+    },
+    "docs/01_research": {
+      "files": 11,
+      "han_prose": 9470,
+      "han_all": 9470
+    },
+    "docs/02_architecture": {
+      "files": 5,
+      "han_prose": 6060,
+      "han_all": 6129
+    },
+    "docs/03_contracts": {
+      "files": 13,
+      "han_prose": 18138,
+      "han_all": 18138
+    },
+    "docs/04_tasks": {
+      "files": 85,
+      "han_prose": 153810,
+      "han_all": 153810
+    },
+    "docs/05_tests": {
+      "files": 85,
+      "han_prose": 61083,
+      "han_all": 61083
+    },
+    "docs/06_operations": {
+      "files": 4,
+      "han_prose": 3970,
+      "han_all": 3970
+    },
+    "docs/07_gates": {
+      "files": 7,
+      "han_prose": 3764,
+      "han_all": 3764
+    },
+    "implementation/progress": {
+      "files": 2,
+      "han_prose": 159,
+      "han_all": 159
+    },
+    "reference/README.md": {
+      "files": 1,
+      "han_prose": 368,
+      "han_all": 368
+    },
+    "reference/prompts": {
+      "files": 4,
+      "han_prose": 472,
+      "han_all": 1574
+    },
+    "tools/README.md": {
+      "files": 1,
+      "han_prose": 278,
+      "han_all": 278
+    }
+  }
+}

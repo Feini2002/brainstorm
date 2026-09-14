@@ -1,0 +1,1 @@
+请先读取仓库根目录的00_ROUTER.md和AGENTS.md，再读取implementation/progress/NEXT_TASK.md。按reference/contracts/tasks.json找到当前任务及其前置，从T001开始逐个实施。每次仅加载当前任务、对应契约和验收用例；保留全部规格文件，不重新设计架构，不引入超出MVP的依赖。先完成真实可运行路径，再执行测试；未执行或受环境阻塞的事项如实记录，不用mock或占位页面宣称完成。每个任务完成后更新进度和证据，再推进下一项。

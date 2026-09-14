@@ -1,0 +1,1593 @@
+{
+  "scope": "Specification package only; application, Node24 runtime, browser and live LLM not tested",
+  "auditedAt": "2026-09-14T07:40:56.277609+00:00",
+  "python": "3.13.5",
+  "sqlite": "3.46.1",
+  "summary": {
+    "passed": 48,
+    "failed": 0,
+    "skipped": 0
+  },
+  "counts": {
+    "markdown_count": 222,
+    "han_all": 262394,
+    "han_prose": 261223,
+    "markdown_bytes": 1045994,
+    "files": [
+      {
+        "path": "00_ROUTER.md",
+        "bytes": 4269,
+        "han_all": 915,
+        "han_prose": 915
+      },
+      {
+        "path": "AGENTS.md",
+        "bytes": 2400,
+        "han_all": 612,
+        "han_prose": 612
+      },
+      {
+        "path": "README.md",
+        "bytes": 2254,
+        "han_all": 474,
+        "han_prose": 474
+      },
+      {
+        "path": "docs/00_product/01_product_contract.md",
+        "bytes": 5882,
+        "han_all": 1650,
+        "han_prose": 1650
+      },
+      {
+        "path": "docs/01_research/00_sources.md",
+        "bytes": 11742,
+        "han_all": 2697,
+        "han_prose": 2697
+      },
+      {
+        "path": "docs/01_research/01_next_react.md",
+        "bytes": 2726,
+        "han_all": 704,
+        "han_prose": 704
+      },
+      {
+        "path": "docs/01_research/02_sqlite.md",
+        "bytes": 2502,
+        "han_all": 667,
+        "han_prose": 667
+      },
+      {
+        "path": "docs/01_research/03_zod.md",
+        "bytes": 2415,
+        "han_all": 612,
+        "han_prose": 612
+      },
+      {
+        "path": "docs/01_research/04_react_flow.md",
+        "bytes": 2467,
+        "han_all": 636,
+        "han_prose": 636
+      },
+      {
+        "path": "docs/01_research/05_dagre.md",
+        "bytes": 2338,
+        "han_all": 639,
+        "han_prose": 639
+      },
+      {
+        "path": "docs/01_research/06_markmap.md",
+        "bytes": 2462,
+        "han_all": 661,
+        "han_prose": 661
+      },
+      {
+        "path": "docs/01_research/07_mermaid.md",
+        "bytes": 2354,
+        "han_all": 611,
+        "han_prose": 611
+      },
+      {
+        "path": "docs/01_research/08_dompurify.md",
+        "bytes": 2348,
+        "han_all": 611,
+        "han_prose": 611
+      },
+      {
+        "path": "docs/01_research/09_test_tools.md",
+        "bytes": 2489,
+        "han_all": 675,
+        "han_prose": 675
+      },
+      {
+        "path": "docs/01_research/11_alternatives.md",
+        "bytes": 3561,
+        "han_all": 957,
+        "han_prose": 957
+      },
+      {
+        "path": "docs/02_architecture/01_system_blueprint.md",
+        "bytes": 6304,
+        "han_all": 1622,
+        "han_prose": 1622
+      },
+      {
+        "path": "docs/02_architecture/02_component_assembly.md",
+        "bytes": 5676,
+        "han_all": 1338,
+        "han_prose": 1338
+      },
+      {
+        "path": "docs/02_architecture/03_ui_information_design.md",
+        "bytes": 6034,
+        "han_all": 1588,
+        "han_prose": 1588
+      },
+      {
+        "path": "docs/02_architecture/04_repository_layout.md",
+        "bytes": 3949,
+        "han_all": 585,
+        "han_prose": 516
+      },
+      {
+        "path": "docs/02_architecture/05_decisions_and_tradeoffs.md",
+        "bytes": 3765,
+        "han_all": 996,
+        "han_prose": 996
+      },
+      {
+        "path": "docs/03_contracts/00_contract_index.md",
+        "bytes": 3023,
+        "han_all": 551,
+        "han_prose": 551
+      },
+      {
+        "path": "docs/03_contracts/01_data_contract.md",
+        "bytes": 6633,
+        "han_all": 1571,
+        "han_prose": 1571
+      },
+      {
+        "path": "docs/03_contracts/02_state_machines.md",
+        "bytes": 5061,
+        "han_all": 1344,
+        "han_prose": 1344
+      },
+      {
+        "path": "docs/03_contracts/03_dto_and_version_rules.md",
+        "bytes": 8529,
+        "han_all": 1754,
+        "han_prose": 1754
+      },
+      {
+        "path": "docs/03_contracts/04_api_contract.md",
+        "bytes": 9556,
+        "han_all": 1777,
+        "han_prose": 1777
+      },
+      {
+        "path": "docs/03_contracts/05_settings_and_security.md",
+        "bytes": 6366,
+        "han_all": 1457,
+        "han_prose": 1457
+      },
+      {
+        "path": "docs/03_contracts/06_llm_pipeline.md",
+        "bytes": 8278,
+        "han_all": 1984,
+        "han_prose": 1984
+      },
+      {
+        "path": "docs/03_contracts/07_candidate_retrieval.md",
+        "bytes": 4851,
+        "han_all": 1297,
+        "han_prose": 1297
+      },
+      {
+        "path": "docs/03_contracts/08_relations_and_evidence.md",
+        "bytes": 5096,
+        "han_all": 1336,
+        "han_prose": 1336
+      },
+      {
+        "path": "docs/03_contracts/09_view_schemas_and_compilers.md",
+        "bytes": 6149,
+        "han_all": 1481,
+        "han_prose": 1481
+      },
+      {
+        "path": "docs/03_contracts/10_backup_bundle.md",
+        "bytes": 6029,
+        "han_all": 1319,
+        "han_prose": 1319
+      },
+      {
+        "path": "docs/03_contracts/11_sql_service_recipes.md",
+        "bytes": 6402,
+        "han_all": 1314,
+        "han_prose": 1314
+      },
+      {
+        "path": "docs/03_contracts/12_replay_timelines.md",
+        "bytes": 3862,
+        "han_all": 953,
+        "han_prose": 953
+      },
+      {
+        "path": "docs/04_tasks/00_task_index.md",
+        "bytes": 8595,
+        "han_all": 942,
+        "han_prose": 942
+      },
+      {
+        "path": "docs/04_tasks/G0/T001_runtime.md",
+        "bytes": 7006,
+        "han_all": 1893,
+        "han_prose": 1893
+      },
+      {
+        "path": "docs/04_tasks/G0/T002_dependencies.md",
+        "bytes": 6984,
+        "han_all": 1850,
+        "han_prose": 1850
+      },
+      {
+        "path": "docs/04_tasks/G0/T003_repo_boundaries.md",
+        "bytes": 7078,
+        "han_all": 1837,
+        "han_prose": 1837
+      },
+      {
+        "path": "docs/04_tasks/G0/T004_startup_scripts.md",
+        "bytes": 6810,
+        "han_all": 1792,
+        "han_prose": 1792
+      },
+      {
+        "path": "docs/04_tasks/G0/T005_app_shell.md",
+        "bytes": 6852,
+        "han_all": 1859,
+        "han_prose": 1859
+      },
+      {
+        "path": "docs/04_tasks/G0/T006_api_envelope.md",
+        "bytes": 6785,
+        "han_all": 1759,
+        "han_prose": 1759
+      },
+      {
+        "path": "docs/04_tasks/G0/T007_local_security.md",
+        "bytes": 7085,
+        "han_all": 1901,
+        "han_prose": 1901
+      },
+      {
+        "path": "docs/04_tasks/G0/T008_database_runtime.md",
+        "bytes": 7010,
+        "han_all": 1852,
+        "han_prose": 1852
+      },
+      {
+        "path": "docs/04_tasks/G0/T009_migrations.md",
+        "bytes": 6827,
+        "han_all": 1810,
+        "han_prose": 1810
+      },
+      {
+        "path": "docs/04_tasks/G0/T010_repositories.md",
+        "bytes": 6843,
+        "han_all": 1774,
+        "han_prose": 1774
+      },
+      {
+        "path": "docs/04_tasks/G0/T011_test_harness.md",
+        "bytes": 7120,
+        "han_all": 1899,
+        "han_prose": 1899
+      },
+      {
+        "path": "docs/04_tasks/G0/T012_contract_guard.md",
+        "bytes": 7258,
+        "han_all": 1874,
+        "han_prose": 1874
+      },
+      {
+        "path": "docs/04_tasks/G1/T013_capture_ui.md",
+        "bytes": 7057,
+        "han_all": 1899,
+        "han_prose": 1899
+      },
+      {
+        "path": "docs/04_tasks/G1/T014_capture_api.md",
+        "bytes": 6798,
+        "han_all": 1791,
+        "han_prose": 1791
+      },
+      {
+        "path": "docs/04_tasks/G1/T015_timeline_cards.md",
+        "bytes": 6775,
+        "han_all": 1835,
+        "han_prose": 1835
+      },
+      {
+        "path": "docs/04_tasks/G1/T016_library_query.md",
+        "bytes": 6730,
+        "han_all": 1758,
+        "han_prose": 1758
+      },
+      {
+        "path": "docs/04_tasks/G1/T017_tag_dictionary.md",
+        "bytes": 6856,
+        "han_all": 1827,
+        "han_prose": 1827
+      },
+      {
+        "path": "docs/04_tasks/G1/T018_item_details.md",
+        "bytes": 6888,
+        "han_all": 1826,
+        "han_prose": 1826
+      },
+      {
+        "path": "docs/04_tasks/G1/T019_edit_versions.md",
+        "bytes": 6792,
+        "han_all": 1774,
+        "han_prose": 1774
+      },
+      {
+        "path": "docs/04_tasks/G1/T020_delete_item.md",
+        "bytes": 6764,
+        "han_all": 1816,
+        "han_prose": 1816
+      },
+      {
+        "path": "docs/04_tasks/G1/T021_selection.md",
+        "bytes": 6884,
+        "han_all": 1861,
+        "han_prose": 1861
+      },
+      {
+        "path": "docs/04_tasks/G1/T022_manual_relations.md",
+        "bytes": 6835,
+        "han_all": 1785,
+        "han_prose": 1785
+      },
+      {
+        "path": "docs/04_tasks/G1/T023_relation_review.md",
+        "bytes": 6787,
+        "han_all": 1792,
+        "han_prose": 1792
+      },
+      {
+        "path": "docs/04_tasks/G1/T024_offline_crud.md",
+        "bytes": 6789,
+        "han_all": 1805,
+        "han_prose": 1805
+      },
+      {
+        "path": "docs/04_tasks/G1/T025_save_feedback.md",
+        "bytes": 6997,
+        "han_all": 1869,
+        "han_prose": 1869
+      },
+      {
+        "path": "docs/04_tasks/G1/T026_crud_acceptance.md",
+        "bytes": 7432,
+        "han_all": 1941,
+        "han_prose": 1941
+      },
+      {
+        "path": "docs/04_tasks/G2/T027_settings_ui.md",
+        "bytes": 6960,
+        "han_all": 1811,
+        "han_prose": 1811
+      },
+      {
+        "path": "docs/04_tasks/G2/T028_endpoint_policy.md",
+        "bytes": 6920,
+        "han_all": 1835,
+        "han_prose": 1835
+      },
+      {
+        "path": "docs/04_tasks/G2/T029_secret_storage.md",
+        "bytes": 6979,
+        "han_all": 1799,
+        "han_prose": 1799
+      },
+      {
+        "path": "docs/04_tasks/G2/T030_redaction.md",
+        "bytes": 6924,
+        "han_all": 1844,
+        "han_prose": 1844
+      },
+      {
+        "path": "docs/04_tasks/G2/T031_llm_transport.md",
+        "bytes": 7091,
+        "han_all": 1790,
+        "han_prose": 1790
+      },
+      {
+        "path": "docs/04_tasks/G2/T032_connection_test.md",
+        "bytes": 6793,
+        "han_all": 1802,
+        "han_prose": 1802
+      },
+      {
+        "path": "docs/04_tasks/G2/T033_prompts.md",
+        "bytes": 7015,
+        "han_all": 1859,
+        "han_prose": 1859
+      },
+      {
+        "path": "docs/04_tasks/G2/T034_candidate_search.md",
+        "bytes": 6959,
+        "han_all": 1859,
+        "han_prose": 1859
+      },
+      {
+        "path": "docs/04_tasks/G2/T035_run_registration.md",
+        "bytes": 6908,
+        "han_all": 1816,
+        "han_prose": 1816
+      },
+      {
+        "path": "docs/04_tasks/G2/T036_organize_orchestration.md",
+        "bytes": 7020,
+        "han_all": 1824,
+        "han_prose": 1824
+      },
+      {
+        "path": "docs/04_tasks/G2/T037_structured_parse.md",
+        "bytes": 7009,
+        "han_all": 1832,
+        "han_prose": 1832
+      },
+      {
+        "path": "docs/04_tasks/G2/T038_metadata_apply.md",
+        "bytes": 6946,
+        "han_all": 1800,
+        "han_prose": 1800
+      },
+      {
+        "path": "docs/04_tasks/G2/T039_relation_apply.md",
+        "bytes": 7065,
+        "han_all": 1870,
+        "han_prose": 1870
+      },
+      {
+        "path": "docs/04_tasks/G2/T040_run_recovery.md",
+        "bytes": 6922,
+        "han_all": 1811,
+        "han_prose": 1811
+      },
+      {
+        "path": "docs/04_tasks/G2/T041_llm_diagnostics.md",
+        "bytes": 6822,
+        "han_all": 1825,
+        "han_prose": 1825
+      },
+      {
+        "path": "docs/04_tasks/G2/T042_ai_acceptance.md",
+        "bytes": 7678,
+        "han_all": 1984,
+        "han_prose": 1984
+      },
+      {
+        "path": "docs/04_tasks/G3/T043_graph_query.md",
+        "bytes": 6842,
+        "han_all": 1779,
+        "han_prose": 1779
+      },
+      {
+        "path": "docs/04_tasks/G3/T044_graph_adapter.md",
+        "bytes": 6609,
+        "han_all": 1731,
+        "han_prose": 1731
+      },
+      {
+        "path": "docs/04_tasks/G3/T045_reactflow_canvas.md",
+        "bytes": 6713,
+        "han_all": 1762,
+        "han_prose": 1762
+      },
+      {
+        "path": "docs/04_tasks/G3/T046_dagre_layout.md",
+        "bytes": 6674,
+        "han_all": 1773,
+        "han_prose": 1773
+      },
+      {
+        "path": "docs/04_tasks/G3/T047_layout_persistence.md",
+        "bytes": 6780,
+        "han_all": 1761,
+        "han_prose": 1761
+      },
+      {
+        "path": "docs/04_tasks/G3/T048_graph_filters.md",
+        "bytes": 6744,
+        "han_all": 1799,
+        "han_prose": 1799
+      },
+      {
+        "path": "docs/04_tasks/G3/T049_graph_interactions.md",
+        "bytes": 6832,
+        "han_all": 1803,
+        "han_prose": 1803
+      },
+      {
+        "path": "docs/04_tasks/G3/T050_graph_readability.md",
+        "bytes": 6740,
+        "han_all": 1809,
+        "han_prose": 1809
+      },
+      {
+        "path": "docs/04_tasks/G3/T051_graph_staleness.md",
+        "bytes": 6876,
+        "han_all": 1821,
+        "han_prose": 1821
+      },
+      {
+        "path": "docs/04_tasks/G3/T052_graph_acceptance.md",
+        "bytes": 7200,
+        "han_all": 1885,
+        "han_prose": 1885
+      },
+      {
+        "path": "docs/04_tasks/G4/T053_view_repository.md",
+        "bytes": 6932,
+        "han_all": 1769,
+        "han_prose": 1769
+      },
+      {
+        "path": "docs/04_tasks/G4/T054_source_snapshot.md",
+        "bytes": 6933,
+        "han_all": 1805,
+        "han_prose": 1805
+      },
+      {
+        "path": "docs/04_tasks/G4/T055_mindmap_generation.md",
+        "bytes": 7040,
+        "han_all": 1820,
+        "han_prose": 1820
+      },
+      {
+        "path": "docs/04_tasks/G4/T056_mindmap_compiler.md",
+        "bytes": 6765,
+        "han_all": 1780,
+        "han_prose": 1780
+      },
+      {
+        "path": "docs/04_tasks/G4/T057_markmap_renderer.md",
+        "bytes": 6737,
+        "han_all": 1761,
+        "han_prose": 1761
+      },
+      {
+        "path": "docs/04_tasks/G4/T058_mindmap_sources.md",
+        "bytes": 6794,
+        "han_all": 1827,
+        "han_prose": 1827
+      },
+      {
+        "path": "docs/04_tasks/G4/T059_view_regeneration.md",
+        "bytes": 6819,
+        "han_all": 1766,
+        "han_prose": 1766
+      },
+      {
+        "path": "docs/04_tasks/G4/T060_mindmap_export.md",
+        "bytes": 6712,
+        "han_all": 1779,
+        "han_prose": 1779
+      },
+      {
+        "path": "docs/04_tasks/G4/T061_mindmap_acceptance.md",
+        "bytes": 7086,
+        "han_all": 1849,
+        "han_prose": 1849
+      },
+      {
+        "path": "docs/04_tasks/G5/T062_flow_intent.md",
+        "bytes": 6853,
+        "han_all": 1848,
+        "han_prose": 1848
+      },
+      {
+        "path": "docs/04_tasks/G5/T063_flow_document.md",
+        "bytes": 6893,
+        "han_all": 1759,
+        "han_prose": 1759
+      },
+      {
+        "path": "docs/04_tasks/G5/T064_flow_compiler.md",
+        "bytes": 6727,
+        "han_all": 1772,
+        "han_prose": 1772
+      },
+      {
+        "path": "docs/04_tasks/G5/T065_mermaid_renderer.md",
+        "bytes": 6673,
+        "han_all": 1745,
+        "han_prose": 1745
+      },
+      {
+        "path": "docs/04_tasks/G5/T066_flow_lifecycle.md",
+        "bytes": 6675,
+        "han_all": 1771,
+        "han_prose": 1771
+      },
+      {
+        "path": "docs/04_tasks/G5/T067_flow_history.md",
+        "bytes": 6927,
+        "han_all": 1789,
+        "han_prose": 1789
+      },
+      {
+        "path": "docs/04_tasks/G5/T068_flow_export.md",
+        "bytes": 6772,
+        "han_all": 1779,
+        "han_prose": 1779
+      },
+      {
+        "path": "docs/04_tasks/G5/T069_flow_acceptance.md",
+        "bytes": 7045,
+        "han_all": 1855,
+        "han_prose": 1855
+      },
+      {
+        "path": "docs/04_tasks/G6/T070_full_export.md",
+        "bytes": 6872,
+        "han_all": 1793,
+        "han_prose": 1793
+      },
+      {
+        "path": "docs/04_tasks/G6/T071_import_validation.md",
+        "bytes": 6695,
+        "han_all": 1798,
+        "han_prose": 1798
+      },
+      {
+        "path": "docs/04_tasks/G6/T072_import_commit.md",
+        "bytes": 6683,
+        "han_all": 1795,
+        "han_prose": 1795
+      },
+      {
+        "path": "docs/04_tasks/G6/T073_backup_recovery.md",
+        "bytes": 6738,
+        "han_all": 1823,
+        "han_prose": 1823
+      },
+      {
+        "path": "docs/04_tasks/G6/T074_diagnostics.md",
+        "bytes": 6794,
+        "han_all": 1801,
+        "han_prose": 1801
+      },
+      {
+        "path": "docs/04_tasks/G6/T075_security_regression.md",
+        "bytes": 7219,
+        "han_all": 1893,
+        "han_prose": 1893
+      },
+      {
+        "path": "docs/04_tasks/G6/T076_unit_suite.md",
+        "bytes": 6949,
+        "han_all": 1854,
+        "han_prose": 1854
+      },
+      {
+        "path": "docs/04_tasks/G6/T077_api_suite.md",
+        "bytes": 6732,
+        "han_all": 1801,
+        "han_prose": 1801
+      },
+      {
+        "path": "docs/04_tasks/G6/T078_e2e_suite.md",
+        "bytes": 6599,
+        "han_all": 1793,
+        "han_prose": 1793
+      },
+      {
+        "path": "docs/04_tasks/G6/T079_performance.md",
+        "bytes": 6913,
+        "han_all": 1853,
+        "han_prose": 1853
+      },
+      {
+        "path": "docs/04_tasks/G6/T080_windows_runbook.md",
+        "bytes": 7012,
+        "han_all": 1852,
+        "han_prose": 1852
+      },
+      {
+        "path": "docs/04_tasks/G6/T081_production_audit.md",
+        "bytes": 6968,
+        "han_all": 1852,
+        "han_prose": 1852
+      },
+      {
+        "path": "docs/04_tasks/G6/T082_ux_quality.md",
+        "bytes": 6779,
+        "han_all": 1829,
+        "han_prose": 1829
+      },
+      {
+        "path": "docs/04_tasks/G6/T083_release_evidence.md",
+        "bytes": 7099,
+        "han_all": 1868,
+        "han_prose": 1868
+      },
+      {
+        "path": "docs/04_tasks/G6/T084_final_acceptance.md",
+        "bytes": 6718,
+        "han_all": 1826,
+        "han_prose": 1826
+      },
+      {
+        "path": "docs/05_tests/00_test_strategy.md",
+        "bytes": 5252,
+        "han_all": 1361,
+        "han_prose": 1361
+      },
+      {
+        "path": "docs/05_tests/G0/T001_cases.md",
+        "bytes": 3249,
+        "han_all": 821,
+        "han_prose": 821
+      },
+      {
+        "path": "docs/05_tests/G0/T002_cases.md",
+        "bytes": 3184,
+        "han_all": 764,
+        "han_prose": 764
+      },
+      {
+        "path": "docs/05_tests/G0/T003_cases.md",
+        "bytes": 3145,
+        "han_all": 762,
+        "han_prose": 762
+      },
+      {
+        "path": "docs/05_tests/G0/T004_cases.md",
+        "bytes": 3068,
+        "han_all": 744,
+        "han_prose": 744
+      },
+      {
+        "path": "docs/05_tests/G0/T005_cases.md",
+        "bytes": 3070,
+        "han_all": 773,
+        "han_prose": 773
+      },
+      {
+        "path": "docs/05_tests/G0/T006_cases.md",
+        "bytes": 3080,
+        "han_all": 752,
+        "han_prose": 752
+      },
+      {
+        "path": "docs/05_tests/G0/T007_cases.md",
+        "bytes": 3144,
+        "han_all": 781,
+        "han_prose": 781
+      },
+      {
+        "path": "docs/05_tests/G0/T008_cases.md",
+        "bytes": 3046,
+        "han_all": 759,
+        "han_prose": 759
+      },
+      {
+        "path": "docs/05_tests/G0/T009_cases.md",
+        "bytes": 2960,
+        "han_all": 718,
+        "han_prose": 718
+      },
+      {
+        "path": "docs/05_tests/G0/T010_cases.md",
+        "bytes": 2940,
+        "han_all": 700,
+        "han_prose": 700
+      },
+      {
+        "path": "docs/05_tests/G0/T011_cases.md",
+        "bytes": 2968,
+        "han_all": 731,
+        "han_prose": 731
+      },
+      {
+        "path": "docs/05_tests/G0/T012_cases.md",
+        "bytes": 2958,
+        "han_all": 725,
+        "han_prose": 725
+      },
+      {
+        "path": "docs/05_tests/G1/T013_cases.md",
+        "bytes": 3005,
+        "han_all": 750,
+        "han_prose": 750
+      },
+      {
+        "path": "docs/05_tests/G1/T014_cases.md",
+        "bytes": 3028,
+        "han_all": 736,
+        "han_prose": 736
+      },
+      {
+        "path": "docs/05_tests/G1/T015_cases.md",
+        "bytes": 3007,
+        "han_all": 752,
+        "han_prose": 752
+      },
+      {
+        "path": "docs/05_tests/G1/T016_cases.md",
+        "bytes": 2943,
+        "han_all": 731,
+        "han_prose": 731
+      },
+      {
+        "path": "docs/05_tests/G1/T017_cases.md",
+        "bytes": 2967,
+        "han_all": 731,
+        "han_prose": 731
+      },
+      {
+        "path": "docs/05_tests/G1/T018_cases.md",
+        "bytes": 3018,
+        "han_all": 738,
+        "han_prose": 738
+      },
+      {
+        "path": "docs/05_tests/G1/T019_cases.md",
+        "bytes": 3032,
+        "han_all": 719,
+        "han_prose": 719
+      },
+      {
+        "path": "docs/05_tests/G1/T020_cases.md",
+        "bytes": 2946,
+        "han_all": 720,
+        "han_prose": 720
+      },
+      {
+        "path": "docs/05_tests/G1/T021_cases.md",
+        "bytes": 2954,
+        "han_all": 743,
+        "han_prose": 743
+      },
+      {
+        "path": "docs/05_tests/G1/T022_cases.md",
+        "bytes": 2927,
+        "han_all": 697,
+        "han_prose": 697
+      },
+      {
+        "path": "docs/05_tests/G1/T023_cases.md",
+        "bytes": 3001,
+        "han_all": 722,
+        "han_prose": 722
+      },
+      {
+        "path": "docs/05_tests/G1/T024_cases.md",
+        "bytes": 2886,
+        "han_all": 704,
+        "han_prose": 704
+      },
+      {
+        "path": "docs/05_tests/G1/T025_cases.md",
+        "bytes": 2999,
+        "han_all": 753,
+        "han_prose": 753
+      },
+      {
+        "path": "docs/05_tests/G1/T026_cases.md",
+        "bytes": 2963,
+        "han_all": 739,
+        "han_prose": 739
+      },
+      {
+        "path": "docs/05_tests/G2/T027_cases.md",
+        "bytes": 2994,
+        "han_all": 728,
+        "han_prose": 728
+      },
+      {
+        "path": "docs/05_tests/G2/T028_cases.md",
+        "bytes": 2995,
+        "han_all": 719,
+        "han_prose": 719
+      },
+      {
+        "path": "docs/05_tests/G2/T029_cases.md",
+        "bytes": 2907,
+        "han_all": 696,
+        "han_prose": 696
+      },
+      {
+        "path": "docs/05_tests/G2/T030_cases.md",
+        "bytes": 3007,
+        "han_all": 747,
+        "han_prose": 747
+      },
+      {
+        "path": "docs/05_tests/G2/T031_cases.md",
+        "bytes": 3025,
+        "han_all": 701,
+        "han_prose": 701
+      },
+      {
+        "path": "docs/05_tests/G2/T032_cases.md",
+        "bytes": 2901,
+        "han_all": 705,
+        "han_prose": 705
+      },
+      {
+        "path": "docs/05_tests/G2/T033_cases.md",
+        "bytes": 2904,
+        "han_all": 700,
+        "han_prose": 700
+      },
+      {
+        "path": "docs/05_tests/G2/T034_cases.md",
+        "bytes": 2924,
+        "han_all": 729,
+        "han_prose": 729
+      },
+      {
+        "path": "docs/05_tests/G2/T035_cases.md",
+        "bytes": 3033,
+        "han_all": 727,
+        "han_prose": 727
+      },
+      {
+        "path": "docs/05_tests/G2/T036_cases.md",
+        "bytes": 3012,
+        "han_all": 733,
+        "han_prose": 733
+      },
+      {
+        "path": "docs/05_tests/G2/T037_cases.md",
+        "bytes": 2950,
+        "han_all": 711,
+        "han_prose": 711
+      },
+      {
+        "path": "docs/05_tests/G2/T038_cases.md",
+        "bytes": 2979,
+        "han_all": 724,
+        "han_prose": 724
+      },
+      {
+        "path": "docs/05_tests/G2/T039_cases.md",
+        "bytes": 2974,
+        "han_all": 719,
+        "han_prose": 719
+      },
+      {
+        "path": "docs/05_tests/G2/T040_cases.md",
+        "bytes": 2944,
+        "han_all": 698,
+        "han_prose": 698
+      },
+      {
+        "path": "docs/05_tests/G2/T041_cases.md",
+        "bytes": 2895,
+        "han_all": 717,
+        "han_prose": 717
+      },
+      {
+        "path": "docs/05_tests/G2/T042_cases.md",
+        "bytes": 2892,
+        "han_all": 712,
+        "han_prose": 712
+      },
+      {
+        "path": "docs/05_tests/G3/T043_cases.md",
+        "bytes": 2846,
+        "han_all": 687,
+        "han_prose": 687
+      },
+      {
+        "path": "docs/05_tests/G3/T044_cases.md",
+        "bytes": 2852,
+        "han_all": 665,
+        "han_prose": 665
+      },
+      {
+        "path": "docs/05_tests/G3/T045_cases.md",
+        "bytes": 2928,
+        "han_all": 701,
+        "han_prose": 701
+      },
+      {
+        "path": "docs/05_tests/G3/T046_cases.md",
+        "bytes": 2833,
+        "han_all": 678,
+        "han_prose": 678
+      },
+      {
+        "path": "docs/05_tests/G3/T047_cases.md",
+        "bytes": 2872,
+        "han_all": 686,
+        "han_prose": 686
+      },
+      {
+        "path": "docs/05_tests/G3/T048_cases.md",
+        "bytes": 2911,
+        "han_all": 711,
+        "han_prose": 711
+      },
+      {
+        "path": "docs/05_tests/G3/T049_cases.md",
+        "bytes": 2881,
+        "han_all": 697,
+        "han_prose": 697
+      },
+      {
+        "path": "docs/05_tests/G3/T050_cases.md",
+        "bytes": 2867,
+        "han_all": 691,
+        "han_prose": 691
+      },
+      {
+        "path": "docs/05_tests/G3/T051_cases.md",
+        "bytes": 2919,
+        "han_all": 700,
+        "han_prose": 700
+      },
+      {
+        "path": "docs/05_tests/G3/T052_cases.md",
+        "bytes": 2880,
+        "han_all": 698,
+        "han_prose": 698
+      },
+      {
+        "path": "docs/05_tests/G4/T053_cases.md",
+        "bytes": 2827,
+        "han_all": 648,
+        "han_prose": 648
+      },
+      {
+        "path": "docs/05_tests/G4/T054_cases.md",
+        "bytes": 2937,
+        "han_all": 707,
+        "han_prose": 707
+      },
+      {
+        "path": "docs/05_tests/G4/T055_cases.md",
+        "bytes": 2857,
+        "han_all": 692,
+        "han_prose": 692
+      },
+      {
+        "path": "docs/05_tests/G4/T056_cases.md",
+        "bytes": 2751,
+        "han_all": 630,
+        "han_prose": 630
+      },
+      {
+        "path": "docs/05_tests/G4/T057_cases.md",
+        "bytes": 2879,
+        "han_all": 674,
+        "han_prose": 674
+      },
+      {
+        "path": "docs/05_tests/G4/T058_cases.md",
+        "bytes": 2864,
+        "han_all": 713,
+        "han_prose": 713
+      },
+      {
+        "path": "docs/05_tests/G4/T059_cases.md",
+        "bytes": 2871,
+        "han_all": 679,
+        "han_prose": 679
+      },
+      {
+        "path": "docs/05_tests/G4/T060_cases.md",
+        "bytes": 2866,
+        "han_all": 688,
+        "han_prose": 688
+      },
+      {
+        "path": "docs/05_tests/G4/T061_cases.md",
+        "bytes": 2841,
+        "han_all": 701,
+        "han_prose": 701
+      },
+      {
+        "path": "docs/05_tests/G5/T062_cases.md",
+        "bytes": 2925,
+        "han_all": 733,
+        "han_prose": 733
+      },
+      {
+        "path": "docs/05_tests/G5/T063_cases.md",
+        "bytes": 2862,
+        "han_all": 670,
+        "han_prose": 670
+      },
+      {
+        "path": "docs/05_tests/G5/T064_cases.md",
+        "bytes": 2888,
+        "han_all": 666,
+        "han_prose": 666
+      },
+      {
+        "path": "docs/05_tests/G5/T065_cases.md",
+        "bytes": 2899,
+        "han_all": 669,
+        "han_prose": 669
+      },
+      {
+        "path": "docs/05_tests/G5/T066_cases.md",
+        "bytes": 2869,
+        "han_all": 671,
+        "han_prose": 671
+      },
+      {
+        "path": "docs/05_tests/G5/T067_cases.md",
+        "bytes": 2859,
+        "han_all": 675,
+        "han_prose": 675
+      },
+      {
+        "path": "docs/05_tests/G5/T068_cases.md",
+        "bytes": 2776,
+        "han_all": 667,
+        "han_prose": 667
+      },
+      {
+        "path": "docs/05_tests/G5/T069_cases.md",
+        "bytes": 2881,
+        "han_all": 713,
+        "han_prose": 713
+      },
+      {
+        "path": "docs/05_tests/G6/T070_cases.md",
+        "bytes": 2846,
+        "han_all": 701,
+        "han_prose": 701
+      },
+      {
+        "path": "docs/05_tests/G6/T071_cases.md",
+        "bytes": 2785,
+        "han_all": 670,
+        "han_prose": 670
+      },
+      {
+        "path": "docs/05_tests/G6/T072_cases.md",
+        "bytes": 2837,
+        "han_all": 694,
+        "han_prose": 694
+      },
+      {
+        "path": "docs/05_tests/G6/T073_cases.md",
+        "bytes": 2982,
+        "han_all": 741,
+        "han_prose": 741
+      },
+      {
+        "path": "docs/05_tests/G6/T074_cases.md",
+        "bytes": 2794,
+        "han_all": 690,
+        "han_prose": 690
+      },
+      {
+        "path": "docs/05_tests/G6/T075_cases.md",
+        "bytes": 2954,
+        "han_all": 727,
+        "han_prose": 727
+      },
+      {
+        "path": "docs/05_tests/G6/T076_cases.md",
+        "bytes": 2834,
+        "han_all": 700,
+        "han_prose": 700
+      },
+      {
+        "path": "docs/05_tests/G6/T077_cases.md",
+        "bytes": 2729,
+        "han_all": 655,
+        "han_prose": 655
+      },
+      {
+        "path": "docs/05_tests/G6/T078_cases.md",
+        "bytes": 2829,
+        "han_all": 695,
+        "han_prose": 695
+      },
+      {
+        "path": "docs/05_tests/G6/T079_cases.md",
+        "bytes": 2879,
+        "han_all": 719,
+        "han_prose": 719
+      },
+      {
+        "path": "docs/05_tests/G6/T080_cases.md",
+        "bytes": 2898,
+        "han_all": 702,
+        "han_prose": 702
+      },
+      {
+        "path": "docs/05_tests/G6/T081_cases.md",
+        "bytes": 2897,
+        "han_all": 698,
+        "han_prose": 698
+      },
+      {
+        "path": "docs/05_tests/G6/T082_cases.md",
+        "bytes": 2829,
+        "han_all": 696,
+        "han_prose": 696
+      },
+      {
+        "path": "docs/05_tests/G6/T083_cases.md",
+        "bytes": 2822,
+        "han_all": 690,
+        "han_prose": 690
+      },
+      {
+        "path": "docs/05_tests/G6/T084_cases.md",
+        "bytes": 2886,
+        "han_all": 703,
+        "han_prose": 703
+      },
+      {
+        "path": "docs/06_operations/01_install_and_bootstrap.md",
+        "bytes": 6654,
+        "han_all": 1360,
+        "han_prose": 1360
+      },
+      {
+        "path": "docs/06_operations/02_backup_and_incidents.md",
+        "bytes": 4298,
+        "han_all": 1174,
+        "han_prose": 1174
+      },
+      {
+        "path": "docs/06_operations/03_dependency_and_license_register.md",
+        "bytes": 2593,
+        "han_all": 593,
+        "han_prose": 593
+      },
+      {
+        "path": "docs/06_operations/04_handover_and_acceptance.md",
+        "bytes": 3185,
+        "han_all": 843,
+        "han_prose": 843
+      },
+      {
+        "path": "docs/07_gates/G0.md",
+        "bytes": 3160,
+        "han_all": 536,
+        "han_prose": 536
+      },
+      {
+        "path": "docs/07_gates/G1.md",
+        "bytes": 3519,
+        "han_all": 567,
+        "han_prose": 567
+      },
+      {
+        "path": "docs/07_gates/G2.md",
+        "bytes": 3878,
+        "han_all": 596,
+        "han_prose": 596
+      },
+      {
+        "path": "docs/07_gates/G3.md",
+        "bytes": 2937,
+        "han_all": 515,
+        "han_prose": 515
+      },
+      {
+        "path": "docs/07_gates/G4.md",
+        "bytes": 2801,
+        "han_all": 492,
+        "han_prose": 492
+      },
+      {
+        "path": "docs/07_gates/G5.md",
+        "bytes": 2609,
+        "han_all": 477,
+        "han_prose": 477
+      },
+      {
+        "path": "docs/07_gates/G6.md",
+        "bytes": 3718,
+        "han_all": 581,
+        "han_prose": 581
+      },
+      {
+        "path": "implementation/progress/NEXT_TASK.md",
+        "bytes": 226,
+        "han_all": 56,
+        "han_prose": 56
+      },
+      {
+        "path": "implementation/progress/evidence/README.md",
+        "bytes": 384,
+        "han_all": 103,
+        "han_prose": 103
+      },
+      {
+        "path": "reference/README.md",
+        "bytes": 1476,
+        "han_all": 368,
+        "han_prose": 368
+      },
+      {
+        "path": "reference/prompts/flow-v1.md",
+        "bytes": 1710,
+        "han_all": 418,
+        "han_prose": 118
+      },
+      {
+        "path": "reference/prompts/mindmap-v1.md",
+        "bytes": 1587,
+        "han_all": 384,
+        "han_prose": 118
+      },
+      {
+        "path": "reference/prompts/organize-v1.md",
+        "bytes": 2148,
+        "han_all": 532,
+        "han_prose": 118
+      },
+      {
+        "path": "reference/prompts/repair-v1.md",
+        "bytes": 1068,
+        "han_all": 240,
+        "han_prose": 118
+      },
+      {
+        "path": "tools/README.md",
+        "bytes": 1142,
+        "han_all": 278,
+        "han_prose": 278
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "links.relative_paths",
+      "status": "passed",
+      "detail": "1392 relative file links resolve; URL fetch and heading anchors are outside this check"
+    },
+    {
+      "name": "tasks.dag_and_ids",
+      "status": "passed",
+      "detail": "84 unique tasks, acyclic dependencies, 504 rule IDs and 504 case IDs linked"
+    },
+    {
+      "name": "tasks.initial_status",
+      "status": "passed",
+      "detail": "No application task is falsely marked completed"
+    },
+    {
+      "name": "http.registry",
+      "status": "passed",
+      "detail": "31 unique method/path contracts; private routes guarded"
+    },
+    {
+      "name": "files.json_parse",
+      "status": "passed",
+      "detail": "17 JSON files parse"
+    },
+    {
+      "name": "files.no_runtime_payload",
+      "status": "passed",
+      "detail": "No database, node_modules, .env, or credential file is packaged; this is not a universal secret scanner"
+    },
+    {
+      "name": "sql.nine_tables",
+      "status": "passed",
+      "detail": "True"
+    },
+    {
+      "name": "sql.unicode_readback",
+      "status": "passed",
+      "detail": "True"
+    },
+    {
+      "name": "sql.capture_unique",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "name": "sql.item_type_enum",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "name": "sql.raw_required",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "name": "sql.importance_range",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "name": "sql.strict_integer",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "name": "sql.tag_normalized_unique",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "name": "sql.item_tag_foreign_key",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "name": "sql.tag_position_range",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "name": "sql.self_relation",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "name": "sql.symmetric_order",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "name": "sql.manual_has_no_score",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "name": "sql.manual_not_rejected",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "name": "sql.ai_has_score",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "name": "sql.relation_unique_tombstone",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "name": "sql.global_run_singleton",
+      "status": "passed",
+      "detail": "Second running operation of another kind rejected"
+    },
+    {
+      "name": "sql.attempt_cap",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "name": "sql.run_slot_released",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "name": "sql.transaction_rollback",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "name": "sql.compare_and_swap",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "name": "sql.delete_cascade_preserves_view_run",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "name": "sql.foreign_key_check",
+      "status": "passed",
+      "detail": "True"
+    },
+    {
+      "name": "sql.integrity_check",
+      "status": "passed",
+      "detail": "True"
+    },
+    {
+      "name": "sql.reference_suite",
+      "status": "passed",
+      "detail": "SQLite 3.46.1; in-memory reference schema tests only, not Node runtime"
+    },
+    {
+      "name": "schema.organize.definition",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "name": "schema.organize.valid_fixture",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "name": "schema.mindmap.definition",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "name": "schema.mindmap.valid_fixture",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "name": "schema.flow.definition",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "name": "schema.flow.valid_fixture",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "name": "schema.organize.rejects_extra_rawText",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "name": "business.mindmap.valid_tree",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "name": "business.mindmap.rejects_cycle",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "name": "business.organize.evidence_substrings",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "name": "business.flow.causal_fixture_invalid",
+      "status": "passed",
+      "detail": "Fixture violates causal evidence gate and is correctly identified as invalid"
+    },
+    {
+      "name": "business.backup.references_hash_whitelist",
+      "status": "passed",
+      "detail": "4 items, 4 tags, references and view hash consistent"
+    },
+    {
+      "name": "backup.sql_midway_rollback_preserves_settings",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "name": "backup.sql_restore_values",
+      "status": "passed",
+      "detail": "Original/current text, manual lock, capture fingerprint, versions and stale status preserved"
+    },
+    {
+      "name": "backup.sql_view_prompt_hash_references",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "name": "backup.reference_roundtrip_suite",
+      "status": "passed",
+      "detail": "Reference restoration executed against SQLite; future app import API is not thereby tested"
+    },
+    {
+      "name": "volume.prose_han_at_least_200000",
+      "status": "passed",
+      "detail": "True"
+    }
+  ]
+}
