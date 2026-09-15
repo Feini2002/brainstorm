@@ -84,32 +84,61 @@ export interface ManagedServer {
 }
 
 /**
+ * Overrides for {@link startServer}.
+ *
+ * `scriptedProvider: false` exists for T042's live semantic cases. The shared
+ * suite server always has the scripted seam on, so a case that configured a real
+ * key there would still be answered by the replay file — a "semantic pass" that
+ * was really a replay is precisely the forgery T042-R05 forbids. Such a case has
+ * to run against a server where the seam is absent, and that server needs its own
+ * data directory so it cannot disturb the suite's shared database.
+ */
+export interface StartServerOptions {
+  port?: number;
+  dataDir?: string;
+  /** Set `false` to start a server that can reach a real provider. */
+  scriptedProvider?: boolean;
+  /** Extra environment for the child, e.g. nothing secret in the default path. */
+  extraEnv?: Record<string, string>;
+}
+
+/**
  * Start one `next start` instance against the restart data directory.
  *
  * The child is spawned through the same `scripts/start-local.mjs` wrapper the user
  * runs, so the case exercises the real launch path — including its own port and
  * origin validation — instead of a hand-rolled `next start`.
  */
-export async function startServer(): Promise<ManagedServer> {
-  const port = restartPort();
-  const origin = restartOrigin();
+export async function startServer(options: StartServerOptions = {}): Promise<ManagedServer> {
+  const port = options.port ?? restartPort();
+  const origin = `http://127.0.0.1:${port}`;
+  const dataDir = options.dataDir ?? restartDataDir();
+
+  const env: NodeJS.ProcessEnv = {
+    ...process.env,
+    APP_HOST: '127.0.0.1',
+    APP_PORT: String(port),
+    APP_ORIGIN: origin,
+    BRAIN_DATA_DIR: dataDir,
+    NODE_ENV: 'production',
+    ...(options.extraEnv ?? {}),
+  };
+  if (options.scriptedProvider === false) {
+    // Deleted rather than merely not set: the runner's own environment must not be
+    // able to smuggle the seam back in, or the live case would replay silently.
+    delete env.BRAIN_SCRIPTED_PROVIDER;
+  } else {
+    // The scripted provider directory, so this case's generation path can be
+    // driven by a fixed answer without a real model (see transport.ts).
+    env.BRAIN_SCRIPTED_PROVIDER = E2E_SCRIPTED_DIR;
+  }
 
   const child: ChildProcess = spawn(
     process.execPath,
     [path.join(PROJECT_ROOT, 'scripts', 'start-local.mjs'), 'start'],
     {
       cwd: PROJECT_ROOT,
-      env: {
-        ...process.env,
-        APP_HOST: '127.0.0.1',
-        APP_PORT: String(port),
-        APP_ORIGIN: origin,
-        BRAIN_DATA_DIR: restartDataDir(),
-        // The scripted provider directory, so this case's generation path can be
-        // driven by a fixed answer without a real model (see transport.ts).
-        BRAIN_SCRIPTED_PROVIDER: E2E_SCRIPTED_DIR,
-        NODE_ENV: 'production',
-      },
+      env,
       stdio: 'ignore',
       windowsHide: true,
     },
