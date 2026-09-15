@@ -24,37 +24,41 @@
     },
     {
       "id": "T003",
-      "status": "implemented",
+      "status": "verified",
       "evidence": [
         "docs/progress/G0.md",
-        "implementation/progress/evidence/G0.md"
+        "implementation/progress/evidence/G0.md",
+        "tests/contracts/architecture.test.ts"
       ],
       "blockedBy": []
     },
     {
       "id": "T004",
-      "status": "implemented",
+      "status": "verified",
       "evidence": [
         "docs/progress/G0.md",
-        "implementation/progress/evidence/G0.md"
+        "implementation/progress/evidence/G0.md",
+        "tests/unit/start-local.test.ts"
       ],
       "blockedBy": []
     },
     {
       "id": "T005",
-      "status": "implemented",
+      "status": "verified",
       "evidence": [
         "docs/progress/G0.md",
-        "implementation/progress/evidence/G0.md"
+        "implementation/progress/evidence/G0.md",
+        "tests/unit/app-shell.test.ts"
       ],
       "blockedBy": []
     },
     {
       "id": "T006",
-      "status": "implemented",
+      "status": "verified",
       "evidence": [
         "docs/progress/G0.md",
-        "implementation/progress/evidence/G0.md"
+        "implementation/progress/evidence/G0.md",
+        "tests/unit/api-envelope.test.ts"
       ],
       "blockedBy": []
     },
@@ -122,10 +126,12 @@
     },
     {
       "id": "T013",
-      "status": "implemented",
+      "status": "verified",
       "evidence": [
         "docs/progress/G1.md",
-        "implementation/progress/evidence/G1.md"
+        "implementation/progress/evidence/G1.md",
+        "tests/unit/capture-draft.test.ts",
+        "tests/integration/capture-draft.test.ts"
       ],
       "blockedBy": []
     },
@@ -142,64 +148,71 @@
     },
     {
       "id": "T015",
-      "status": "implemented",
+      "status": "verified",
       "evidence": [
         "docs/progress/G1.md",
-        "implementation/progress/evidence/G1.md"
+        "implementation/progress/evidence/G1.md",
+        "tests/unit/timeline-cards.test.ts"
       ],
       "blockedBy": []
     },
     {
       "id": "T016",
-      "status": "implemented",
+      "status": "verified",
       "evidence": [
         "docs/progress/G1.md",
-        "implementation/progress/evidence/G1.md"
+        "implementation/progress/evidence/G1.md",
+        "tests/integration/query-items.test.ts"
       ],
       "blockedBy": []
     },
     {
       "id": "T017",
-      "status": "implemented",
+      "status": "verified",
       "evidence": [
         "docs/progress/G1.md",
-        "implementation/progress/evidence/G1.md"
+        "implementation/progress/evidence/G1.md",
+        "tests/integration/tags.test.ts"
       ],
       "blockedBy": []
     },
     {
       "id": "T018",
-      "status": "implemented",
+      "status": "verified",
       "evidence": [
         "docs/progress/G1.md",
-        "implementation/progress/evidence/G1.md"
+        "implementation/progress/evidence/G1.md",
+        "tests/integration/item-details.test.ts"
       ],
       "blockedBy": []
     },
     {
       "id": "T019",
-      "status": "implemented",
+      "status": "verified",
       "evidence": [
         "docs/progress/G1.md",
-        "implementation/progress/evidence/G1.md"
+        "implementation/progress/evidence/G1.md",
+        "tests/integration/edit-item.test.ts"
       ],
       "blockedBy": []
     },
     {
       "id": "T020",
-      "status": "implemented",
+      "status": "verified",
       "evidence": [
         "docs/progress/G1.md",
-        "implementation/progress/evidence/G1.md"
+        "implementation/progress/evidence/G1.md",
+        "tests/integration/delete-item.test.ts"
       ],
       "blockedBy": []
     },
     {
       "id": "T021",
-      "status": "implemented",
+      "status": "verified",
       "evidence": [
         "docs/progress/G1.md",
-        "implementation/progress/evidence/G1.md"
+        "implementation/progress/evidence/G1.md",
+        "tests/integration/selection.test.ts"
       ],
       "blockedBy": []
     },
