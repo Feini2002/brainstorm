@@ -83,6 +83,15 @@ export const LIMITS = {
   listPageSizeMax: 100,
   activeRunPollMs: 1500,
 
+  // Local diagnostics journal (T074-R04). The retention cap and the repeat
+  // window are contract values, not implementation details, because the user is
+  // told what they are on the settings page and a test asserts the bound.
+  diagnosticJournalCapacity: 200,
+  diagnosticRepeatLimit: 3,
+  diagnosticRepeatWindowMs: 60000,
+  diagnosticLatencySamples: 50,
+  diagnosticRecentRuns: 50,
+
   // Import
   importItemsMax: 10000,
   importRelationsMax: 50000,

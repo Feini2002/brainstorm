@@ -136,9 +136,7 @@ function routeFileFor(endpointPath) {
 }
 
 /** Routes not yet implemented are listed here with their owning task. */
-const PENDING_ROUTES = {
-  '/api/diagnostics': 'T074',
-};
+const PENDING_ROUTES = {};
 
 /**
  * Routes this build implements that api_registry.json does not name.

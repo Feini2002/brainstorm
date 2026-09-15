@@ -739,8 +739,17 @@
     },
     {
       "id": "T074",
-      "status": "not_started",
-      "evidence": [],
+      "status": "verified",
+      "evidence": [
+        "docs/progress/G6.md",
+        "implementation/progress/evidence/G6.md",
+        "src/app/api/diagnostics/route.ts",
+        "src/server/observability/diagnostics.ts",
+        "src/features/settings/DiagnosticsPanel.tsx",
+        "tests/integration/diagnostics.test.ts",
+        "tests/unit/diagnostics.test.ts",
+        "tests/e2e/diagnostics.spec.ts"
+      ],
       "blockedBy": []
     },
     {

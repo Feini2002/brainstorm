@@ -66,6 +66,11 @@ interface GuardReport {
   routes: { implemented: number; pending: number; paths: number; endpointMethods: number };
 }
 
+/** Escape a literal for `new RegExp`, so a path with `{id}` cannot become a quantifier. */
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+}
+
 describe('T012 契约一致性', () => {
   it('当前仓库通过契约检查', () => {
     const { status, report } = runGuard();
@@ -158,25 +163,83 @@ describe('T012 契约一致性', () => {
     // 从待办表里**动态**挑一条仍然未实现的端点，让用例随进度自然迁移。
     const guardPath = path.join(directory, 'scripts/check-contracts.mjs');
     const original = readFileSync(guardPath, 'utf8');
-    const declared = [...original.matchAll(/^\s*'([^']+)':\s*'T\d+',\s*$/gmu)].map((match) => match[1]);
-    expect(declared.length, '待办表应至少登记一个未实现端点').toBeGreaterThan(0);
+    // 只扫描 `PENDING_ROUTES` 这一块。以前的正则在全文件范围内匹配，于是
+    // `LOCAL_EXTENSION_ROUTES` 里的 `'/api/runs/{id}/diagnostics': 'T041'` 也会被当成
+    // 待办项——它的路径含 `{id}`，塞进 `new RegExp` 会变成非法量词而直接抛错。
+    const block = /const PENDING_ROUTES = \{([\s\S]*?)\};/u.exec(original);
+    expect(block, '未找到 PENDING_ROUTES 声明').not.toBeNull();
+    const declared = [...(block?.[1] ?? '').matchAll(/^\s*'([^']+)':\s*'T\d+',\s*$/gmu)].map(
+      (match: RegExpMatchArray) => match[1],
+    );
 
-    const pendingPath = declared.find((candidate) => {
-      const routeFile = path.join(
-        projectRoot,
-        'src/app/api',
-        ...candidate.replace(/^\/api\//u, '').split('/').filter((segment) => !segment.startsWith('{')),
-        'route.ts',
+    if (declared.length > 0) {
+      const pendingPath = declared.find((candidate) => {
+        const routeFile = path.join(
+          projectRoot,
+          'src/app/api',
+          ...candidate
+            .replace(/^\/api\//u, '')
+            .split('/')
+            .filter((segment) => !segment.startsWith('{')),
+          'route.ts',
+        );
+        return !existsSync(routeFile);
+      });
+      expect(pendingPath, `待办表 ${declared.join(', ')} 中的端点都已实现，登记应清理`).toBeDefined();
+
+      writeFileSync(
+        guardPath,
+        original.replace(
+          new RegExp(`^\\s*'${escapeRegExp(pendingPath as string)}':[^\\n]*\\n`, 'mu'),
+          '',
+        ),
+        'utf8',
       );
-      return !existsSync(routeFile);
-    });
-    expect(pendingPath, `待办表 ${declared.join(', ')} 中的端点都已实现，登记应清理`).toBeDefined();
 
-    writeFileSync(guardPath, original.replace(new RegExp(`^\\s*'${pendingPath}':[^\\n]*\\n`, 'mu'), ''), 'utf8');
+      const { status, report } = runGuard(directory);
+      const typed = report as GuardReport;
+      expect(status).toBe(1);
+      expect(typed.failures.join('\n')).toContain(pendingPath);
+      return;
+    }
+
+    // 待办表已空（所有登记端点都已实现，例如 T074 交付后的 `/api/diagnostics`）。
+    // 用例不能因此失去对象：规则本身是「契约里登记、却既不实现也不登记待办的端点
+    // 必须被拦下」。于是直接在副本的 registry 里补一条指向不存在路由的端点，
+    // 断言 guard 报出它，而不是悄悄放过。
+    const registryPath = path.join(directory, 'reference/contracts/api_registry.json');
+    const registry = JSON.parse(readFileSync(registryPath, 'utf8')) as {
+      endpoints: { method: string; path: string }[];
+    };
+    const ghost = '/api/ghost-not-implemented';
+    expect(
+      registry.endpoints.some((endpoint) => endpoint.path === ghost),
+      '注入用的端点不应已经存在于 registry',
+    ).toBe(false);
+    registry.endpoints.push({ method: 'GET', path: ghost });
+    writeFileSync(registryPath, JSON.stringify(registry, null, 2), 'utf8');
 
     const { status, report } = runGuard(directory);
     const typed = report as GuardReport;
     expect(status).toBe(1);
-    expect(typed.failures.join('\n')).toContain(pendingPath);
+    const failures = typed.failures.join('\n');
+    expect(failures).toContain(ghost);
+    expect(failures).toContain('缺少路由实现且未登记待办');
+
+    // 反向样本，避免上一条变成「任何缺失都报错」的恒真结果：同一端点只要登记进
+    // 待办表，同一个 guard 就必须接受它。
+    const withPending = readFileSync(guardPath, 'utf8').replace(
+      'const PENDING_ROUTES = {};',
+      `const PENDING_ROUTES = {\n  '${ghost}': 'T999',\n};`,
+    );
+    expect(withPending, '待办表注入点未命中，说明 guard 结构已变化').not.toBe(
+      readFileSync(guardPath, 'utf8'),
+    );
+    writeFileSync(guardPath, withPending, 'utf8');
+
+    const accepted = runGuard(directory);
+    const acceptedReport = accepted.report as GuardReport;
+    expect(acceptedReport.failures).toEqual([]);
+    expect(accepted.status).toBe(0);
   });
 });

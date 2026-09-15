@@ -4,9 +4,10 @@
  * Settings page (T027).
  *
  * Two sections: the model connection form, and a plain statement of what the
- * local data directory holds. The data section is intentionally read-only copy
- * here — storage, export and diagnostics get their own tasks in G6, and this
- * page must not offer controls whose behaviour is not implemented.
+ * local data directory holds, followed by the local diagnostics panel (T074).
+ * The data section is intentionally read-only copy — storage, export and
+ * diagnostics get their own tasks in G6, and this page must not offer controls
+ * whose behaviour is not implemented.
  */
 import { useCallback, useState } from 'react';
 
@@ -15,6 +16,7 @@ import { PageHeader } from '@/components/AppShell';
 import { SectionCard } from '@/components/ui/primitives';
 import { useWorkspace } from '@/features/shared/workspace';
 
+import { DiagnosticsPanel } from '@/features/settings/DiagnosticsPanel';
 import { LlmSettingsForm } from '@/features/settings/LlmSettingsForm';
 
 export default function SettingsPage() {
@@ -55,8 +57,15 @@ export default function SettingsPage() {
           <li>逻辑导出不含 Key；完整数据库文件可能包含它，删除记录不等于擦除磁盘。</li>
         </ul>
         <p className="text-xs text-[var(--ink-muted)]">
-          导出、导入、备份与诊断属于交付阶段的任务，本页暂不提供按钮，以免出现没有实际行为的控件。
+          导出、导入与备份属于交付阶段的任务，本页暂不提供按钮，以免出现没有实际行为的控件。
         </p>
+      </SectionCard>
+
+      <SectionCard
+        title="本地诊断"
+        description="版本、计数、耗时、失败层级与日志保留策略。只读取本机状态，不接第三方遥测。"
+      >
+        <DiagnosticsPanel />
       </SectionCard>
     </>
   );
