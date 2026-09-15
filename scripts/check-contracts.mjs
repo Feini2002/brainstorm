@@ -137,9 +137,6 @@ function routeFileFor(endpointPath) {
 
 /** Routes not yet implemented are listed here with their owning task. */
 const PENDING_ROUTES = {
-  '/api/export': 'T070',
-  '/api/import/validate': 'T071',
-  '/api/import': 'T072',
   '/api/diagnostics': 'T074',
 };
 

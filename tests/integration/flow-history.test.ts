@@ -22,7 +22,7 @@ import { computeStaleness } from '@/domain/view';
 import { flowHypothesisEdges } from '@/domain/validateFlow';
 import { compileFlow } from '@/domain/compileFlow';
 import { OpenAICompatibleAdapter } from '@/server/llm/adapter';
-import type { Transport, TransportRequest, TransportResponse } from '@/server/llm/transport';
+import type { Transport, TransportResponse } from '@/server/llm/transport';
 import { callSnapshot } from '@/server/llm/types';
 import { createCapture } from '@/server/services/items';
 import { createManualRelation } from '@/server/services/relations';
@@ -52,7 +52,9 @@ class ScriptedTransport implements Transport {
 
   constructor(private readonly replies: Array<() => TransportResponse>) {}
 
-  async send(_request: TransportRequest): Promise<TransportResponse> {
+  // The interface declares a request parameter; this double ignores it, and TS
+  // allows the shorter signature, so no unused binding is needed.
+  async send(): Promise<TransportResponse> {
     const index = this.calls;
     this.calls += 1;
     return this.replies[Math.min(index, this.replies.length - 1)]!();

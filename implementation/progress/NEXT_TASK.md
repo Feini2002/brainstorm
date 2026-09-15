@@ -1,23 +1,48 @@
 # 当前实施位置
 
-当前：**G4 已完成**。T053–T061 全部实施并验收（脑图仓储、来源快照、生成、编译、Markmap 渲染、
-大纲与来源回跳、过期与再生成、Markdown 与 JSON 导出、脑图闭环验收）。
-下一步进入 **G5 流程投影**（T062–T069）。
-G3 已完成并验收；真实 Provider 语义验收仍阻塞，见「已知阻塞」。
+当前：**G6 进行中**。T070–T073（整库逻辑导出、恢复校验、恢复事务、备份与损坏恢复手册）
+已实施并验收，在 `tasks.current.json` 中为 `verified`。
+**T074–T084 尚未完成**：T074（本地诊断与可观测性）正在实现，T075 及以后未开始。
+G5（T062–T069）已完成并验收；G0–G4 已完成。真实 Provider 语义验收仍阻塞，见「已知阻塞」。
 
-最新验证（本机实测，2026-09-15，完整一致的一轮）：
+最新验证（本机实测，2026-09-15，G6 的 T070–T073 收口轮）：
 
 ```
-npm run lint        exit 0   （0 error / 8 warning，均为未使用变量提示）
+npm run lint        exit 0   （0 problems，全仓库）
 npm run typecheck   exit 0
-npm run contracts   exit 0   （18 已实现 / 5 待办；3 条本地扩展路由；53 limits；28 错误码；failures 空）
-npm run test        exit 0   （37 套件 450 例）
-npm run build       exit 0   （Turbopack，10/10 静态页）
-npx playwright test exit 0   （79 例，13 个 spec，3.3m）
+npm run contracts   exit 0   （22 已实现 / 1 待办；3 条本地扩展路由；53 limits；28 错误码；failures 空）
+npm test            exit 0   （70 套件 896 例，含 browser 项目）
+npm run build       exit 0   （6 个页面路由 + API 全部生成）
+npx playwright test exit 0   （104 例，3.6m）
 ```
 
-G4 门禁报告：`docs/progress/G4.md`（T053–T061 全部 verified）。
-证据：`implementation/progress/evidence/G4.md`。
+G6 门禁报告：`docs/progress/G6.md`（**进行中**，只覆盖 T070–T073，不是通过报告）。
+证据：`implementation/progress/evidence/G6.md`。
+G5 门禁报告：`docs/progress/G5.md`（T062–T069 全部 verified）。
+
+## G6 进度（T070–T084）
+
+| 任务 | 内容 | 实现位置 | 证据 | 状态 |
+| --- | --- | --- | --- | --- |
+| T070 | 整库逻辑导出与秘密白名单 | `src/domain/exportBundle.ts`、`src/server/services/exportKnowledge.ts`、`src/app/api/export/route.ts` | `tests/integration/export.test.ts` 23 例 | verified |
+| T071 | 恢复文件校验与空库策略 | `src/domain/importBundle.ts`、`src/server/services/validateImport.ts`、`src/app/api/import/validate/route.ts` | `tests/integration/import-validation.test.ts` 26 例 | verified |
+| T072 | 恢复事务、引用重建与回滚 | `src/server/services/importKnowledge.ts`、`src/app/api/import/route.ts` | `tests/integration/import.test.ts` 26 例 | verified |
+| T073 | WAL备份、数据搬迁与损坏恢复说明 | `scripts/inspect-data.mjs`、`docs/operations/backup-recovery.md` | `tests/integration/recovery.test.ts` 20 例 | verified |
+| T074 | 本地诊断与可观测性 | `src/app/api/diagnostics/route.ts`、`src/server/observability/diagnostics.ts`、`src/features/settings/DiagnosticsPanel.tsx` | —（实现中） | in_progress |
+| T075–T084 | 安全回归 / 三层测试套件 / 性能 / 手册 / 审计 / UX / 发布证据 / 最终验收 | — | — | 未开始 |
+
+T070–T073 可直接复用的既有能力与下游注意点（详见 `docs/progress/G6.md` 第 11 节）：
+
+- `BACKUP_SCHEMA_VERSION = 1`（`src/domain/exportBundle.ts:51`）：恢复侧对未来版本**明确拒绝**，
+  改它必须同步改 `importBundle.ts` 的版本分支与 T071-C01 用例。
+- `exportBytesMax`（20 MiB）**双登记**在 `reference/contracts/limits.json` 与 `src/domain/limits.ts`，
+  `npm run contracts` 会比对两者，只改一处即失败。
+- 恢复的大体积请求体走 `bodyLimit: 'import'`（`src/server/http/respond.ts` 的 `ROUTE_BODY_LIMITS`
+  按路由族区分），不是全局默认值。
+- `inspect-data.mjs` 故意是 `.mjs` 而非 `.ts`：必须在没有构建、没有 TypeScript 的机器上直接跑，
+  否则「数据库坏了且服务起不来」时就没用了。它不参与 `tsc`，改动后用 `recovery.test.ts` 兜底。
+- 导出用**显式白名单列**（`BACKUP_*_COLUMNS`）而非 `SELECT *`：新知识字段要进备份必须同时进白名单，
+  否则静默丢失；反之若字段是秘密，加进去会让 T070-C02 立刻红——这个张力是有意的。
 
 ## G4 进度（T053–T061）
 
@@ -197,14 +222,31 @@ G1 期间的修复（分页游标 SQL、join 列名二义、`decodeEvidence` 字
 - **未执行**：CSP 生产配置实测（需先分别验证 Mermaid/Markmap 所需样式，前置到 G6 前）。
 - **未执行**：性能预算（属 T079）。
 
-## 下一步：G5 流程投影（T062–T069）
+## 下一步：G6 续做（T074–T084）
 
-按 `tasks.json` 依赖顺序推进：**T062** 流程视图意图输入与材料确认 → T063 流程节点/边类型与证据契约
-→ T064 受限 Flow 到 Mermaid 编译器 → T065 Mermaid 严格渲染与 SVG 净化 → T066 异步渲染竞争、尺寸与降级
-→ T067 流程视图保存、来源与新鲜度 → T068 流程源码/JSON/安全 SVG 导出 → T069 流程可视化与逻辑保真验收。
-G5 之后是 G6（T070–T084：整库导出与恢复、测试套件、性能预算、发布材料、终审与 MVP 完成定义）。
+**T074**（本地诊断与可观测性，实现中）→ **T075** 密钥/跨站/渲染安全回归（依赖 T007、T028、
+T030、T057、T065、T070、T074）→ **T076** 领域单元测试与边界矩阵 → **T077** API 与 SQLite 集成测试
+→ **T078** 六页浏览器端到端验收 → **T079** 加载/查询/图形性能预算 → **T080** Windows 安装与故障手册
+→ **T081** 生产构建、依赖审计与发布材料 → **T082** 中文文案与无障碍终审 → **T083** 任务证据与缺陷清单
+→ **T084** 最终用户旅程与 MVP 完成定义。
 
-G5 可直接复用的既有能力：
+T076–T084 主要是**收敛既有成果**（三层测试套件、性能预算、发布材料、终审），不再是新建功能，
+因此应直接复用各 Gate 已有证据而不是另起一套。注意 T075 明确依赖 T065 与 T070，
+这两项均已 verified，前置是可验证输出。
+
+G6 可直接复用的既有能力：
+
+- **导出/恢复**：`src/domain/exportBundle.ts`、`importBundle.ts`、`src/server/services/exportKnowledge.ts`、
+  `validateImport.ts`、`importKnowledge.ts`；整库快照与事务切点的既有范式，T081 的发布材料应引用它们。
+- **诊断投影**：`src/server/services/getRunDiagnostics.ts` 与 `src/domain/runDiagnosticsExport.ts`（T041）
+  是 T074 的最近先例——DTO 形状、披露规则、只读约束都可直接对齐，不要另写一套。
+- **安全层**：`src/server/security/localGuard.ts`（token/origin/host）、
+  `src/server/observability/redaction.ts`（`registerSecret` / `redactSecrets`）是 T075 回归的既有防线。
+- **契约守卫**：`scripts/check-contracts.mjs` + `tests/contracts/guard.test.ts`。
+  注意 T012-C06 现在会**动态**挑一条仍未实现的待办端点，因此实现 `/api/diagnostics` 后
+  记得从 `PENDING_ROUTES` 移除该条，否则 guard 会报「路由登记过期」。
+
+G5 可直接复用的既有能力（仍有效）：
 
 - 视图层：`src/app/api/views/*`、`src/server/repositories/views.ts`、`src/domain/view.ts`
   （`computeStaleness` / `describeSourceDrift` / `describeStaleness` / `ViewFreshness`）——T067

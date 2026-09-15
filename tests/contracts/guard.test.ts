@@ -152,23 +152,31 @@ describe('T012 契约一致性', () => {
 
   it('T012-C06 未实现路由必须登记待办，不能伪装成已完成', () => {
     const directory = scratchCopy();
-    // 让一个**尚未实现**的路由既没有 route 文件、又不在待办表里：guard 必须报
-    // 缺少实现。之前这里删的是已实现的 `/api/graph` 登记（它在 T012 完成时仍待办），
-    // G3 实现该路由后那句替换不再命中，用例静默失效——所以现在改成“删掉一条真实
-    // 待办登记 + 确认对应 route 文件确实不存在”，与仓库当前进度无关。
+    // 待办表里的端点必须真的还没实现；否则 guard 应报“登记过期”而不是放过它。
+    // 过去这里把某个**具体**端点写死成未实现，该端点实现后用例就静默失效了
+    // （G3 的 `/api/graph` 发生过一次，G6 的 `/api/export` 又发生一次）。所以这里
+    // 从待办表里**动态**挑一条仍然未实现的端点，让用例随进度自然迁移。
     const guardPath = path.join(directory, 'scripts/check-contracts.mjs');
     const original = readFileSync(guardPath, 'utf8');
-    const entry = /^\s*'\/api\/export':\s*'T070',\s*$/mu;
-    expect(entry.test(original), '待办表应仍登记 /api/export（T070）').toBe(true);
-    expect(
-      existsSync(path.join(projectRoot, 'src/app/api/export/route.ts')),
-      '/api/export 应尚未实现，否则本用例要换一个仍未实现的端点',
-    ).toBe(false);
-    writeFileSync(guardPath, original.replace(entry, ''), 'utf8');
+    const declared = [...original.matchAll(/^\s*'([^']+)':\s*'T\d+',\s*$/gmu)].map((match) => match[1]);
+    expect(declared.length, '待办表应至少登记一个未实现端点').toBeGreaterThan(0);
+
+    const pendingPath = declared.find((candidate) => {
+      const routeFile = path.join(
+        projectRoot,
+        'src/app/api',
+        ...candidate.replace(/^\/api\//u, '').split('/').filter((segment) => !segment.startsWith('{')),
+        'route.ts',
+      );
+      return !existsSync(routeFile);
+    });
+    expect(pendingPath, `待办表 ${declared.join(', ')} 中的端点都已实现，登记应清理`).toBeDefined();
+
+    writeFileSync(guardPath, original.replace(new RegExp(`^\\s*'${pendingPath}':[^\\n]*\\n`, 'mu'), ''), 'utf8');
 
     const { status, report } = runGuard(directory);
     const typed = report as GuardReport;
     expect(status).toBe(1);
-    expect(typed.failures.join('\n')).toContain('/api/export');
+    expect(typed.failures.join('\n')).toContain(pendingPath);
   });
 });

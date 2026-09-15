@@ -684,26 +684,44 @@
     },
     {
       "id": "T070",
-      "status": "not_started",
-      "evidence": [],
+      "status": "verified",
+      "evidence": [
+        "docs/progress/G6.md",
+        "implementation/progress/evidence/G6.md",
+        "tests/integration/export.test.ts"
+      ],
       "blockedBy": []
     },
     {
       "id": "T071",
-      "status": "not_started",
-      "evidence": [],
+      "status": "verified",
+      "evidence": [
+        "docs/progress/G6.md",
+        "implementation/progress/evidence/G6.md",
+        "tests/integration/import-validation.test.ts"
+      ],
       "blockedBy": []
     },
     {
       "id": "T072",
-      "status": "not_started",
-      "evidence": [],
+      "status": "verified",
+      "evidence": [
+        "docs/progress/G6.md",
+        "implementation/progress/evidence/G6.md",
+        "tests/integration/import.test.ts"
+      ],
       "blockedBy": []
     },
     {
       "id": "T073",
-      "status": "not_started",
-      "evidence": [],
+      "status": "verified",
+      "evidence": [
+        "docs/progress/G6.md",
+        "implementation/progress/evidence/G6.md",
+        "tests/integration/recovery.test.ts",
+        "scripts/inspect-data.mjs",
+        "docs/operations/backup-recovery.md"
+      ],
       "blockedBy": []
     },
     {
