@@ -7,7 +7,10 @@
  *     goes through `publicSettings`, which returns `apiKeyConfigured: boolean`
  *     and nothing else about the secret — no prefix, no length, no fingerprint
  *     (T029-R01). The only reader that returns the value is `readApiKey`, which
- *     the model adapter calls in-process.
+ *     the model adapter calls in-process. One deliberate exception exists: a
+ *     replaced key is handed to `registerSecret` so the redaction value layer
+ *     can strip it out of provider text (T030-C02). That registration is
+ *     write-only — nothing can read a value back out of it.
  *  2. **Config and key commit together.** `writeSettings` runs inside an explicit
  *     `BEGIN IMMEDIATE` transaction, so a failing secret write rolls back the new
  *     base URL as well. A half-applied update would send the *old* credential to
@@ -23,6 +26,7 @@ import type { DatabaseSync } from 'node:sqlite';
 import { AppError } from '@/domain/errors';
 import { DEFAULT_LLM_CONFIG, type LlmConfig } from '@/domain/knowledge';
 import { mapSqliteError } from '@/server/db/database';
+import { registerSecret } from '@/server/observability/redaction';
 import { nowIso } from './shared';
 import {
   SECRET_NAMES,
@@ -137,6 +141,15 @@ export function writeSettings(db: DatabaseSync, input: WriteSettingsInput): Stor
         });
       }
       writeSecret(db, SECRET_NAMES.llmApiKey, input.apiKey, timestamp);
+      /**
+       * Register the new key so the value layer of `redactSecrets` knows it
+       * from the moment it exists (T030-C02). Registration is monotonic and
+       * happens *after* the write: a rolled-back transaction must not leave a
+       * value registered that the database never accepted. The previous key is
+       * intentionally not unregistered — it may already appear in a stored
+       * error message, and `redactSecrets` runs the literal values first.
+       */
+      registerSecret(input.apiKey);
     } else if (input.keyAction === 'delete') {
       // Deleting follows the same transaction: a failed delete must not report a
       // missing secret as removed (T029-C03).

@@ -193,3 +193,56 @@ export async function captureViaUi(page: Page, text: string): Promise<void> {
 export function uniqueText(prefix: string): string {
   return `${prefix}-${Date.now().toString(36)}-${Math.floor(Math.random() * 1e6).toString(36)}`;
 }
+
+/**
+ * Resolve a captured text to the id of the record that holds it.
+ *
+ * `captureViaUi` types into the box the way a user does, so it has no id to give
+ * back; this reads it from the same list route the Library uses. The needle is
+ * this run's unique text, so the lookup cannot land on another spec's record.
+ */
+export async function findItemIdViaApi(page: Page, needle: string): Promise<string> {
+  const response = await page.request.get(`${E2E_ORIGIN}/api/items`, {
+    headers: await authHeaders(page),
+    params: { q: needle, limit: 5 },
+  });
+  expect(response.status(), `GET /api/items?q= 应返回 200，实际 ${response.status()}`).toBe(200);
+  const envelope = (await response.json()) as {
+    data: { items: { id: string; rawText: string }[] };
+  };
+  const found = envelope.data.items.find((item) => item.rawText.includes(needle));
+  expect(found, `应能按「${needle}」读回条目`).toBeTruthy();
+  return found!.id;
+}
+
+/**
+ * Result of a cleanup delete, so "already gone" is a stated outcome rather than a
+ * swallowed error.
+ *
+ * `already-missing` is the legitimate end state of a case that deleted the record
+ * through the UI itself (T062-C05 does exactly that).
+ */
+export type DeleteItemOutcome = 'deleted' | 'already-missing';
+
+/**
+ * Delete one record through the product's own DELETE route.
+ *
+ * Cleanup uses the same endpoint the drawer uses: writing the row out with a
+ * seeded SQL statement would prove the fixture can delete, not that the product
+ * can (the harness rule above). The revision is read first because the route
+ * requires it (optimistic concurrency). Only the id passed in is touched —
+ * "clear the table" would delete records other specs are still asserting about.
+ */
+export async function deleteItemViaApi(page: Page, id: string): Promise<DeleteItemOutcome> {
+  const headers = await authHeaders(page);
+  const current = await page.request.get(`${E2E_ORIGIN}/api/items/${id}`, { headers });
+  if (current.status() === 404) return 'already-missing';
+  expect(current.status(), `GET /api/items/${id} 应返回 200，实际 ${current.status()}`).toBe(200);
+  const envelope = (await current.json()) as { data: { revision: number } };
+  const deleted = await page.request.delete(`${E2E_ORIGIN}/api/items/${id}`, {
+    headers,
+    data: { expectedRevision: envelope.data.revision },
+  });
+  expect(deleted.status(), `DELETE /api/items/${id} 应返回 200，实际 ${deleted.status()}`).toBe(200);
+  return 'deleted';
+}

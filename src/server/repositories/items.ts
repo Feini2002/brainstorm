@@ -261,11 +261,20 @@ export function listItems(db: DatabaseSync, input: ListItemsInput): ListItemsRes
 
   if (input.filters.q !== undefined && input.filters.q.length > 0) {
     const pattern = `%${escapeLike(input.filters.q)}%`;
+    // Tag labels are part of the documented search scope (T016-R01: "搜索覆盖
+    // rawText、title、summary 和标签名"), and the Library's search box says so.
+    // Searching the join table rather than a JSON column is the same rule the
+    // candidate retrieval uses, so "AI" finds a note tagged "AI" in both places.
     where.push(
       `(knowledge_items.title LIKE ? ESCAPE '\\' OR knowledge_items.summary LIKE ? ESCAPE '\\'
-        OR knowledge_items.raw_text LIKE ? ESCAPE '\\')`,
+        OR knowledge_items.raw_text LIKE ? ESCAPE '\\'
+        OR EXISTS (
+          SELECT 1 FROM item_tags it JOIN tags t ON t.id = it.tag_id
+           WHERE it.item_id = knowledge_items.id
+             AND t.label LIKE ? ESCAPE '\\'
+        ))`,
     );
-    params.push(pattern, pattern, pattern);
+    params.push(pattern, pattern, pattern, pattern);
   }
   if (input.filters.type) {
     where.push('knowledge_items.type = ?');

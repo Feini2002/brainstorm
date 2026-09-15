@@ -182,28 +182,73 @@ export function zodFieldErrors(error: {
     keys?: ReadonlyArray<string>;
   }>;
 }): Record<string, string[]> {
-  const fieldErrors: Record<string, string[]> = {};
+  // A `Map`, not an object literal. The keys here are **client-supplied field
+  // names**, so a key such as `constructor`, `toString`, `valueOf` or
+  // `hasOwnProperty` would read `Object.prototype`'s member instead of the
+  // undefined a fresh accumulator should give — and `(fieldErrors[key] ??= []).push`
+  // would then call `.push` on a function, throwing a `TypeError` that escapes as
+  // `500 INTERNAL`. The request was supposed to be rejected with a readable
+  // `400 VALIDATION` naming the offending field, so the diagnostic itself must not
+  // be the thing that breaks (T006-C01: invalid input is a protocol error, never an
+  // unhandled one).
+  const fieldErrors = new Map<string, string[]>();
+  const add = (key: string, message: string): void => {
+    const existing = fieldErrors.get(key);
+    if (existing === undefined) fieldErrors.set(key, [message]);
+    else existing.push(message);
+  };
+
   for (const issue of error.issues) {
     // Strict objects report unknown fields as one issue listing every key, so
     // each rejected field must be named individually for the client to mark it.
     if (issue.code === 'unrecognized_keys' && issue.keys && issue.keys.length > 0) {
       for (const key of issue.keys) {
-        (fieldErrors[key] ??= []).push('该字段不允许由客户端提交');
+        add(key, '该字段不允许由客户端提交');
       }
       continue;
     }
     const key = issue.path.length > 0 ? issue.path.map(String).join('.') : '_';
-    (fieldErrors[key] ??= []).push(issue.message);
+    add(key, issue.message);
   }
-  return fieldErrors;
+  // Back to a plain object for the wire. Every key is now an own property, so
+  // `{"constructor":[…]}` serialises as written instead of vanishing.
+  return Object.fromEntries(fieldErrors);
 }
 
-/** Parse query parameters with a schema, raising the standard 400 on failure. */
+/**
+ * Parse query parameters with a schema, raising the standard 400 on failure.
+ *
+ * A parameter that appears more than once is collected into an array of its
+ * values, in first-seen order, rather than letting the last occurrence overwrite
+ * the earlier ones. That overwrite was a data-loss bug for the one documented
+ * repeated parameter — `SelectionQuery.itemId` (`?itemId=a&itemId=b`), which is how
+ * the flow/mindmap pages ask the server to confirm a whole selection: only the
+ * last id survived, so the "what will be sent" panel described a subset of the
+ * material and a deleted record could hide behind the truncation (T062-C05).
+ *
+ * A schema that expects a scalar will now reject a duplicated parameter with a 400
+ * rather than silently truncating it, which is the honest failure for an ambiguous
+ * request.
+ */
 export function parseQuery<T>(request: Request, schema: ZodType<T>): T {
   const url = new URL(request.url);
-  const raw: Record<string, string> = {};
-  for (const [key, value] of url.searchParams.entries()) raw[key] = value;
-  const parsed = schema.safeParse(raw);
+  // A `Map` for the same reason as `zodFieldErrors` above: these keys are query
+  // parameter names chosen by the client, and a plain object would let
+  // `constructor`/`toString`/`valueOf`/`hasOwnProperty` masquerade as an
+  // already-present value (the prototype member is not `undefined`), so a second
+  // occurrence would push a *function* into the collected array.
+  const raw = new Map<string, string | string[]>();
+  for (const [key, value] of url.searchParams.entries()) {
+    const existing = raw.get(key);
+    if (existing === undefined) {
+      raw.set(key, value);
+    } else if (Array.isArray(existing)) {
+      existing.push(value);
+    } else {
+      raw.set(key, [existing, value]);
+    }
+  }
+  const parsed = schema.safeParse(Object.fromEntries(raw));
   if (!parsed.success) {
     throw new AppError('VALIDATION', '查询参数不合法', zodFieldErrors(parsed.error));
   }

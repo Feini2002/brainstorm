@@ -8,13 +8,8 @@
  * tags) appear as clearly secondary. A record that has never been organized
  * shows an honest "仅保存" state rather than an invented summary.
  */
-import {
-  ITEM_STATUS_LABELS,
-  ITEM_TYPE_LABELS,
-  SOURCE_TYPE_LABELS,
-  type ItemDTO,
-} from '@/domain/knowledge';
-import { isStructuredStale } from '@/domain/knowledge';
+import { ITEM_STATUS_LABELS, ITEM_TYPE_LABELS, SOURCE_TYPE_LABELS, type ItemDTO } from '@/domain/knowledge';
+import { cardPreview, cardTitle, showsStaleBadge } from './cardDisplay';
 import { formatTime } from './formatTime';
 
 export interface KnowledgeCardProps {
@@ -43,7 +38,9 @@ export function KnowledgeCard({ item, onOpen, selection, actions }: KnowledgeCar
   const time = formatTime(item.createdAt);
   // A stale record still shows its content, but the badge says the source moved:
   // the displayed organization is based on an older raw version.
-  const stale = isStructuredStale(item.structuredBaseRawVersion, item.rawVersion);
+  const stale = showsStaleBadge(item);
+  const heading = cardTitle(item);
+  const preview = cardPreview(item);
 
   return (
     <article
@@ -57,7 +54,7 @@ export function KnowledgeCard({ item, onOpen, selection, actions }: KnowledgeCar
             <input
               type="checkbox"
               data-testid="card-select"
-              aria-label={`选择：${item.title || item.capturedText.slice(0, 20)}`}
+              aria-label={`选择：${heading}`}
               checked={selection.selected}
               disabled={selection.disabled && !selection.selected}
               onChange={(event) => selection.onToggle(item.id, event.target.checked)}
@@ -68,7 +65,7 @@ export function KnowledgeCard({ item, onOpen, selection, actions }: KnowledgeCar
             className="min-w-0 truncate text-left text-sm font-medium text-[var(--ink)] hover:underline"
             onClick={() => onOpen?.(item.id)}
           >
-            {item.title.trim().length > 0 ? item.title : '未命名'}
+            {heading}
           </button>
         </div>
         <time
@@ -80,10 +77,9 @@ export function KnowledgeCard({ item, onOpen, selection, actions }: KnowledgeCar
         </time>
       </header>
 
-      {/* Captured text is verbatim and never truncated in the data model. */}
-      <p className="line-clamp-4 whitespace-pre-wrap text-sm text-[var(--ink)]">
-        {item.capturedText}
-      </p>
+      {/* Captured text is verbatim in the data model; the card renders a bounded
+          preview so a ten-thousand-character note is not mounted in a list. */}
+      <p className="line-clamp-4 whitespace-pre-wrap text-sm text-[var(--ink)]">{preview}</p>
 
       {item.summary.trim().length > 0 ? (
         <p className="text-xs text-[var(--ink-muted)]">摘要：{item.summary}</p>

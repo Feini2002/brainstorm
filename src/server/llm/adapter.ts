@@ -26,7 +26,7 @@ import { requireEndpoint } from './endpointPolicy';
 import { parseCompletion, type ParsedCompletion } from './protocol';
 import { classifyHttpStatus, parseRetryAfter } from './providerErrors';
 import { getTransport, type Transport } from './transport';
-import { summarizeProviderText } from '@/server/observability/redaction';
+import { registerSecret, summarizeProviderText } from '@/server/observability/redaction';
 import type { LlmCallSnapshot } from './types';
 
 export interface ChatMessage {
@@ -152,6 +152,23 @@ export class OpenAICompatibleAdapter implements LLMAdapter {
     assertConfigured(request.config);
     const { endpoint } = requireEndpoint(request.config.baseUrl);
     const body = buildRequestBody(request.config, request.messages);
+
+    /**
+     * Register the credential before it is attached to a request (T030-C02).
+     *
+     * This is the point where a key read out of `secrets` enters a call frame,
+     * so it is also the only place that can guarantee the value is known to the
+     * value layer of `redactSecrets` — including the case where the key was
+     * stored by an earlier process and this process never saw the write. A
+     * provider that echoes the key back inside a 401 body would otherwise
+     * produce a hint no pattern recognises and the message would reach the
+     * browser and `ai_runs.error_message` verbatim.
+     *
+     * Registration is deliberately monotonic: a rotated key keeps its
+     * predecessor registered, because the previous value may already sit inside
+     * a stored error message.
+     */
+    registerSecret(request.config.apiKey);
 
     const transport = request.transport ?? this.transport ?? getTransport();
 

@@ -145,7 +145,7 @@ let schemaRepairEnabled = true;
  * registration, and the adapter at send time), and both calls below are followed
  * by a second write that supplies the real address.
  */
-async function ensureLlmConfigured(headers: Record<string, string>): Promise<void> {
+export async function ensureLlmConfigured(headers: Record<string, string>): Promise<void> {
   if (connectionConfigured) return;
 
   const current = await readLlmSettings(headers);
@@ -177,7 +177,7 @@ async function ensureLlmConfigured(headers: Record<string, string>): Promise<voi
 }
 
 /** Turn the one repair attempt off, so a malformed answer costs exactly one call. */
-async function setSchemaRepairEnabled(
+export async function setSchemaRepairEnabled(
   headers: Record<string, string>,
   enabled: boolean,
 ): Promise<void> {
@@ -224,7 +224,7 @@ let scriptSequence = 0;
  * two scripts with the same answer still differ as content, and the timestamp plus
  * sequence keeps the name ordering the directory's "newest" rule relies on.
  */
-function writeScript(content: string): string {
+export function writeScript(content: string): string {
   mkdirSync(E2E_SCRIPTED_DIR, { recursive: true });
   scriptSequence += 1;
   const name = `script-${Date.now()}-${String(scriptSequence).padStart(4, '0')}-${randomUUID().slice(0, 8)}.json`;

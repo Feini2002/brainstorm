@@ -35,7 +35,10 @@ export default defineConfig([
   ...nextTs,
   {
     name: "feini/domain-purity",
-    files: ["src/domain/**/*.ts"],
+    // `.tsx` is included deliberately: `*.ts` does not match a `.tsx` file, so a
+    // component dropped into `src/domain` would escape every rule below and could
+    // start importing React while still sitting in the pure layer (T003-R01).
+    files: ["src/domain/**/*.{ts,tsx}"],
     rules: {
       "no-restricted-imports": [
         "error",

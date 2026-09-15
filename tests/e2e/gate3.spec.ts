@@ -203,9 +203,28 @@ test.describe('T052 关系图集成验收', () => {
     expect(graph.nodeIds.sort()).toEqual([pair.leftId, pair.rightId].sort());
     expect(graph.scope.shownEdgeCount).toBe(1);
 
+    // The library is shared with every other case in this file and with the specs
+    // that run before it, so "everything" is not a fixed number. The summary is
+    // therefore asserted against a view that pins the read to exactly these two
+    // records — the same idiom T052-C04 already uses
+    // (docs/05_tests/G3「每个场景必须从明确基线开始，不依赖上一场景残留」).
+    const scoped = await page.request.post(`${E2E_ORIGIN}/api/views`, {
+      headers,
+      data: {
+        name: uniqueText('同源视图'),
+        selection: { mode: 'explicit', itemIds: [pair.leftId, pair.rightId] },
+        positions: {},
+        direction: 'TB',
+      },
+    });
+    expect(scoped.status()).toBe(201);
+    const scopedView = (await scoped.json()) as { data: { id: string } };
+
     await page.goto('/graph');
     await expect(page.getByTestId('graph-canvas')).toBeVisible();
     await expect(page.getByTestId('graph-summary')).toBeVisible();
+    // Select the view explicitly instead of trusting the default restore order.
+    await page.getByTestId('graph-view-select').selectOption(scopedView.data.id);
     await expect(page.getByTestId('graph-summary-nodes')).toContainText('2 个节点');
   });
 
@@ -551,6 +570,10 @@ test.describe('T052 关系图集成验收', () => {
       // stored JSON more than a row nobody reads.
       await page.goto(`${origin}/graph`);
       await expect(page.getByTestId('graph-canvas')).toBeVisible();
+      // Same explicit-baseline idiom as T052-C01/C04: the count is asserted on the
+      // view saved before the restart, so it is a fact about that view rather than
+      // about whatever else the restart library happens to hold.
+      await page.getByTestId('graph-view-select').selectOption(view.data.id);
       await expect(page.getByTestId('graph-summary-nodes')).toContainText('2 个节点');
     } finally {
       await server.stop();

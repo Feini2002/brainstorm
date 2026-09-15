@@ -19,6 +19,7 @@ import { SOURCE_TYPE_LABELS } from '@/domain/knowledge';
 import { LIMITS } from '@/domain/limits';
 import { Button, Field, InlineError, Select, TextArea } from '@/components/ui/primitives';
 import { SavePhaseStatus } from '@/features/shared/MutationStatus';
+import { shouldSubmitFromKeyboard } from './captureShortcuts';
 import { useCapture, type CaptureResult } from './useCapture';
 
 const SOURCE_TYPE_ORDER = ['other', 'chatgpt', 'claude', 'web', 'book', 'myself'] as const;
@@ -63,13 +64,12 @@ export function CaptureBox({
 
   const onSubmitShortcut = useCallback(
     (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      // `isComposing` guards the IME: Enter during composition selects a
-      // candidate and must not submit (T013-R03).
-      if (event.nativeEvent.isComposing || event.keyCode === 229) return;
-      if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
-        event.preventDefault();
-        void capture.submit();
-      }
+      // Ctrl/Cmd+Enter submits; Enter alone inserts a newline; an in-progress IME
+      // composition never submits (T013-R03). The rule lives in captureShortcuts
+      // so it can be asserted without a renderer.
+      if (!shouldSubmitFromKeyboard(event.nativeEvent)) return;
+      event.preventDefault();
+      void capture.submit();
     },
     [capture],
   );

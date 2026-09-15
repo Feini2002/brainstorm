@@ -1,0 +1,236 @@
+{
+  "$comment": "T069 验收样本：把「模型可能返回的流程答案」固化成数据。gate5.spec.ts 把每一段样本当成真实模型答案，通过 scripted provider 逐字送入真实的 /api/views/mermaid/generate，因此这里既不是注释、也不是喂给页面看的假数据 —— 它经过真实的 schema、证据门槛、编译、渲染与导出。mindmap 的样本由 tests/fixtures/mindmap-cases.json 负责，两者分工不同：那份管树结构，这份管边类型、证据引用与注入文本。",
+  "$shape": {
+    "valid": "合法答案：{ title, direction, nodes[], edges[] }。占位符 $A/$B/$C 表示「本次选中的第 N 条来源 id」，$REL 表示一条本次材料中真实存在的已确认 causes 关系 id，由用例在运行时替换成真实 UUID —— 样本本身不携带 id，避免样本与真实数据脱钩。expect 段是断言用的期望值（边类型、是否降级、是否保留推测），由用例读取，而不是在用例里第二次硬编码。",
+    "invalid": "结构非法答案：与 valid 同形，但违反某条规则。expectMessage 是要在服务端错误文本里出现的片段，用于确认拒绝的是这条规则本身（例如「边终点不存在」而不是笼统的「字段不符合要求」）。$repeatNodes 表示该样本的节点数量在用例里按此数量生成，用于超限样本。"
+  },
+  "valid": {
+    "causalClaimedWithoutEvidence": {
+      "$comment": "T069-C01 主场景：材料只有两条互相相关的观点，模型却画了一条 causal。领域校验没有可引用的 causes 关系，必须降级为明确标注的推测。sample 里故意不写 relationIds —— 这正是「无依据因果」的形状。",
+      "title": "两个观点的先后",
+      "direction": "LR",
+      "nodes": [
+        { "id": "n1", "label": "先定义问题", "itemIds": ["$A"] },
+        { "id": "n2", "label": "再动手实现", "itemIds": ["$B"] }
+      ],
+      "edges": [
+        {
+          "source": "n1",
+          "target": "n2",
+          "kind": "causal",
+          "label": "定义问题导致实现更快",
+          "itemIds": ["$A", "$B"],
+          "relationIds": []
+        }
+      ],
+      "expect": {
+        "edgeKinds": ["hypothesis"],
+        "downgraded": 1,
+        "warns": true,
+        "hypothesisLabels": ["定义问题导致实现更快"],
+        "itemIds": ["$A", "$B"]
+      }
+    },
+    "causalClaimedWithEvidence": {
+      "$comment": "T069-C01 对照组：同一条 causal 声明，但引用了本次材料里一条已确认且未过期的 causes 关系，且该关系的两个端点正好落在两个节点的来源里。这个样本能保住 causal，才说明上一条降级是「因为没依据」而不是「因为程序一律不画因果」。",
+      "title": "有依据的因果",
+      "direction": "LR",
+      "nodes": [
+        { "id": "n1", "label": "前提这一步", "itemIds": ["$A"] },
+        { "id": "n2", "label": "结果这一步", "itemIds": ["$B"] }
+      ],
+      "edges": [
+        {
+          "source": "n1",
+          "target": "n2",
+          "kind": "causal",
+          "label": "前提成立才出现结果",
+          "itemIds": ["$A", "$B"],
+          "relationIds": ["$REL"]
+        }
+      ],
+      "expect": {
+        "edgeKinds": ["causal"],
+        "downgraded": 0,
+        "warns": false
+      }
+    },
+    "modelMarkedHypothesis": {
+      "$comment": "T069-C02 的载体：模型自己就把不确定标成 hypothesis，同时标签里塞进注入片段。样本必须是合法的 —— 转义是编译期的责任，不是拒绝的理由。故意包含 <script>、img onerror、click 指令、引号、换行花括号与试图改写 securityLevel 的文本。",
+      "title": "带注入片段的推测 <script>alert(1)</script>",
+      "direction": "LR",
+      "nodes": [
+        {
+          "id": "n1",
+          "label": "<img src=x onerror=alert(1)> 与 <script>alert('x')</script>",
+          "itemIds": ["$A"]
+        },
+        {
+          "id": "n2",
+          "label": "click n1 \"http://evil.example/steal?c=\" 换行\n第二大行 {brace} | pipe",
+          "itemIds": ["$B"]
+        }
+      ],
+      "edges": [
+        {
+          "source": "n1",
+          "target": "n2",
+          "kind": "hypothesis",
+          "label": "试图降级渲染安全的文本 securityLevel \"loose\"",
+          "itemIds": ["$A", "$B"],
+          "relationIds": []
+        }
+      ],
+      "expect": {
+        "edgeKinds": ["hypothesis"],
+        "downgraded": 0,
+        "warns": false,
+        "hypothesisLabels": ["试图降级渲染安全的文本 securityLevel \"loose\""]
+      }
+    },
+    "plainSequence": {
+      "$comment": "T069-C03/C04 的载体：一条无害的顺序边，标签足够独特，便于在多张图之间区分「现在显示的是哪一张」。",
+      "title": "两步顺序",
+      "direction": "TB",
+      "nodes": [
+        { "id": "n1", "label": "第一步写清目标", "itemIds": ["$A"] },
+        { "id": "n2", "label": "第二步再谈方案", "itemIds": ["$B"] }
+      ],
+      "edges": [
+        {
+          "source": "n1",
+          "target": "n2",
+          "kind": "sequence",
+          "label": "先目标后方案",
+          "itemIds": ["$A", "$B"],
+          "relationIds": []
+        }
+      ],
+      "expect": {
+        "edgeKinds": ["sequence"],
+        "downgraded": 0,
+        "warns": false
+      }
+    }
+  },
+  "invalid": {
+    "notJson": {
+      "$comment": "整段散文而不是 JSON。服务端必须先拒绝它，而不是把文字塞进某个字段。",
+      "raw": "我理解的流程是：先收集材料，再连接要点，最后回看一遍。",
+      "expectMessage": "JSON"
+    },
+    "mermaidSmuggledIn": {
+      "$comment": "T069-R03「click注入」的上游形态：模型试图直接给出 Mermaid 源码。schema 是 strictObject，模型控制的字段永远不会被信任，所以多出来的键是 400 级的拒绝，而不是被当成图形指令。",
+      "title": "模型自带源码",
+      "direction": "LR",
+      "nodes": [{ "id": "n1", "label": "唯一节点", "itemIds": ["$A"] }],
+      "edges": [],
+      "mermaid": "flowchart LR\n  n1-->n2\n  click n1 href \"http://evil.example\"",
+      "expectMessage": "字段不符合要求"
+    },
+    "duplicateNodeId": {
+      "$comment": "同一个节点 id 出现两次会让「这条边指向哪一个」变成未定义，必须在服务端挡住，而不是让浏览器画出一张错位的图。",
+      "title": "重复节点 id",
+      "direction": "LR",
+      "nodes": [
+        { "id": "n1", "label": "重复甲", "itemIds": ["$A"] },
+        { "id": "n1", "label": "重复乙", "itemIds": ["$B"] }
+      ],
+      "edges": [],
+      "expectMessage": "节点 id 重复"
+    },
+    "danglingEndpoint": {
+      "$comment": "T069-R03「未知端点」：边指向一个不存在的节点。Mermaid 遇到这种源码会「好心」补出一个节点，于是画面上出现一条材料里从没说过的事实 —— 这正是必须在服务端拒绝的原因。",
+      "title": "悬空端点",
+      "direction": "LR",
+      "nodes": [
+        { "id": "n1", "label": "存在的节点", "itemIds": ["$A"] },
+        { "id": "n2", "label": "另一个存在节点", "itemIds": ["$B"] }
+      ],
+      "edges": [
+        {
+          "source": "n1",
+          "target": "n9",
+          "kind": "association",
+          "label": "指向不存在的节点",
+          "itemIds": ["$A"],
+          "relationIds": []
+        }
+      ],
+      "expectMessage": "边终点不存在"
+    },
+    "selfLoop": {
+      "$comment": "边指向自己。自我因果是一句无法证伪的话，构图上也无法画成流程图里的一条边。",
+      "title": "自环",
+      "direction": "LR",
+      "nodes": [{ "id": "n1", "label": "自指节点", "itemIds": ["$A"] }],
+      "edges": [
+        {
+          "source": "n1",
+          "target": "n1",
+          "kind": "causal",
+          "label": "自己导致自己",
+          "itemIds": ["$A"],
+          "relationIds": []
+        }
+      ],
+      "expectMessage": "自环"
+    },
+    "unselectedSource": {
+      "$comment": "T069-R03 的「无效来源」：节点引用了本次没有选中的真实条目。$UNSELECTED 由用例替换成一条真实存在但未选中的 id，这样被拒的原因就只能是「不在选择里」，而不是「这个 UUID 不存在」。",
+      "title": "引用未选来源",
+      "direction": "LR",
+      "nodes": [{ "id": "n1", "label": "引用没选中的记录", "itemIds": ["$UNSELECTED"] }],
+      "edges": [],
+      "expectMessage": "引用了未选择的来源"
+    },
+    "unknownEdgeKind": {
+      "$comment": "边类型不在五种之内。契约里的类型是枚举，模型自创的词汇必须被拒绝，而不是被就近归到某个已有的类型上。",
+      "title": "自创边类型",
+      "direction": "LR",
+      "nodes": [
+        { "id": "n1", "label": "甲", "itemIds": ["$A"] },
+        { "id": "n2", "label": "乙", "itemIds": ["$B"] }
+      ],
+      "edges": [
+        {
+          "source": "n1",
+          "target": "n2",
+          "kind": "definitely_causes",
+          "label": "自创类型",
+          "itemIds": ["$A"],
+          "relationIds": []
+        }
+      ],
+      "expectMessage": "字段不符合要求"
+    },
+    "edgeWithoutLabel": {
+      "$comment": "一条没有说明的边。无字箭头是「暗示因果」最省事的形式，因此 label 是必填而不是可选。",
+      "title": "没有说明的边",
+      "direction": "LR",
+      "nodes": [
+        { "id": "n1", "label": "甲", "itemIds": ["$A"] },
+        { "id": "n2", "label": "乙", "itemIds": ["$B"] }
+      ],
+      "edges": [
+        { "source": "n1", "target": "n2", "kind": "association", "itemIds": ["$A"], "relationIds": [] }
+      ],
+      "expectMessage": "字段不符合要求"
+    },
+    "nodeWithoutSource": {
+      "$comment": "节点没有任何来源。整张图里出现一个无法回溯的记录，就是把模型自己的话当成了材料。",
+      "title": "没有来源的节点",
+      "direction": "LR",
+      "nodes": [{ "id": "n1", "label": "凭空节点", "itemIds": [] }],
+      "edges": [],
+      "expectMessage": "字段不符合要求"
+    },
+    "tooManyNodes": {
+      "$comment": "T069-R03「超限」。节点数量超过 LIMITS.flowNodes（40），由用例按 $repeatNodes 生成同样的形状。服务端要在把文档交给浏览器之前就明确失败，而不是让浏览器硬渲染一张超预算的图。",
+      "title": "过大的答案",
+      "direction": "LR",
+      "$repeatNodes": 41,
+      "expectMessage": "超过上限"
+    }
+  }
+}

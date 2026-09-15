@@ -28,6 +28,7 @@ import type { ItemDTO } from '@/domain/knowledge';
 import { LIMITS } from '@/domain/limits';
 import { codePointLength } from '@/domain/text';
 import { ApiClientError, apiRequest } from '@/features/shared/apiClient';
+import { canSubmitDraft, hasUnsavedDraft } from './captureShortcuts';
 
 export type CaptureSourceType = ItemDTO['sourceType'];
 
@@ -149,6 +150,36 @@ export function clearCaptureDraft(): void {
 }
 
 /* -------------------------------------------------------------------------- */
+/* Draft rules (T013-C03/C04/C05)                                             */
+/* -------------------------------------------------------------------------- */
+
+export interface CaptureSubmission {
+  text: string;
+  /** The draft revision that was submitted; see the module comment above. */
+  revision: number;
+}
+
+/**
+ * Apply a confirmed write to the draft.
+ *
+ * Clears only when the draft is still the exact snapshot that was submitted.
+ * "Exact" is decided by the revision counter, not by comparing strings: if the
+ * user edits and then types back to identical text, that is still new input and
+ * must survive. This is the rule that stops a slow response from erasing the
+ * next thought (T013-C03), and it is exposed as a function because a subtle
+ * comparison like this is worth asserting directly.
+ */
+export function applyAcceptedWrite(
+  current: { text: string; revision: number },
+  submitted: CaptureSubmission,
+): { text: string; revision: number; cleared: boolean } {
+  if (current.revision !== submitted.revision || current.text !== submitted.text) {
+    return { text: current.text, revision: current.revision, cleared: false };
+  }
+  return { text: '', revision: current.revision, cleared: true };
+}
+
+/* -------------------------------------------------------------------------- */
 
 let keyCounter = 0;
 
@@ -236,12 +267,17 @@ export function useCapture(options: UseCaptureOptions = {}): UseCaptureApi {
 
   const codePoints = codePointLength(draft);
   const overLimit = codePoints > LIMITS.rawTextCodePoints;
-  const canSubmit = draft.trim().length > 0 && !overLimit && phase !== 'saving';
+  const canSubmit = canSubmitDraft({
+    text: draft,
+    codePoints,
+    limit: LIMITS.rawTextCodePoints,
+    saving: phase === 'saving',
+  });
 
   // Registering this while there is unsaved text covers reload/close, the two
   // ways a draft can be lost that the in-memory store cannot prevent.
   useEffect(() => {
-    if (draft.trim().length === 0 || draft === (lastSubmittedText ?? '')) return;
+    if (!hasUnsavedDraft(draft, lastSubmittedText)) return;
     const onBeforeUnload = (event: BeforeUnloadEvent) => {
       event.preventDefault();
     };
@@ -269,10 +305,12 @@ export function useCapture(options: UseCaptureOptions = {}): UseCaptureApi {
         if (!mountedRef.current) return;
         pendingRef.current = null;
         // Clear only the exact snapshot that was submitted. Anything typed since
-        // carries a higher draft revision and is kept (T025-R05).
-        if (draftRevisionRef.current === revision && draftSnapshot.text === text) {
-          patchDraft({ text: '', sourceRef: '' });
-        }
+        // carries a higher draft revision and is kept (T025-R05 / T013-C03).
+        const applied = applyAcceptedWrite(
+          { text: draftSnapshot.text, revision: draftRevisionRef.current },
+          { text, revision },
+        );
+        if (applied.cleared) patchDraft({ text: '', sourceRef: '' });
         setOutcome({ item: result.item, replayed: result.replayed, stored: true });
         setLastSubmittedText(text);
         setPhase('saved');

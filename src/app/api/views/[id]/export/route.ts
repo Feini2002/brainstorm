@@ -15,7 +15,6 @@
  */
 import { AppError, toSafeError } from '@/domain/errors';
 import { viewExportQuerySchema } from '@/domain/schemas/http';
-import { isViewExportFormat } from '@/domain/viewExport';
 import { getDb } from '@/server/db/database';
 import { guardError, logRequestFailure } from '@/server/http/errors';
 import { jsonFailure, requestFacts, requestIdFrom } from '@/server/http/respond';
@@ -37,16 +36,12 @@ export async function GET(request: Request, context: RouteContext): Promise<Resp
       Object.fromEntries(new URL(request.url).searchParams.entries()),
     );
     if (!parsed.success) {
-      throw new AppError('VALIDATION', '导出格式不合法，只支持 markdown 与 json');
-    }
-    const format = parsed.data.format;
-    if (!isViewExportFormat(format)) {
-      throw new AppError('VALIDATION', '导出格式不合法，只支持 markdown 与 json');
+      throw new AppError('VALIDATION', '导出格式不合法，只支持 markdown、json 与 mermaid');
     }
 
     const file = exportView(getDb(), {
       id: params.id ?? '',
-      format,
+      format: parsed.data.format,
       now: new Date().toISOString(),
     });
 

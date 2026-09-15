@@ -52,6 +52,27 @@ export default defineConfig({
           environment: 'node',
           // These spawn a child process and copy a file tree per case.
           testTimeout: 30_000,
+          // Cleanup is `rmSync` over copied trees: a full-suite run puts several
+          // projects on the same disk at once, and the default 10s hook budget was
+          // observed to expire there (guard.test.ts passes in ~1.7s when the
+          // project runs alone).
+          hookTimeout: 60_000,
+        },
+      },
+      {
+        extends: true,
+        test: {
+          // Real-browser cases for the flow renderer/sanitizer (T065-C01–C04,
+          // T066-C01/C06). They run under Node like every other project, but the
+          // assertions execute inside a real Chromium: `dompurify` never attaches
+          // `sanitize` without a DOM and Mermaid is a browser library, so these
+          // cannot be honest in-process. See tests/browser/support/flowSandbox.ts.
+          name: 'browser',
+          include: ['tests/browser/**/*.test.ts'],
+          environment: 'node',
+          // Launching Chromium and bundling Mermaid dominate the runtime.
+          testTimeout: 180_000,
+          hookTimeout: 180_000,
         },
       },
     ],

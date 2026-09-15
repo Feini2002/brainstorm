@@ -6,6 +6,7 @@
  * only a bounded, redacted summary the user can act on.
  */
 import { AppError, type ErrorCode } from '@/domain/errors';
+import { redactSecrets } from '@/server/observability/redaction';
 
 /**
  * Raised when a provider rejects the `response_format` parameter itself.
@@ -83,13 +84,19 @@ export function classifyHttpStatus(status: number, context: ProviderErrorContext
 /**
  * Keep at most a short, single-line hint. Provider bodies can echo request
  * content or credentials, so this is bounded and control characters removed.
+ *
+ * Secret removal is *not* re-implemented here. The rules live in
+ * `observability/redaction.ts` and only there: the `Bearer`/`sk-` table this
+ * function used to carry was a second, narrower rule set that missed every
+ * other credential shape (an Azure or self-hosted gateway key, a Gemini
+ * `AIzaSy…` key) and never consulted the registered live secrets — so a
+ * provider echoing one of those survived this path while `redactSecrets` would
+ * have removed it (T030-C02).
  */
 export function sanitizeHint(value: string | undefined): string {
   if (!value) return '';
   const singleLine = value.replace(/[\r\n\t]+/gu, ' ').replace(/\s+/gu, ' ').trim();
-  const withoutSecrets = singleLine
-    .replace(/Bearer\s+[A-Za-z0-9._\-]+/giu, 'Bearer [redacted]')
-    .replace(/sk-[A-Za-z0-9._\-]{8,}/gu, '[redacted]');
+  const withoutSecrets = redactSecrets(singleLine);
   return withoutSecrets.length > 200 ? `${withoutSecrets.slice(0, 200)}…` : withoutSecrets;
 }
 

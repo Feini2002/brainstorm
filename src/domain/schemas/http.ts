@@ -170,9 +170,23 @@ export const relationQuerySchema = z.strictObject({
  * Preview request (T021-R05). The client sends ids, or a tag whose members are
  * resolved once, here — never a saved query that could widen later. This is a
  * read: it must not reach a model.
+ *
+ * `itemId` accepts either one occurrence or several (`?itemId=a` or
+ * `?itemId=a&itemId=b`) and always normalizes to an array, because both are the
+ * same request in a URL. Before this, the field was array-only while a query
+ * string can only ever produce a string, so *every* explicit-id preview answered
+ * 400 — the "what will be sent" panel could only be built from a tag, and the
+ * deleted-record check on an explicit selection was unreachable (T062-C02/C05).
+ * `parseQuery` collects repeats rather than overwriting them, so the multi-id form
+ * now survives as well.
  */
+const itemIdQuerySchema = z
+  .union([uuidSchema, z.array(uuidSchema)])
+  .optional()
+  .transform((value) => (value === undefined ? undefined : Array.isArray(value) ? value : [value]));
+
 export const selectionQuerySchema = z.strictObject({
-  itemId: z.array(uuidSchema).optional(),
+  itemId: itemIdQuerySchema,
   fromTagId: uuidSchema.optional(),
   filterTagId: uuidSchema.optional(),
 });
@@ -294,15 +308,22 @@ export const generationRequestSchema = z.strictObject({
 export type GenerationRequestInput = z.input<typeof generationRequestSchema>;
 
 /**
- * Export format for `GET /api/views/{id}/export` (T060).
+ * Export format for `GET /api/views/{id}/export` (T060 mindmap, T068 flow).
  *
  * A closed set rather than a free string: the registry types the response as
  * `File`, and a caller asking for `format=pdf` must get a clear refusal instead of
  * an empty download that looks like a broken PDF (T060-C06 「不能用不可用按钮制造
  * 完整感」). Defaults to markdown, the format a person is most likely to want.
+ *
+ * `mermaid` is part of the set even though a mindmap cannot produce it, and `svg`
+ * is absent even though a flow's menu offers it. Both asymmetries are deliberate:
+ * the set describes what the *endpoint* may be asked for, and the service then
+ * refuses a format that does not fit the stored kind with a message naming it.
+ * `svg` is refused for every kind because a sanitized SVG only exists after a
+ * browser has rendered one (T068-R04), so the server has no safe bytes to send.
  */
 export const viewExportQuerySchema = z.strictObject({
-  format: z.enum(['markdown', 'json']).default('markdown'),
+  format: z.enum(['markdown', 'json', 'mermaid']).default('markdown'),
 });
 
 export type ViewExportQueryInput = z.input<typeof viewExportQuerySchema>;

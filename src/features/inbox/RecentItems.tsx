@@ -10,6 +10,7 @@
  */
 import type { ItemPageResult } from '@/domain/api';
 import { Button, EmptyState, InlineError, LoadingIndicator } from '@/components/ui/primitives';
+import { timelineSummary } from '@/features/shared/cardDisplay';
 import { KnowledgeCard } from '@/features/shared/KnowledgeCard';
 import { useApiQuery } from '@/features/shared/useApiQuery';
 import { useSelection } from '@/features/shared/workspace';
@@ -62,13 +63,17 @@ export function RecentItems({ onOpen, refreshToken = 0, limit = DEFAULT_LIMIT }:
     <section className="flex flex-col gap-3" aria-label="最近记录">
       <div className="flex items-baseline justify-between">
         <h2 className="text-sm font-semibold text-[var(--ink)]">最近记录</h2>
-        <p className="text-xs text-[var(--ink-muted)]">
-          共 {page.totalMatched} 条
-          {page.items.length < page.totalMatched ? `，显示最新 ${page.items.length} 条` : ''}
+        <p className="text-xs text-[var(--ink-muted)]" data-testid="timeline-summary">
+          {timelineSummary({ shown: page.items.length, totalMatched: page.totalMatched })}
         </p>
       </div>
       <ul className="flex flex-col gap-2">
         {page.items.map((item) => (
+          /*
+            The React key is the item id, never the title and never the index
+            (T015-R03/C03): two records can share a title, and reordering a list
+            keyed by index makes React reuse the wrong subtree.
+          */
           <li key={item.id}>
             <KnowledgeCard
               item={item}

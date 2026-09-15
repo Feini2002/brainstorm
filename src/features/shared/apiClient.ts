@@ -50,7 +50,13 @@ const NETWORK_ERROR: SafeError = {
 export interface RequestOptions {
   method?: 'GET' | 'POST' | 'PATCH' | 'DELETE' | 'PUT';
   body?: unknown;
-  query?: Record<string, string | number | boolean | undefined>;
+  /**
+   * Query values. An array is serialized as a repeated parameter
+   * (`?itemId=a&itemId=b`), which is how `SelectionQuery.itemId` is defined in the
+   * contract — a client that could only send one id could not express a selection
+   * preview at all (T062).
+   */
+  query?: Record<string, string | number | boolean | readonly string[] | undefined>;
   /** Skip token acquisition (only /api/health and /api/session may). */
   anonymous?: boolean;
   /** Abort a long-running read when the user navigates away. */
@@ -63,6 +69,10 @@ function buildUrl(path: string, query?: RequestOptions['query']): string {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(query)) {
     if (value === undefined) continue;
+    if (Array.isArray(value)) {
+      for (const entry of value) params.append(key, entry);
+      continue;
+    }
     params.set(key, String(value));
   }
   const suffix = params.toString();
@@ -131,7 +141,7 @@ export async function apiRequestFull<T>(
 async function readFailure(response: Response): Promise<{ error: SafeError; requestId: string }> {
   try {
     const body = (await response.json()) as ApiEnvelope<unknown>;
-    if (body && typeof body === 'object' && body.ok === false) {
+    if (body && typeof body === 'object' && body.ok === false && isSafeError(body.error)) {
       return { error: body.error, requestId: body.requestId };
     }
   } catch {
@@ -145,6 +155,21 @@ async function readFailure(response: Response): Promise<{ error: SafeError; requ
     },
     requestId: response.headers.get('x-request-id') ?? '',
   };
+}
+
+/**
+ * Whether a decoded body really carries the failure shape.
+ *
+ * A JSON body that is *not* our envelope — a proxy's `{"data":[]}`, a captive
+ * portal's `{"error":"…"}` string, an older server's shape — must be reported as a
+ * protocol error. Reading `error.code` off such a body used to throw
+ * `TypeError: Cannot read properties of undefined`, so the page received an
+ * unhandled exception instead of a readable message (T006-C01's whole point).
+ */
+function isSafeError(value: unknown): value is SafeError {
+  if (value === null || typeof value !== 'object') return false;
+  const candidate = value as Partial<SafeError>;
+  return typeof candidate.code === 'string' && typeof candidate.message === 'string';
 }
 
 async function parseEnvelope<T>(response: Response): Promise<T> {
@@ -171,8 +196,37 @@ async function parseEnvelope<T>(response: Response): Promise<T> {
     );
   }
 
-  if (body.ok === true) return body.data;
-  throw new ApiClientError(body.error, { requestId: body.requestId, httpStatus: response.status });
+  if (body !== null && typeof body === 'object' && body.ok === true) return body.data;
+
+  const failure = await failureFromBody(body, response);
+  throw new ApiClientError(failure.error, {
+    requestId: failure.requestId,
+    httpStatus: response.status,
+  });
+}
+
+/** Build the safe error for a JSON body that is not a success envelope. */
+async function failureFromBody(
+  body: unknown,
+  response: Response,
+): Promise<{ error: SafeError; requestId: string }> {
+  if (body !== null && typeof body === 'object' && (body as { ok?: unknown }).ok === false) {
+    const candidate = body as { error?: unknown; requestId?: unknown };
+    if (isSafeError(candidate.error)) {
+      return {
+        error: candidate.error,
+        requestId: typeof candidate.requestId === 'string' ? candidate.requestId : '',
+      };
+    }
+  }
+  return {
+    error: {
+      code: 'INTERNAL',
+      message: `本地服务返回了无法识别的响应（HTTP ${response.status}）`,
+      retryable: false,
+    },
+    requestId: response.headers.get('x-request-id') ?? '',
+  };
 }
 
 /**

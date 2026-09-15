@@ -15,6 +15,7 @@ import {
 } from './knowledge';
 import { LIMITS } from './limits';
 import { codePointLength, hasVisibleContent } from './text';
+import { normalizeKeywordList, normalizeTagList } from './tags';
 
 export interface UserPatch {
   rawText?: string;
@@ -118,12 +119,39 @@ export function validateUserPatch(patch: UserPatch): ValidateFieldIssues {
     }
   }
 
-  if (patch.tags !== undefined && patch.tags.length > LIMITS.tagsPerItem * 4) {
-    fieldErrors.tags = ['标签数量超过上限'];
+  // The raw array has a hard ceiling so a million duplicates cannot be processed
+  // at all, and the ceiling that matters is the number of *effective* tags after
+  // normalization (docs/03_contracts/03_dto_and_version_rules.md §2). Accepting a
+  // ninth distinct tag and quietly storing eight would lose the user's input
+  // without saying so (T017-C03 「不能静默丢最后一个」).
+  if (patch.tags !== undefined) {
+    if (patch.tags.length > LIMITS.tagsPerItem * 4) {
+      fieldErrors.tags = ['标签数量超过上限'];
+    } else {
+      const { labels, droppedOverLimit } = normalizeTagList(patch.tags);
+      if (droppedOverLimit > 0) {
+        fieldErrors.tags = [
+          `一次最多 ${LIMITS.tagsPerItem} 个标签，当前有 ${
+            labels.length + droppedOverLimit
+          } 个，请减少 ${droppedOverLimit} 个`,
+        ];
+      }
+    }
   }
 
-  if (patch.keywords !== undefined && patch.keywords.length > LIMITS.keywordsPerItem * 4) {
-    fieldErrors.keywords = ['关键词数量超过上限'];
+  if (patch.keywords !== undefined) {
+    if (patch.keywords.length > LIMITS.keywordsPerItem * 4) {
+      fieldErrors.keywords = ['关键词数量超过上限'];
+    } else {
+      const { keywords, droppedOverLimit } = normalizeKeywordList(patch.keywords);
+      if (droppedOverLimit > 0) {
+        fieldErrors.keywords = [
+          `一次最多 ${LIMITS.keywordsPerItem} 个关键词，当前有 ${
+            keywords.length + droppedOverLimit
+          } 个，请减少 ${droppedOverLimit} 个`,
+        ];
+      }
+    }
   }
 
   if (

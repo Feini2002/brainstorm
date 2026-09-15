@@ -10,8 +10,9 @@
  * .npmrc 复制过去），绝不触碰工作区的 lockfile 或 node_modules；BROWSERS_PATH
  * 也只作为子进程环境变量传入，不写用户级配置。
  */
-import { spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { spawn, spawnSync } from 'node:child_process';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { rm } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import module from 'node:module';
 import { tmpdir } from 'node:os';
@@ -27,11 +28,28 @@ const npmrcPath = path.join(projectRoot, '.npmrc');
 
 const temporaries: string[] = [];
 
-afterAll(() => {
-  for (const directory of temporaries) {
-    rmSync(directory, { recursive: true, force: true });
-  }
-});
+afterAll(
+  async () => {
+    // `rm` from `node:fs/promises` rather than `rmSync` on purpose.
+    //
+    // These directories hold a full `node_modules` from `npm ci`, and deleting
+    // one on Windows takes tens of seconds. A synchronous delete blocks this
+    // worker's event loop for that entire time, which starves Vitest's
+    // `onTaskUpdate` RPC heartbeat — the run then reports every test as passing
+    // and still exits 1 with "Timeout calling onTaskUpdate". Awaiting the async
+    // delete keeps the worker responsive, so the cleanup cost no longer shows up
+    // as a false failure.
+    //
+    // `maxRetries` matches the `tests/e2e/support/resetData.ts` convention: real
+    // file locks let go after a short wait, so a transient EPERM must not fail an
+    // otherwise green run.
+    for (const directory of temporaries) {
+      await rm(directory, { recursive: true, force: true, maxRetries: 20, retryDelay: 250 });
+    }
+    temporaries.length = 0;
+  },
+  180_000,
+);
 
 interface Manifest {
   dependencies: Record<string, string>;
@@ -79,20 +97,57 @@ interface CommandResult {
   elapsedMs: number;
 }
 
-function run(command: string, cwd: string, env: Partial<NodeJS.ProcessEnv> = {}): CommandResult {
-  const started = Date.now();
-  const result = spawnSync(command, {
-    cwd,
-    shell: true,
-    encoding: 'utf8',
-    env: { ...process.env, ...env },
-    maxBuffer: 32 * 1024 * 1024,
+function run(
+  command: string,
+  cwd: string,
+  env: Partial<NodeJS.ProcessEnv> = {},
+  timeoutMs = 240_000,
+): Promise<CommandResult> {
+  return new Promise((resolve, reject) => {
+    const started = Date.now();
+    // `spawn` rather than `spawnSync`: these commands take minutes, and a
+    // synchronous wait blocks this worker's event loop for the whole run, which
+    // starves Vitest's `onTaskUpdate` RPC and makes the *runner* report an
+    // unhandled timeout even though every assertion passed. The command is still
+    // the same real command; only the waiting is non-blocking.
+    const child = spawn(command, {
+      cwd,
+      shell: true,
+      env: { ...process.env, ...env },
+    });
+
+    let stdout = '';
+    let stderr = '';
+    child.stdout?.on('data', (chunk: Buffer) => {
+      stdout += chunk.toString('utf8');
+    });
+    child.stderr?.on('data', (chunk: Buffer) => {
+      stderr += chunk.toString('utf8');
+    });
+
+    // A hung install must surface as a diagnosable failure rather than hang the run.
+    const timer = setTimeout(() => {
+      child.kill();
+      reject(
+        new Error(
+          `命令在 ${timeoutMs}ms 内未结束，已终止：${command}\n${`${stdout}${stderr}`.slice(-2000)}`,
+        ),
+      );
+    }, timeoutMs);
+
+    child.on('error', (error) => {
+      clearTimeout(timer);
+      reject(error);
+    });
+    child.on('close', (status) => {
+      clearTimeout(timer);
+      resolve({
+        status,
+        output: `${stdout}${stderr}`,
+        elapsedMs: Date.now() - started,
+      });
+    });
   });
-  return {
-    status: result.status,
-    output: `${result.stdout ?? ''}${result.stderr ?? ''}`,
-    elapsedMs: Date.now() - started,
-  };
 }
 
 /** Read an installed package's own version, i.e. what actually landed on disk. */
@@ -155,7 +210,7 @@ describe('T002 依赖解析、锁定与下载', () => {
     const directory = scratchProject();
     const lockBefore = sha256(path.join(directory, 'package-lock.json'));
 
-    const result = run('npm ci --ignore-scripts --prefer-offline --no-audit', directory);
+    const result = await run('npm ci --ignore-scripts --prefer-offline --no-audit', directory);
 
     // 记录实际耗时：这是把该命令放进自动化套件的成本依据。
     expect(
@@ -183,7 +238,7 @@ describe('T002 依赖解析、锁定与下载', () => {
     expect(lockBefore).toBe(sha256(lockPath));
   }, 240_000);
 
-  it('T002-C02 package.json 与 lockfile 不一致时安装明确失败，不悄悄换版本', () => {
+  it('T002-C02 package.json 与 lockfile 不一致时安装明确失败，不悄悄换版本', async () => {
     const directory = scratchProject();
     const patched = JSON.parse(readFileSync(manifestPath, 'utf8')) as Manifest;
     // 一个在 registry 上真实存在、但锁文件没有解析过的版本：这正是「声明与实际
@@ -195,7 +250,7 @@ describe('T002 依赖解析、锁定与下载', () => {
     );
     const lockBefore = sha256(path.join(directory, 'package-lock.json'));
 
-    const result = run('npm ci --ignore-scripts --no-audit', directory);
+    const result = await run('npm ci --ignore-scripts --no-audit', directory);
 
     expect(result.status, '不一致的锁文件必须让安装失败').not.toBe(0);
     expect(result.output).toContain('EUSAGE');
@@ -299,14 +354,14 @@ describe('T002 依赖解析、锁定与下载', () => {
     expect(report).toContain('未安装任何第三方替代品来顶替 Node 内置模块');
   });
 
-  it('T002-C05 断网且缓存不完整时保留原锁文件并提示缺少下载材料', () => {
+  it('T002-C05 断网且缓存不完整时保留原锁文件并提示缺少下载材料', async () => {
     const directory = scratchProject();
     const coldCache = mkdtempSync(path.join(tmpdir(), 'feini-cold-cache-'));
     temporaries.push(coldCache);
     const lockBefore = sha256(path.join(directory, 'package-lock.json'));
 
     // `--offline` + 一个空 cache 目录：等同于「网络不可用且没有下载材料」。
-    const result = run(
+    const result = await run(
       `npm ci --ignore-scripts --offline --no-audit --cache "${coldCache}"`,
       directory,
     );

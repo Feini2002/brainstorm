@@ -137,7 +137,6 @@ function routeFileFor(endpointPath) {
 
 /** Routes not yet implemented are listed here with their owning task. */
 const PENDING_ROUTES = {
-  '/api/views/mermaid/generate': 'T063',
   '/api/export': 'T070',
   '/api/import/validate': 'T071',
   '/api/import': 'T072',

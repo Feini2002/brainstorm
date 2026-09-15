@@ -619,38 +619,67 @@
     },
     {
       "id": "T064",
-      "status": "not_started",
-      "evidence": [],
+      "status": "verified",
+      "evidence": [
+        "docs/progress/G5.md",
+        "implementation/progress/evidence/G5.md",
+        "tests/unit/flow-compiler.test.ts"
+      ],
       "blockedBy": []
     },
     {
       "id": "T065",
-      "status": "not_started",
-      "evidence": [],
+      "status": "verified",
+      "evidence": [
+        "docs/progress/G5.md",
+        "implementation/progress/evidence/G5.md",
+        "tests/unit/flow-sanitize.test.ts",
+        "tests/browser/flow-render-security.test.ts",
+        "tests/e2e/flow-security.spec.ts"
+      ],
       "blockedBy": []
     },
     {
       "id": "T066",
-      "status": "not_started",
-      "evidence": [],
+      "status": "verified",
+      "evidence": [
+        "docs/progress/G5.md",
+        "implementation/progress/evidence/G5.md",
+        "tests/e2e/flow-lifecycle.spec.ts",
+        "tests/browser/flow-render-security.test.ts"
+      ],
       "blockedBy": []
     },
     {
       "id": "T067",
-      "status": "not_started",
-      "evidence": [],
+      "status": "verified",
+      "evidence": [
+        "docs/progress/G5.md",
+        "implementation/progress/evidence/G5.md",
+        "tests/integration/flow-history.test.ts"
+      ],
       "blockedBy": []
     },
     {
       "id": "T068",
-      "status": "not_started",
-      "evidence": [],
+      "status": "verified",
+      "evidence": [
+        "docs/progress/G5.md",
+        "implementation/progress/evidence/G5.md",
+        "tests/unit/flow-export.test.ts",
+        "tests/browser/flow-render-security.test.ts",
+        "tests/e2e/gate5.spec.ts"
+      ],
       "blockedBy": []
     },
     {
       "id": "T069",
-      "status": "not_started",
-      "evidence": [],
+      "status": "verified",
+      "evidence": [
+        "docs/progress/G5.md",
+        "implementation/progress/evidence/G5.md",
+        "tests/e2e/gate5.spec.ts"
+      ],
       "blockedBy": []
     },
     {

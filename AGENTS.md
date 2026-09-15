@@ -26,3 +26,13 @@
 ## 完成含义
 
 文件存在不等于功能完成，TypeScript通过不等于浏览器可用，mock通过不等于真实模型通过。每个Gate分别报告已执行、失败、阻塞、未执行。没有真实证据时保持未验收状态，不虚构测试日志、截图或依赖兼容性结论。
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->
