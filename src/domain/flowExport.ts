@@ -34,9 +34,12 @@ export const FLOW_EXPORT_SCHEMA_VERSION = 1;
  *
  * `svg` is here because it now has a real, tested producer: `sanitizeSvgString`
  * plus `findUnsafeSvgMarkup` in the renderer, exercised by
- * `tests/e2e/mermaid-security.spec.ts`. It was absent while it was not, and the UI
- * had no button for it — a disabled SVG button would have made the menu look
- * complete at exactly the moment the user was finding out what it can do.
+ * `tests/e2e/flow-security.spec.ts` (the contract names a
+ * `mermaid-security.spec.ts`; that file does not exist and this one is the
+ * deliberate equivalent — see its header for why the name differs). It was absent
+ * while it was not, and the UI had no button for it — a disabled SVG button would
+ * have made the menu look complete at exactly the moment the user was finding out
+ * what it can do.
  *
  * The server still refuses to *generate* an SVG, and that asymmetry is the point:
  * the sanitized picture only exists after a browser has rendered and purified it

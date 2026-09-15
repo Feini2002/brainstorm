@@ -322,8 +322,10 @@ export type GenerationRequestInput = z.input<typeof generationRequestSchema>;
  * `svg` is refused for every kind because a sanitized SVG only exists after a
  * browser has rendered one (T068-R04), so the server has no safe bytes to send.
  */
+export const viewExportFormatSchema = z.enum(['json', 'markdown', 'mermaid']);
+
 export const viewExportQuerySchema = z.strictObject({
-  format: z.enum(['markdown', 'json', 'mermaid']).default('markdown'),
+  format: viewExportFormatSchema.default('markdown'),
 });
 
 export type ViewExportQueryInput = z.input<typeof viewExportQuerySchema>;
@@ -427,8 +429,6 @@ export const viewListQuerySchema = z.strictObject({
   limit: z.coerce.number().int().min(1).max(LIMITS.listPageSizeMax).optional(),
   cursor: z.string().optional(),
 });
-
-export const viewExportFormatSchema = z.enum(['json', 'markdown', 'mermaid']);
 
 // ---------------------------------------------------------------------------
 // Import

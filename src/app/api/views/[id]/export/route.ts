@@ -13,13 +13,13 @@
  * exactly the failure `docs/03_contracts/10_backup_bundle.md` §2 warns about
  * (下载失败显示 JSON 错误，不把错误正文另存为看起来正常的备份).
  */
-import { AppError, toSafeError } from '@/domain/errors';
+import { toSafeError } from '@/domain/errors';
 import { viewExportQuerySchema } from '@/domain/schemas/http';
 import { getDb } from '@/server/db/database';
 import { guardError, logRequestFailure } from '@/server/http/errors';
 import { jsonFailure, requestFacts, requestIdFrom } from '@/server/http/respond';
+import { parseQuery, type RouteContext } from '@/server/http/routeHandler';
 import { guardRead } from '@/server/security/localGuard';
-import type { RouteContext } from '@/server/http/routeHandler';
 import { exportView } from '@/server/services/views/exportView';
 
 export const runtime = 'nodejs';
@@ -32,16 +32,25 @@ export async function GET(request: Request, context: RouteContext): Promise<Resp
     if (!guard.ok) throw guardError(guard.failure ?? 'origin');
 
     const params = context?.params ? await context.params : {};
-    const parsed = viewExportQuerySchema.safeParse(
-      Object.fromEntries(new URL(request.url).searchParams.entries()),
-    );
-    if (!parsed.success) {
-      throw new AppError('VALIDATION', '导出格式不合法，只支持 markdown、json 与 mermaid');
-    }
+    // `parseQuery` rather than `Object.fromEntries(searchParams)`: the latter lets
+    // a later duplicate win silently, so `?format=markdown&format=json` was
+    // accepted as `json` instead of being rejected as ambiguous. `format` is a
+    // scalar, so `scalarKeys` makes the repetition an explicit 400. It is the same
+    // bug class as the repeated `itemId` overwrite the shared parser exists to
+    // prevent.
+    //
+    // `message` keeps the rejection on the endpoint's own terms: the schema
+    // deliberately does not list `svg` as a requestable format, so a `fieldErrors`
+    // entry would quote `svg` back and advertise the one thing the contract says
+    // not to offer (T068-R04). The message names the supported set instead.
+    const query = parseQuery(request, viewExportQuerySchema, {
+      scalarKeys: ['format'],
+      message: '导出格式不合法，只支持 markdown、json 与 mermaid',
+    });
 
     const file = exportView(getDb(), {
       id: params.id ?? '',
-      format: parsed.data.format,
+      format: query.format,
       now: new Date().toISOString(),
     });
 

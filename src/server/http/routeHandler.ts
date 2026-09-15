@@ -226,11 +226,32 @@ export function zodFieldErrors(error: {
  * last id survived, so the "what will be sent" panel described a subset of the
  * material and a deleted record could hide behind the truncation (T062-C05).
  *
- * A schema that expects a scalar will now reject a duplicated parameter with a 400
- * rather than silently truncating it, which is the honest failure for an ambiguous
- * request.
+ * A value that legitimately repeats must be declared as an array by the schema,
+ * which is how `?itemId=a&itemId=b` keeps working. A scalar parameter that repeats
+ * is ambiguous — `?format=markdown&format=json` has no defined winner — so such
+ * parameters are named in `options.scalarKeys` to get an explicit 400 instead of
+ * the last value winning silently.
  */
-export function parseQuery<T>(request: Request, schema: ZodType<T>): T {
+export interface ParseQueryOptions {
+  /**
+   * Parameters that must not repeat. Repetition is rejected rather than resolved.
+   * Only list scalar parameters; array parameters are supposed to repeat.
+   */
+  scalarKeys?: readonly string[];
+  /**
+   * Replace the default `查询参数不合法` message. Use it when the rejection must
+   * state what *is* supported rather than quote what was sent — a `fieldErrors`
+   * entry would echo the offending value back, which for the export route would
+   * advertise the very format its contract says not to offer.
+   */
+  message?: string;
+}
+
+export function parseQuery<T>(
+  request: Request,
+  schema: ZodType<T>,
+  options: ParseQueryOptions = {},
+): T {
   const url = new URL(request.url);
   // A `Map` for the same reason as `zodFieldErrors` above: these keys are query
   // parameter names chosen by the client, and a plain object would let
@@ -248,8 +269,24 @@ export function parseQuery<T>(request: Request, schema: ZodType<T>): T {
       raw.set(key, [existing, value]);
     }
   }
+  // Repetition is meaningful only where the schema models a list. For a scalar
+  // parameter it is ambiguous: `?format=markdown&format=json` has no defined
+  // winner, and every previous answer was "whichever came last", silently. The
+  // caller names such parameters so the ambiguity is reported instead of
+  // resolved by accident. Parameters not listed here keep collecting into an
+  // array, which is what `?itemId=a&itemId=b` depends on (T021-C03, T062-C05).
+  for (const key of options.scalarKeys ?? []) {
+    if (Array.isArray(raw.get(key))) {
+      throw new AppError('VALIDATION', `参数 ${key} 只能出现一次`, { [key]: ['重复出现'] });
+    }
+  }
   const parsed = schema.safeParse(Object.fromEntries(raw));
   if (!parsed.success) {
+    // `message` exists for routes whose rejection must state what *is* supported
+    // rather than echo what was sent (the export route: a `fieldErrors` entry
+    // would quote the offending `svg` back, and the endpoint's contract is to
+    // list the usable formats without advertising that one).
+    if (options.message !== undefined) throw new AppError('VALIDATION', options.message);
     throw new AppError('VALIDATION', '查询参数不合法', zodFieldErrors(parsed.error));
   }
   return parsed.data;
