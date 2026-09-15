@@ -31,4 +31,15 @@
 
 不仅列依赖，还定义每个库的输入输出、所有权、生命周期和失败边界；不仅生成图，还验证图节点来源、保存版本和过期状态；不仅保存Key，还区分保留/替换/删除、跨域转移确认和本地请求保护；不仅调用模型，还记录幂等运行、超时、格式修复和迟到结果；不仅导出，还给出空库恢复与回滚契约。
 
-所有业务任务初始状态均为not_started。压缩包已执行的检查仅针对规格、链接、参考数据和SQL约束；应用的Node24运行、浏览器、网络模型与最终体验需要在实施后分别验收。
+## 实施现状
+
+本仓库同时承载规格包与实施代码。当前进度以 [当前实施位置](implementation/progress/NEXT_TASK.md) 与
+[机器可读状态](implementation/progress/tasks.current.json) 为准，完成情况按 Gate 分别记录在
+[docs/progress/G0.md](docs/progress/G0.md)、[docs/progress/G1.md](docs/progress/G1.md)，运行证据在
+[implementation/progress/evidence](implementation/progress/evidence/README.md)。
+
+已验收：**G0（T001–T012）** 与 **G1（T013–T026，离线知识库闭环）**。G2 起仍在实施中，
+未标注证据的任务保持未完成状态；没有真实执行的用例一律记为未执行或环境阻塞。
+
+规格包自身的检查（链接、任务依赖、参考数据与SQL约束）针对文档，不证明应用已经运行。
+`implementation/progress/tasks.initial.json` 保留实施前的全 not_started 起点，不被覆盖。

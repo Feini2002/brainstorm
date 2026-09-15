@@ -34,6 +34,11 @@ export const ERROR_CODES = {
   PROVIDER_REFUSAL: { httpStatus: 422, retryable: false },
   PROVIDER_TRUNCATED: { httpStatus: 422, retryable: false },
   PROVIDER_PROTOCOL: { httpStatus: 502, retryable: false },
+  /**
+   * The 2xx response carried nothing usable. Retryable because it is often
+   * transient, but the user must opt in: see `paidAutomaticNetworkRetries`.
+   */
+  EMPTY_MODEL_OUTPUT: { httpStatus: 422, retryable: true },
   STRUCTURED_INVALID: { httpStatus: 422, retryable: true },
   SOURCE_CHANGED: { httpStatus: 409, retryable: true },
   RUN_INTERRUPTED: { httpStatus: 409, retryable: true },

@@ -8,9 +8,17 @@
  * request on its own: an explicit caller-provided idempotency key plus user
  * action is required to replay anything (T006-R05).
  */
-import type { ApiEnvelope, SessionInfo } from '@/domain/api';
+import type { ApiEnvelope } from '@/domain/api';
 import type { SafeError } from '@/domain/errors';
 import { LIMITS } from '@/domain/limits';
+import { loadSession, resetSession } from './session';
+
+/**
+ * Re-exported unchanged so every existing caller keeps importing the session
+ * from `apiClient`; the bootstrap itself now lives in `session.ts` (T007-R02),
+ * because the contract names that file as the owner of the session singleton.
+ */
+export { loadSession, resetSession };
 
 export class ApiClientError extends Error {
   readonly code: SafeError['code'];
@@ -38,39 +46,6 @@ const NETWORK_ERROR: SafeError = {
   message: '本地服务没有响应，请确认应用仍在运行',
   retryable: true,
 };
-
-/** In-memory session singleton; a page reload legitimately re-bootstraps it. */
-let sessionPromise: Promise<SessionInfo> | null = null;
-
-export function resetSession(): void {
-  sessionPromise = null;
-}
-
-export function loadSession(): Promise<SessionInfo> {
-  if (!sessionPromise) {
-    sessionPromise = fetchSession().catch((error) => {
-      sessionPromise = null;
-      throw error;
-    });
-  }
-  return sessionPromise;
-}
-
-async function fetchSession(): Promise<SessionInfo> {
-  let response: Response;
-  try {
-    response = await fetch('/api/session', {
-      method: 'GET',
-      cache: 'no-store',
-      credentials: 'same-origin',
-      headers: { Accept: 'application/json' },
-    });
-  } catch {
-    throw new ApiClientError(NETWORK_ERROR);
-  }
-  const envelope = await parseEnvelope<SessionInfo>(response);
-  return envelope;
-}
 
 export interface RequestOptions {
   method?: 'GET' | 'POST' | 'PATCH' | 'DELETE' | 'PUT';
@@ -200,8 +175,23 @@ async function parseEnvelope<T>(response: Response): Promise<T> {
   throw new ApiClientError(body.error, { requestId: body.requestId, httpStatus: response.status });
 }
 
-/** Download a binary/attachment response with the session token attached. */
-export async function apiDownload(path: string, query?: RequestOptions['query']): Promise<Blob> {
+/**
+ * Download an attachment with the session token attached.
+ *
+ * The filename comes from the server's `Content-Disposition`, not from a name the
+ * client rebuilds. The naming rule (view id + safe date, never a raw title) lives
+ * in `domain/viewExport.ts` and is applied once, on the side that knows the view;
+ * a second implementation here would drift and could start feeding a title into a
+ * path (T060-R03).
+ *
+ * `Content-Disposition` is advisory from the browser's point of view, but it is
+ * read here as data rather than trusted as a path: the value is only ever assigned
+ * to `anchor.download`, which the browser sanitizes.
+ */
+export async function apiDownload(
+  path: string,
+  query?: RequestOptions['query'],
+): Promise<{ blob: Blob; filename: string | null }> {
   const session = await loadSession();
   let response: Response;
   try {
@@ -218,13 +208,26 @@ export async function apiDownload(path: string, query?: RequestOptions['query'])
     throw new ApiClientError(NETWORK_ERROR);
   }
   if (!response.ok) {
+    // A failure is the normal JSON envelope. Surfacing it as an `ApiClientError`
+    // is what keeps a failed export from being saved as a file that looks like a
+    // successful one (docs/03_contracts/10_backup_bundle.md §2).
     const failure = await readFailure(response);
     throw new ApiClientError(failure.error, {
       requestId: failure.requestId,
       httpStatus: response.status,
     });
   }
-  return response.blob();
+  return { blob: await response.blob(), filename: filenameFromDisposition(response) };
+}
+
+/** Pull the quoted or bare filename out of a `Content-Disposition` header. */
+function filenameFromDisposition(response: Response): string | null {
+  const header = response.headers.get('content-disposition');
+  if (!header) return null;
+  const quoted = /filename="([^"]+)"/iu.exec(header);
+  if (quoted?.[1]) return quoted[1];
+  const bare = /filename=([^;]+)/iu.exec(header);
+  return bare?.[1]?.trim() ?? null;
 }
 
 /** Create a temporary object URL for a downloaded file and click it once. */

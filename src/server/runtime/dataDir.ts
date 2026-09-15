@@ -18,7 +18,13 @@ export const DATABASE_FILE_NAME = 'brain.db';
 export function findProjectRoot(): string {
   // process.cwd() is the Next.js / Node server working directory in dev and
   // production start. The spec keeps the app rooted at the repo root.
-  return path.resolve(process.cwd());
+  //
+  // The `turbopackIgnore` annotation is the documented signal that this path is
+  // resolved at runtime, not bundled: without it Turbopack cannot prove which
+  // directory is touched and conservatively traces the whole project. The
+  // excludes in `next.config.ts` bound the trace; this comment keeps the build
+  // output free of a warning that would otherwise hide a real one.
+  return path.resolve(/* turbopackIgnore: true */ process.cwd());
 }
 
 export function resolveDataDir(env: NodeJS.ProcessEnv = process.env): string {
@@ -83,8 +89,19 @@ export function detectRunMode(env: NodeJS.ProcessEnv = process.env): RunMode {
 /** Guard used by tests: refuse to operate on the user's real data directory. */
 export function assertNotUserDataDir(dataDir: string, mode: RunMode): void {
   if (mode !== 'TEST') return;
-  const userDir = path.join(findProjectRoot(), DEFAULT_DATA_DIR_NAME);
-  if (path.resolve(dataDir) === path.resolve(userDir)) {
+  if (isUserDataDir(dataDir)) {
     throw new DataDirError('测试不允许使用用户真实数据目录 .data');
   }
+}
+
+/**
+ * True when `dataDir` is this repository's default user data directory.
+ *
+ * Mode-independent on purpose: the acceptance server is started from a build, so
+ * `detectRunMode()` reports `USER` for it exactly as it would for the owner's own
+ * run. The directory is what actually separates the two.
+ */
+export function isUserDataDir(dataDir: string): boolean {
+  const userDir = path.join(findProjectRoot(), DEFAULT_DATA_DIR_NAME);
+  return path.resolve(dataDir) === path.resolve(userDir);
 }

@@ -39,6 +39,21 @@ export class RefusalError extends AppError {
   }
 }
 
+/**
+ * The provider answered 2xx but carried no usable text.
+ *
+ * Its own code rather than a generic protocol error because the user-facing
+ * consequence is different: the request was accepted and very likely billed, yet
+ * there is nothing to apply. Reported, never wrapped into a successful empty
+ * organize (T031-C04).
+ */
+export class EmptyOutputError extends AppError {
+  constructor(message = '模型返回了空内容，本次没有可用的整理结果') {
+    super('EMPTY_MODEL_OUTPUT', message);
+    this.name = 'EmptyOutputError';
+  }
+}
+
 const REFUSAL_PATTERNS = [
   /^\s*i (cannot|can't|won't|will not|am unable to)/iu,
   /^\s*i'm sorry,? but/iu,
@@ -92,10 +107,12 @@ export function parseCompletion(bodyText: string, providerRequestId: string | nu
 
   const content = messageRecord.content;
   if (typeof content !== 'string') {
-    throw new ProtocolError('服务商返回的 content 不是字符串');
+    // `null` content is what a provider returns for a pure tool-call or a
+    // reasoning-only reply; both are empty results for this application.
+    throw new EmptyOutputError('服务商返回的 content 不是字符串');
   }
   if (content.trim().length === 0) {
-    throw new ProtocolError('服务商返回了空内容');
+    throw new EmptyOutputError();
   }
 
   if (finishReason === 'length') {

@@ -41,7 +41,7 @@ POST /api/items/:id/organize 体为 {requestKey,expectedRevision}。服务端自
 
 ## 5. 图数据与保存的视图
 
-POST /api/graph 作为只读复杂查询接口，体为 {filter:{tagId?,type?,reviewStatuses?,minimumScore?,includeStale?},itemIds?}。放在 src/app/api/graph/route.ts，避免数百 UUID 塞进 URL。返回 {nodes,edges,datasetRevision,scope:{matchedNodeCount,shownNodeCount,matchedEdgeCount,shownEdgeCount,truncated}}。有范围截断时显示醒目提示，不能把部分图称全量；边只能连接已返回节点。
+POST /api/graph 作为只读复杂查询接口，体为 {filter:{tagId?,type?,reviewStatuses?,minimumScore?,includeStale?},itemIds?}。放在 src/app/api/graph/route.ts，避免数百 UUID 塞进 URL。返回 {nodes,edges,datasetRevision,scope:{matchedNodeCount,shownNodeCount,matchedEdgeCount,shownEdgeCount,suggestedEdgeCount,truncated}}，其中 suggestedEdgeCount 为已显示边里待确认的条数（T050-R01 要求摘要区分总数与待确认数）。有范围截断时显示醒目提示，不能把部分图称全量；边只能连接已返回节点。
 
 GET /api/views?kind=&limit=&cursor= 返回 ViewSummaryDTO 列表。POST /api/views 只允许创建 graph 布局视图，体为 {name,selection,positions,direction}，服务器根据当前有效来源生成快照。mindmap/flow 必须来自经过校验的生成服务，普通浏览器不能用 POST 任意写不可信图结果。GET /api/views/:id 返回 ViewDTO。
 

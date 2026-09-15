@@ -13,7 +13,7 @@
  * "已保存" into a failure (T025-R04). With no model configured, "保存并整理"
  * still saves first and then explains the missing configuration (T013-R06).
  */
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import { SOURCE_TYPE_LABELS } from '@/domain/knowledge';
 import { LIMITS } from '@/domain/limits';
@@ -29,13 +29,34 @@ export interface CaptureBoxProps {
   onConfigureModel?: () => void;
   /** Whether an API key is configured; the parent knows, the box does not ask. */
   modelConfigured?: boolean;
+  /**
+   * The organize step, run only after the raw text is stored (T036). Passed down
+   * rather than implemented here: the page owns the run id so it can show the
+   * diagnostics for the run it just started (T041).
+   */
+  organize?: (item: { id: string; revision: number }) => Promise<void>;
 }
 
-export function CaptureBox({ onCreated, onConfigureModel, modelConfigured = false }: CaptureBoxProps) {
+export function CaptureBox({
+  onCreated,
+  onConfigureModel,
+  modelConfigured = false,
+  organize,
+}: CaptureBoxProps) {
   const capture = useCapture({
     ...(onCreated ? { onCreated } : {}),
+    /**
+     * The organize step is attached only when a model is configured.
+     *
+     * Passing it unconditionally would make "保存并整理" fire a doomed request in
+     * a keyless install: the user gets a model error on top of the explanation
+     * they were already shown, and the offline path stops being the quiet one
+     * (T013-R06 / T024-R01). The hint below is the whole response in that case.
+     */
+    ...(organize && modelConfigured
+      ? { organize: (item: { id: string; revision: number }) => organize(item) }
+      : {}),
   });
-  const [configureHint, setConfigureHint] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const saving = capture.phase === 'saving';
@@ -60,12 +81,15 @@ export function CaptureBox({ onCreated, onConfigureModel, modelConfigured = fals
 
   const onSaveAndOrganize = useCallback(() => {
     if (!modelConfigured) {
-      // Never lose the text: save first, then explain that organizing needs a model.
-      setConfigureHint(true);
+      // Never lose the text: save first, then explain that organizing needs a
+      // model. The explanation is written into the draft store rather than local
+      // state so navigating to the settings page and back does not erase it
+      // (T024-R04/R06).
+      capture.setInputHint('整理功能需要先在设置里配置模型；这条原文仍会照常保存。');
       void capture.submit();
       return;
     }
-    setConfigureHint(false);
+    capture.setInputHint(null);
     void capture.submit();
   }, [capture, modelConfigured]);
 
@@ -74,13 +98,21 @@ export function CaptureBox({ onCreated, onConfigureModel, modelConfigured = fals
       <label htmlFor="capture-text" className="text-sm font-semibold text-[var(--ink)]">
         记录一条
       </label>
+      {/*
+        The textarea stays editable while a save is in flight (T025-C06/R06).
+        Disabling it would make the concurrency case impossible instead of
+        handled: a slow request must not stop the user from starting the next
+        thought. The draft is protected by `draftRevision` in `useCapture`, which
+        clears only the exact snapshot the server accepted — so text typed during
+        the round trip is kept. Double submission is prevented on the buttons
+        (`canSubmit` is false while saving), not by blocking input.
+      */}
       <TextArea
         id="capture-text"
         ref={textareaRef}
         data-testid="capture-input"
         rows={4}
         value={capture.draft}
-        disabled={saving}
         placeholder="一个词、一句话，或一段资料。原文会先保存。"
         onChange={(event) => capture.setDraft(event.target.value)}
         onKeyDown={onSubmitShortcut}
@@ -96,10 +128,7 @@ export function CaptureBox({ onCreated, onConfigureModel, modelConfigured = fals
             variant="primary"
             data-testid="capture-save"
             disabled={!capture.canSubmit}
-            onClick={() => {
-              setConfigureHint(false);
-              void capture.submit();
-            }}
+            onClick={() => void capture.submit()}
           >
             {saving ? '保存中…' : '只保存'}
           </Button>
@@ -195,18 +224,28 @@ export function CaptureBox({ onCreated, onConfigureModel, modelConfigured = fals
         </p>
       ) : null}
 
-      {configureHint ? (
-        <div className="rounded-md border border-[var(--warn)] bg-[var(--surface-raised)] p-3 text-sm text-[var(--ink)]">
-          <p>
-            {capture.phase === 'saved'
-              ? '原文已经保存。整理功能需要先在设置里配置模型。'
-              : '整理功能需要先在设置里配置模型；原文仍会照常保存。'}
-          </p>
-          {onConfigureModel ? (
-            <Button variant="secondary" className="mt-2" onClick={onConfigureModel}>
-              去设置模型
+      {/*
+        The hint lives with the draft, so it survives navigation. It is a notice,
+        not an overlay: the textarea above stays editable (T025-R06) and the user
+        can dismiss it without resolving anything.
+      */}
+      {capture.inputHint ? (
+        <div
+          role="status"
+          data-testid="capture-hint"
+          className="flex flex-col items-start gap-2 rounded-md border border-[var(--warn)] bg-[var(--surface-raised)] p-3 text-sm text-[var(--ink)]"
+        >
+          <p>{capture.inputHint}</p>
+          <div className="flex flex-wrap gap-2">
+            {!modelConfigured && onConfigureModel ? (
+              <Button variant="secondary" onClick={onConfigureModel}>
+                去设置模型
+              </Button>
+            ) : null}
+            <Button variant="ghost" onClick={() => capture.setInputHint(null)}>
+              知道了
             </Button>
-          ) : null}
+          </div>
         </div>
       ) : null}
     </section>

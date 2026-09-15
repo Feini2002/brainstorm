@@ -7,16 +7,53 @@
  */
 import { AppError, type ErrorCode } from '@/domain/errors';
 
+/**
+ * Raised when a provider rejects the `response_format` parameter itself.
+ * Lives here rather than in the adapter so `classifyHttpStatus` can raise it
+ * without a circular import.
+ */
+export class StructuredModeRejectedError extends AppError {
+  constructor(message: string) {
+    super('PROVIDER_PROTOCOL', message);
+    this.name = 'StructuredModeRejectedError';
+  }
+}
+
 export interface ProviderErrorContext {
   /** Provider-supplied Retry-After, validated before display. */
   retryAfterSeconds?: number;
   /** Short, redacted provider hint (never the full body, never headers). */
   providerHint?: string;
+  /**
+   * Which JSON mode this request used. A 400 that names `response_format` is
+   * almost always "this service does not implement that parameter", and the
+   * user has to change the setting themselves: retrying in the other mode would
+   * be a silent second paid request (T031-R02).
+   */
+  structuredMode?: 'prompt_json' | 'json_object';
+}
+
+/**
+ * Does the provider hint read like a complaint about `response_format`?
+ *
+ * Matching is deliberately narrow — the parameter name (with or without
+ * underscore) or the OpenAI help text about it. A generic 400 stays a generic
+ * protocol error, because guessing would send users to the wrong setting.
+ */
+export function looksLikeUnsupportedJsonMode(hint: string): boolean {
+  return /response[_ ]?format|json[_ ]?object/iu.test(hint);
 }
 
 export function classifyHttpStatus(status: number, context: ProviderErrorContext = {}): AppError {
   const hint = sanitizeHint(context.providerHint);
   const suffix = hint ? `（服务商提示：${hint}）` : '';
+
+  if (status === 400 && context.structuredMode === 'json_object' && looksLikeUnsupportedJsonMode(hint)) {
+    return new StructuredModeRejectedError(
+      '服务商不接受 response_format 参数。请把「结构化输出方式」改为在提示词中要求 JSON，然后重试；' +
+        `本次不会自动重发。${suffix}`,
+    );
+  }
 
   if (status === 401 || status === 403) {
     return new AppError('PROVIDER_AUTH', `服务商拒绝凭据，请检查 API Key 权限和模型访问${suffix}`);

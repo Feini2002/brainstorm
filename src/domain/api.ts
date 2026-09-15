@@ -60,6 +60,8 @@ export interface GraphScope {
   shownNodeCount: number;
   matchedEdgeCount: number;
   shownEdgeCount: number;
+  /** Shown edges still awaiting confirmation (T050-R01). */
+  suggestedEdgeCount: number;
   truncated: boolean;
 }
 

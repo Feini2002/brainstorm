@@ -12,6 +12,7 @@ import type { ZodType } from 'zod';
 
 import { AppError, type SafeError } from '@/domain/errors';
 import { guardError, logRequestFailure } from '@/server/http/errors';
+import { stripAbsolutePaths } from '@/server/observability/redaction';
 import {
   jsonFailure,
   jsonSuccess,
@@ -53,14 +54,37 @@ function isRouteReply(value: unknown): value is RouteReply {
   );
 }
 
-/** Log a failure once and convert it into the contract envelope. */
+/**
+ * Log a failure once and convert it into the contract envelope.
+ *
+ * `AppError` messages are already safe by construction, but one class of them is
+ * not: the runtime errors raised while opening the data directory embed the
+ * absolute path (`无法创建数据目录 C:\...\nested：ENOTDIR ...`). A local tool still
+ * must not hand its filesystem layout to whatever asked, and T006-C03 asks for a
+ * safe error with controlled detail instead of a stack or a path. So a response
+ * message is stripped of absolute paths before it leaves the process; the log
+ * keeps the same scrubbed projection, since `logSafe` is allow-listed by field
+ * and `message` is one of them.
+ */
 function fail(error: unknown, requestId: string, route: string): Response {
-  const safe: SafeError =
+  const base: SafeError =
     error instanceof AppError
       ? error.toSafeError()
       : { code: 'INTERNAL', message: '本地服务出现未预期错误', retryable: false };
+  const safe = scrubSafeError(base);
   logRequestFailure({ requestId, route, error, safe });
-  return jsonFailure(error, requestId);
+  // Rebuilt as an AppError so the envelope keeps the original code, message,
+  // retryability and field errors; `retryable` is derived from the code, so it
+  // survives the round trip unchanged.
+  return jsonFailure(
+    new AppError(safe.code, safe.message, safe.fieldErrors),
+    requestId,
+  );
+}
+
+/** Remove absolute paths (and therefore internal directory layout) from a safe error. */
+function scrubSafeError(safe: SafeError): SafeError {
+  return { ...safe, message: stripAbsolutePaths(safe.message) };
 }
 
 function guardOrThrow(facts: RequestFacts, mutation: boolean): void {

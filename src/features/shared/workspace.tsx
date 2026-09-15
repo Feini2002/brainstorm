@@ -32,7 +32,14 @@ export interface WorkspaceState {
   closeItem: () => void;
   /** Bumped after an edit or delete so lists can refetch. */
   refreshToken: number;
-  notifyChanged: () => void;
+  /**
+   * Report a write so lists refetch.
+   *
+   * `deletedId` is what lets a delete clean the selection immediately. Without
+   * it, a card ticked in the inbox and then deleted would stay "selected" until
+   * something else loaded a full list (T021-R04 / T026-C04).
+   */
+  notifyChanged: (change?: { deletedId?: string }) => void;
 }
 
 const WorkspaceContext = createContext<WorkspaceState | null>(null);
@@ -46,18 +53,27 @@ export function WorkspaceProvider({
   selectionLimit?: number;
 }) {
   const selection = useSelectionStore(selectionLimit);
+  const { dropDeleted } = selection;
   const [openItemId, setOpenItemId] = useState<string | null>(null);
   const [refreshToken, setRefreshToken] = useState(0);
 
   const openItem = useCallback((id: string) => setOpenItemId(id), []);
   const closeItem = useCallback(() => setOpenItemId(null), []);
-  const notifyChanged = useCallback(() => setRefreshToken((current) => current + 1), []);
+  const notifyChanged = useCallback(
+    (change?: { deletedId?: string }) => {
+      // Reconcile the selection here rather than leaving it to a page effect: the
+      // deletion is known at this point, and the inbox has no full list read that
+      // could notice the missing id afterwards.
+      if (change?.deletedId) dropDeleted(change.deletedId);
+      setRefreshToken((current) => current + 1);
+    },
+    [dropDeleted],
+  );
 
   const value = useMemo<WorkspaceState>(
     () => ({ selection, openItemId, openItem, closeItem, refreshToken, notifyChanged }),
     [closeItem, notifyChanged, openItem, openItemId, refreshToken, selection],
   );
-
   return <WorkspaceContext.Provider value={value}>{children}</WorkspaceContext.Provider>;
 }
 

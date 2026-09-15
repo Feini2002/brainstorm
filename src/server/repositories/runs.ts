@@ -76,6 +76,85 @@ export function getRunRequestHash(db: DatabaseSync, requestKey: UUID): string | 
 }
 
 /**
+ * Read the stored *input* hash for a run id.
+ *
+ * Separate from `getRunRequestHash` (which is keyed by request key) and from the
+ * `RunDTO` (which deliberately omits both hashes, since they are internal
+ * bookkeeping rather than something the browser needs). Late-response handling
+ * compares this value to prove the arriving response belongs to the input the row
+ * was opened with.
+ */
+export function getRunInputHash(db: DatabaseSync, id: UUID): string | null {
+  const row = db
+    .prepare('SELECT input_hash FROM ai_runs WHERE id = ?')
+    .get(id) as { input_hash: string } | undefined;
+  return row?.input_hash ?? null;
+}
+
+/**
+ * Raw diagnostics source for one run (T041).
+ *
+ * Returns the *untrusted* stored columns rather than a `RunDTO`: the diagnostics
+ * view needs the recorded config snapshot, candidate ids and request count, none
+ * of which belong on the browser-facing DTO. Reading them here keeps the SQL in
+ * the repository layer so the service stays a pure transformation, and the
+ * allow-listing happens in `src/domain/runDto.ts` where it can be unit tested
+ * without a database.
+ */
+export interface RunDiagnosticsRow {
+  id: string;
+  kind: string;
+  state: string;
+  subjectId: string | null;
+  promptVersion: string;
+  attemptCount: number;
+  resultRef: string | null;
+  startedAt: string;
+  finishedAt: string | null;
+  configSnapshotJson: string | null;
+  candidateIdsJson: string | null;
+  errorCode: string | null;
+  errorMessage: string | null;
+  usageJson: string | null;
+}
+
+export function findRunDiagnosticsRow(
+  db: DatabaseSync,
+  id: UUID,
+): RunDiagnosticsRow | null {
+  const row = db
+    .prepare(
+      `SELECT id, kind, state, subject_id, prompt_version, attempt_count, result_ref,
+              started_at, finished_at, config_snapshot_json, candidate_ids_json,
+              error_code, error_message, usage_json
+         FROM ai_runs WHERE id = ?`,
+    )
+    .get(id) as Record<string, unknown> | undefined;
+  if (!row) return null;
+  return {
+    id: String(row.id),
+    kind: String(row.kind),
+    state: String(row.state),
+    subjectId: row.subject_id === null || row.subject_id === undefined ? null : String(row.subject_id),
+    promptVersion: String(row.prompt_version),
+    attemptCount: Number(row.attempt_count ?? 0),
+    resultRef: row.result_ref === null || row.result_ref === undefined ? null : String(row.result_ref),
+    startedAt: String(row.started_at),
+    finishedAt:
+      row.finished_at === null || row.finished_at === undefined ? null : String(row.finished_at),
+    configSnapshotJson: optionalText(row.config_snapshot_json),
+    candidateIdsJson: optionalText(row.candidate_ids_json),
+    errorCode: optionalText(row.error_code),
+    errorMessage: optionalText(row.error_message),
+    usageJson: optionalText(row.usage_json),
+  };
+}
+
+function optionalText(value: unknown): string | null {
+  return typeof value === 'string' && value.length > 0 ? value : null;
+}
+
+/**
  * Insert a running run. A UNIQUE violation means another external call is in
  * flight; it is mapped to RUN_BUSY, never to a 500.
  */

@@ -1,0 +1,56 @@
+{
+  "$comment": "T026-R01 最小混合样本：一个词、长段落、多行文本、相同标题、不同标签与中文符号。用例按 id 引用，不改写这里的内容。",
+  "items": [
+    {
+      "id": "one-word",
+      "rawText": "注意力",
+      "sourceType": "myself",
+      "sourceRef": null
+    },
+    {
+      "id": "long-paragraph",
+      "rawText": "如果把知识碎片工具当成第二大脑，真正困难的不是收集，而是让每条记录在需要时能被找回来、被引用、被组合成新的判断。收集本身几乎不产生价值，可检索、可验证来源的结构才产生价值。因此原文必须先完整保存，模型整理只能是叠加在上面的投影，而不是原文的替代品。",
+      "sourceType": "book",
+      "sourceRef": "《设计心理学》第 3 章"
+    },
+    {
+      "id": "multi-line",
+      "rawText": "第一步：先把想到的一句话原样写下来。\n第二步：不急着命名、分类或打标签。\n第三步：等有上下文时再让模型整理，并核对它引用的来源。",
+      "sourceType": "other",
+      "sourceRef": null
+    },
+    {
+      "id": "same-title-a",
+      "rawText": "间隔重复：把复习分散到多天，比一次性集中记忆更耐久。",
+      "sourceType": "web",
+      "sourceRef": "https://example.com/spaced-repetition"
+    },
+    {
+      "id": "same-title-b",
+      "rawText": "间隔重复在语言学习里常被过度简化成背单词次数，但间隔的长度才是关键变量。",
+      "sourceType": "web",
+      "sourceRef": "https://example.org/review-schedule"
+    },
+    {
+      "id": "cjk-punctuation",
+      "rawText": "「引用」、『书名』、——破折号、……省略号、（括号）、【重点】、100% 与 3≤5 都要原样保留。",
+      "sourceType": "other",
+      "sourceRef": null
+    }
+  ],
+  "tags": {
+    "one-word": ["认知"],
+    "long-paragraph": ["认知", "方法论"],
+    "multi-line": ["方法论"],
+    "same-title-a": ["学习"],
+    "same-title-b": ["学习", "方法论"],
+    "cjk-punctuation": ["排版"]
+  },
+  "relation": {
+    "$comment": "T026-C02 的重启复核对象：一条人工关系，重启后必须仍在。",
+    "sourceId": "long-paragraph",
+    "targetId": "multi-line",
+    "type": "related_to",
+    "reason": "同一条工作流的两种表述"
+  }
+}

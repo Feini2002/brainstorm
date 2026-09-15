@@ -1,0 +1,700 @@
+{
+  "specVersion": "2.0",
+  "note": "由 targetFiles 存在性 + 实测门禁结果推导；实现存在不等于验收通过。",
+  "tasks": [
+    {
+      "id": "T001",
+      "status": "implemented",
+      "evidence": [
+        "docs/progress/G0.md",
+        "implementation/progress/evidence/G0.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T002",
+      "status": "implemented",
+      "evidence": [
+        "docs/progress/G0.md",
+        "implementation/progress/evidence/G0.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T003",
+      "status": "implemented",
+      "evidence": [
+        "docs/progress/G0.md",
+        "implementation/progress/evidence/G0.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T004",
+      "status": "implemented",
+      "evidence": [
+        "docs/progress/G0.md",
+        "implementation/progress/evidence/G0.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T005",
+      "status": "implemented",
+      "evidence": [
+        "docs/progress/G0.md",
+        "implementation/progress/evidence/G0.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T006",
+      "status": "implemented",
+      "evidence": [
+        "docs/progress/G0.md",
+        "implementation/progress/evidence/G0.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T007",
+      "status": "implemented",
+      "evidence": [
+        "docs/progress/G0.md",
+        "implementation/progress/evidence/G0.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T008",
+      "status": "implemented",
+      "evidence": [
+        "docs/progress/G0.md",
+        "implementation/progress/evidence/G0.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T009",
+      "status": "implemented",
+      "evidence": [
+        "docs/progress/G0.md",
+        "implementation/progress/evidence/G0.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T010",
+      "status": "implemented",
+      "evidence": [
+        "docs/progress/G0.md",
+        "implementation/progress/evidence/G0.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T011",
+      "status": "implemented",
+      "evidence": [
+        "docs/progress/G0.md",
+        "implementation/progress/evidence/G0.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T012",
+      "status": "implemented",
+      "evidence": [
+        "docs/progress/G0.md",
+        "implementation/progress/evidence/G0.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T013",
+      "status": "implemented",
+      "evidence": [
+        "docs/progress/G1.md",
+        "implementation/progress/evidence/G1.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T014",
+      "status": "implemented",
+      "evidence": [
+        "docs/progress/G1.md",
+        "implementation/progress/evidence/G1.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T015",
+      "status": "implemented",
+      "evidence": [
+        "docs/progress/G1.md",
+        "implementation/progress/evidence/G1.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T016",
+      "status": "implemented",
+      "evidence": [
+        "docs/progress/G1.md",
+        "implementation/progress/evidence/G1.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T017",
+      "status": "implemented",
+      "evidence": [
+        "docs/progress/G1.md",
+        "implementation/progress/evidence/G1.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T018",
+      "status": "implemented",
+      "evidence": [
+        "docs/progress/G1.md",
+        "implementation/progress/evidence/G1.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T019",
+      "status": "implemented",
+      "evidence": [
+        "docs/progress/G1.md",
+        "implementation/progress/evidence/G1.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T020",
+      "status": "implemented",
+      "evidence": [
+        "docs/progress/G1.md",
+        "implementation/progress/evidence/G1.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T021",
+      "status": "implemented",
+      "evidence": [
+        "docs/progress/G1.md",
+        "implementation/progress/evidence/G1.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T022",
+      "status": "implemented",
+      "evidence": [
+        "docs/progress/G1.md",
+        "implementation/progress/evidence/G1.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T023",
+      "status": "implemented",
+      "evidence": [
+        "docs/progress/G1.md",
+        "implementation/progress/evidence/G1.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T024",
+      "status": "implemented",
+      "evidence": [
+        "docs/progress/G1.md",
+        "implementation/progress/evidence/G1.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T025",
+      "status": "implemented",
+      "evidence": [
+        "docs/progress/G1.md",
+        "implementation/progress/evidence/G1.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T026",
+      "status": "implemented",
+      "evidence": [
+        "docs/progress/G1.md",
+        "implementation/progress/evidence/G1.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T027",
+      "status": "implemented",
+      "evidence": [
+        "docs/progress/G2.md",
+        "implementation/progress/evidence/G2.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T028",
+      "status": "implemented",
+      "evidence": [
+        "docs/progress/G2.md",
+        "implementation/progress/evidence/G2.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T029",
+      "status": "implemented",
+      "evidence": [
+        "docs/progress/G2.md",
+        "implementation/progress/evidence/G2.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T030",
+      "status": "implemented",
+      "evidence": [
+        "docs/progress/G2.md",
+        "implementation/progress/evidence/G2.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T031",
+      "status": "implemented",
+      "evidence": [
+        "docs/progress/G2.md",
+        "implementation/progress/evidence/G2.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T032",
+      "status": "implemented",
+      "evidence": [
+        "docs/progress/G2.md",
+        "implementation/progress/evidence/G2.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T033",
+      "status": "implemented",
+      "evidence": [
+        "docs/progress/G2.md",
+        "implementation/progress/evidence/G2.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T034",
+      "status": "implemented",
+      "evidence": [
+        "docs/progress/G2.md",
+        "implementation/progress/evidence/G2.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T035",
+      "status": "implemented",
+      "evidence": [
+        "docs/progress/G2.md",
+        "implementation/progress/evidence/G2.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T036",
+      "status": "implemented",
+      "evidence": [
+        "docs/progress/G2.md",
+        "implementation/progress/evidence/G2.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T037",
+      "status": "implemented",
+      "evidence": [
+        "docs/progress/G2.md",
+        "implementation/progress/evidence/G2.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T038",
+      "status": "implemented",
+      "evidence": [
+        "docs/progress/G2.md",
+        "implementation/progress/evidence/G2.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T039",
+      "status": "implemented",
+      "evidence": [
+        "docs/progress/G2.md",
+        "implementation/progress/evidence/G2.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T040",
+      "status": "implemented",
+      "evidence": [
+        "docs/progress/G2.md",
+        "implementation/progress/evidence/G2.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T041",
+      "status": "implemented",
+      "evidence": [
+        "docs/progress/G2.md",
+        "implementation/progress/evidence/G2.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T042",
+      "status": "implemented",
+      "evidence": [
+        "docs/progress/G2.md",
+        "implementation/progress/evidence/G2.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T043",
+      "status": "verified",
+      "evidence": [
+        "docs/progress/G3.md",
+        "implementation/progress/evidence/G3.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T044",
+      "status": "verified",
+      "evidence": [
+        "docs/progress/G3.md",
+        "implementation/progress/evidence/G3.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T045",
+      "status": "verified",
+      "evidence": [
+        "docs/progress/G3.md",
+        "implementation/progress/evidence/G3.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T046",
+      "status": "verified",
+      "evidence": [
+        "docs/progress/G3.md",
+        "implementation/progress/evidence/G3.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T047",
+      "status": "verified",
+      "evidence": [
+        "docs/progress/G3.md",
+        "implementation/progress/evidence/G3.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T048",
+      "status": "verified",
+      "evidence": [
+        "docs/progress/G3.md",
+        "implementation/progress/evidence/G3.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T049",
+      "status": "verified",
+      "evidence": [
+        "docs/progress/G3.md",
+        "implementation/progress/evidence/G3.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T050",
+      "status": "verified",
+      "evidence": [
+        "docs/progress/G3.md",
+        "implementation/progress/evidence/G3.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T051",
+      "status": "verified",
+      "evidence": [
+        "docs/progress/G3.md",
+        "implementation/progress/evidence/G3.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T052",
+      "status": "verified",
+      "evidence": [
+        "docs/progress/G3.md",
+        "implementation/progress/evidence/G3.md"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T053",
+      "status": "verified",
+      "evidence": [
+        "docs/progress/G4.md",
+        "implementation/progress/evidence/G4.md#t053"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T054",
+      "status": "verified",
+      "evidence": [
+        "docs/progress/G4.md",
+        "implementation/progress/evidence/G4.md#t054"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T055",
+      "status": "verified",
+      "evidence": [
+        "docs/progress/G4.md",
+        "implementation/progress/evidence/G4.md#t055"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T056",
+      "status": "verified",
+      "evidence": [
+        "docs/progress/G4.md",
+        "implementation/progress/evidence/G4.md#t056"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T057",
+      "status": "verified",
+      "evidence": [
+        "docs/progress/G4.md",
+        "implementation/progress/evidence/G4.md#t057"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T058",
+      "status": "verified",
+      "evidence": [
+        "docs/progress/G4.md",
+        "implementation/progress/evidence/G4.md#t058"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T059",
+      "status": "verified",
+      "evidence": [
+        "docs/progress/G4.md",
+        "implementation/progress/evidence/G4.md#t059",
+        "tests/integration/view-regeneration.test.ts",
+        "tests/e2e/mindmap-regeneration.spec.ts"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T060",
+      "status": "verified",
+      "evidence": [
+        "docs/progress/G4.md",
+        "implementation/progress/evidence/G4.md#t060",
+        "tests/unit/view-export.test.ts",
+        "tests/integration/view-export.test.ts",
+        "tests/e2e/mindmap-export.spec.ts"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T061",
+      "status": "verified",
+      "evidence": [
+        "docs/progress/G4.md",
+        "implementation/progress/evidence/G4.md#t061",
+        "tests/e2e/gate4.spec.ts",
+        "tests/e2e/support/gomindmap.ts"
+      ],
+      "blockedBy": []
+    },
+    {
+      "id": "T062",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T063",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T064",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T065",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T066",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T067",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T068",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T069",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T070",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T071",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T072",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T073",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T074",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T075",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T076",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T077",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T078",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T079",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T080",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T081",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T082",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T083",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    },
+    {
+      "id": "T084",
+      "status": "not_started",
+      "evidence": [],
+      "blockedBy": []
+    }
+  ]
+}

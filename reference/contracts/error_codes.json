@@ -120,6 +120,12 @@
     "meaning": "返回格式不符合chat completions协议"
   },
   {
+    "code": "EMPTY_MODEL_OUTPUT",
+    "httpStatus": 422,
+    "retryable": true,
+    "meaning": "上游2xx但content为空或非文本，没有可应用的结果"
+  },
+  {
     "code": "STRUCTURED_INVALID",
     "httpStatus": 422,
     "retryable": true,

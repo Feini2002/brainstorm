@@ -4,7 +4,7 @@
 // 而不是只验证脚本本身能退出 0。T012-C01 与 T012-C03 的核心就是
 // “改坏之后必须被拦下”，因此测试要在临时副本里注入缺陷再观察结果。
 import { spawnSync } from 'node:child_process';
-import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
@@ -63,7 +63,7 @@ function scratchCopy(): string {
 interface GuardReport {
   ok: boolean;
   failures: string[];
-  routes: { implemented: number; pending: number; total: number };
+  routes: { implemented: number; pending: number; paths: number; endpointMethods: number };
 }
 
 describe('T012 契约一致性', () => {
@@ -115,7 +115,25 @@ describe('T012 契约一致性', () => {
     const directory = scratchCopy();
     const ignorePath = path.join(directory, '.gitignore');
     const original = readFileSync(ignorePath, 'utf8');
-    writeFileSync(ignorePath, original.replace('/.data/', ''), 'utf8');
+    const removed = original.replace('/.data/\n', '');
+    expect(removed, '.gitignore 中应有独立的 /.data/ 条目').not.toBe(original);
+    writeFileSync(ignorePath, removed, 'utf8');
+
+    // 除此之外 /tests/e2e/.data/ 还在，所以这条正是在断言“只忽略测试目录不够”。
+    expect(removed).toContain('/tests/e2e/.data/');
+    const { status, report } = runGuard(directory);
+    const typed = report as GuardReport;
+    expect(status).toBe(1);
+    expect(typed.failures.join('\n')).toContain('.data');
+  });
+
+  it('T012-C02 嵌套路径的子串不能顶替真实数据目录', () => {
+    const directory = scratchCopy();
+    const ignorePath = path.join(directory, '.gitignore');
+    const original = readFileSync(ignorePath, 'utf8');
+    // `includes('.data')` 会被这一行满足，但用户的 ./.data 仍然可被提交。
+    // 这是真实发生过的漏洞：e2e 隔离目录上线后，检查项被它的子串蒙过去了。
+    writeFileSync(ignorePath, `${original.replace('/.data/\n', '')}\n/tests/e2e/.data/\n`, 'utf8');
 
     const { status, report } = runGuard(directory);
     const typed = report as GuardReport;
@@ -134,14 +152,23 @@ describe('T012 契约一致性', () => {
 
   it('T012-C06 未实现路由必须登记待办，不能伪装成已完成', () => {
     const directory = scratchCopy();
-    // 移除一个已登记的路由映射，guard 应报“缺少路由实现且未登记待办”。
+    // 让一个**尚未实现**的路由既没有 route 文件、又不在待办表里：guard 必须报
+    // 缺少实现。之前这里删的是已实现的 `/api/graph` 登记（它在 T012 完成时仍待办），
+    // G3 实现该路由后那句替换不再命中，用例静默失效——所以现在改成“删掉一条真实
+    // 待办登记 + 确认对应 route 文件确实不存在”，与仓库当前进度无关。
     const guardPath = path.join(directory, 'scripts/check-contracts.mjs');
     const original = readFileSync(guardPath, 'utf8');
-    writeFileSync(guardPath, original.replace(/^\s*'\/api\/graph':\s*'T043',\s*$/mu, ''), 'utf8');
+    const entry = /^\s*'\/api\/export':\s*'T070',\s*$/mu;
+    expect(entry.test(original), '待办表应仍登记 /api/export（T070）').toBe(true);
+    expect(
+      existsSync(path.join(projectRoot, 'src/app/api/export/route.ts')),
+      '/api/export 应尚未实现，否则本用例要换一个仍未实现的端点',
+    ).toBe(false);
+    writeFileSync(guardPath, original.replace(entry, ''), 'utf8');
 
     const { status, report } = runGuard(directory);
     const typed = report as GuardReport;
     expect(status).toBe(1);
-    expect(typed.failures.join('\n')).toContain('/api/graph');
+    expect(typed.failures.join('\n')).toContain('/api/export');
   });
 });

@@ -107,6 +107,35 @@ export function listRelations(db: DatabaseSync, input: ListRelationsInput): Rela
   return rows.map((row) => decodeRelationRow(row, Boolean(row.stale_flag)));
 }
 
+/**
+ * Read exactly the requested relations, rejecting nothing.
+ *
+ * A saved View snapshots the relation ids it was built from. Reading them back
+ * by id (instead of listing every relation and filtering in memory) keeps the
+ * snapshot/staleness comparison honest for a library larger than one page: a
+ * relation that merely fell outside the list window used to look deleted, which
+ * reported a healthy view as "来源已删除".
+ */
+export function listRelationsByIds(db: DatabaseSync, ids: readonly UUID[]): RelationDTO[] {
+  const unique = [...new Set(ids)];
+  if (unique.length === 0) return [];
+  const byId = new Map<string, RelationDTO>();
+  const CHUNK = 400;
+  for (let start = 0; start < unique.length; start += CHUNK) {
+    const chunk = unique.slice(start, start + CHUNK);
+    const placeholders = chunk.map(() => '?').join(', ');
+    const rows = db
+      .prepare(`${RELATION_WITH_STALE_SQL} WHERE r.id IN (${placeholders})`)
+      .all(...chunk) as Record<string, unknown>[];
+    for (const row of rows) {
+      const relation = decodeRelationRow(row, Boolean(row.stale_flag));
+      byId.set(relation.id, relation);
+    }
+  }
+  // Caller order, so a snapshot's relation list is deterministic.
+  return unique.map((id) => byId.get(id)).filter((entry): entry is RelationDTO => entry !== undefined);
+}
+
 /** Insert a brand new relation row. */
 export function insertRelation(db: DatabaseSync, input: RelationRowInput): void {
   const endpoints = normalizeEndpoints(input.sourceId, input.targetId, input.type);

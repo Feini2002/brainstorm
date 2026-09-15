@@ -37,6 +37,19 @@ yarn-error.log*
 # local runtime data (SQLite database, WAL, backups)
 /.data/
 
+# e2e research data (isolated from the user's own .data)
+#
+# Both directories the suite creates must be listed. `resetData.ts` clears
+# `.data` and `.data-restart`; only the first was ignored, so a `git add -A`
+# right after a run could commit the restart case's SQLite database.
+/tests/e2e/.data/
+/tests/e2e/.data-restart/
+
+# scratch logs and reports from local verification runs
+/.tmp-*.log
+/.tmp-*.json
+/.tmp-*-data/
+
 # test artifacts
 /test-results/
 /playwright-report/

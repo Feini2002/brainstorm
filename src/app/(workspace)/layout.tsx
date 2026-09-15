@@ -20,7 +20,12 @@ function DrawerHost() {
     <KnowledgeDrawer
       itemId={workspace.openItemId}
       onClose={workspace.closeItem}
-      onChanged={workspace.notifyChanged}
+      // The drawer reports `deleted` explicitly, so the selection can drop the id
+      // in the same tick as the delete instead of waiting for a list refetch
+      // (T021-R04 / T026-C04).
+      onChanged={(change) =>
+        workspace.notifyChanged(change.deleted ? { deletedId: change.id } : {})
+      }
     />
   );
 }

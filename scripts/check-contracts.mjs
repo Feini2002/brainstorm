@@ -137,21 +137,29 @@ function routeFileFor(endpointPath) {
 
 /** Routes not yet implemented are listed here with their owning task. */
 const PENDING_ROUTES = {
-  '/api/settings/llm': 'T029',
-  '/api/settings/llm/test': 'T032',
-  '/api/items/{id}/organize': 'T036',
-  '/api/runs/{id}': 'T040',
-  '/api/runs/recover': 'T040',
-  '/api/graph': 'T043',
-  '/api/views': 'T053',
-  '/api/views/{id}': 'T053',
-  '/api/views/mindmap/generate': 'T055',
   '/api/views/mermaid/generate': 'T063',
-  '/api/views/{id}/export': 'T060',
   '/api/export': 'T070',
   '/api/import/validate': 'T071',
   '/api/import': 'T072',
   '/api/diagnostics': 'T074',
+};
+
+/**
+ * Routes this build implements that api_registry.json does not name.
+ *
+ * The registry lists the endpoints the product contract commits to. A route can
+ * still be a legitimate implementation of a task without belonging there: the
+ * run *diagnostics* projection (T041) is deliberately larger than `RunDTO` and
+ * has its own disclosure rules, so it is its own endpoint rather than more
+ * fields on `/api/runs/{id}`. Declaring it here keeps it from being either
+ * silently forgotten or mistaken for a contract endpoint — the check below
+ * verifies it exists and that it has *not* been added to the registry, in which
+ * case the registry should be the one to list it.
+ */
+const LOCAL_EXTENSION_ROUTES = {
+  '/api/runs/{id}/diagnostics': 'T041',
+  '/api/views/{id}/layout': 'T047',
+  '/api/views/{id}/freshness': 'T059',
 };
 
 // The registry lists one entry per method, so a path appears several times.
@@ -192,6 +200,28 @@ for (const key of Object.keys(PENDING_ROUTES)) {
   }
 }
 
+// A local extension must actually exist, and it must not creep into the registry
+// unnoticed: if it is listed there, the registry is the place that owns it.
+for (const [extensionPath, owner] of Object.entries(LOCAL_EXTENSION_ROUTES)) {
+  const exists = (() => {
+    try {
+      read(routeFileFor(extensionPath));
+      return true;
+    } catch {
+      return false;
+    }
+  })();
+  if (!exists) {
+    failures.push(`本地扩展路由登记过期：${extensionPath}（${owner}）已不存在`);
+  } else if (seen.has(extensionPath)) {
+    failures.push(
+      `本地扩展路由 ${extensionPath} 已进入 api_registry.json；应改由该契约文件登记，并从 LOCAL_EXTENSION_ROUTES 移除`,
+    );
+  } else {
+    notes.push(`本地扩展路由：${extensionPath}（${owner}），未在 api_registry.json 中登记`);
+  }
+}
+
 /* -------------------------------------------------------------------------- */
 /* 5. pages exist and use honest empty states (T012-R02)                      */
 /* -------------------------------------------------------------------------- */
@@ -210,8 +240,28 @@ for (const route of PAGE_ROUTES) {
 /* -------------------------------------------------------------------------- */
 
 const gitignore = read('.gitignore');
-for (const required of ['.data', '.env', 'node_modules']) {
-  if (!gitignore.includes(required)) {
+
+/**
+ * Does this ignore file cover `pattern` as a whole entry?
+ *
+ * A plain `includes` is not enough. `.includes('.data')` is satisfied by
+ * `/tests/e2e/.data/`, so the e2e scratch directory would keep the check green
+ * while the real `./.data` database became trackable. Entries are matched whole,
+ * after trimming spaces and a trailing `/`, which is how git reads them here.
+ */
+function ignoresEntry(pattern) {
+  return gitignore
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0 && !line.startsWith('#'))
+    .some((line) => {
+      const bare = line.replace(/^\/+/u, '').replace(/\/+$/u, '');
+      return bare === pattern || bare === `**/${pattern}`;
+    });
+}
+
+for (const required of ['.data', '.env*', 'node_modules']) {
+  if (!ignoresEntry(required)) {
     failures.push(`.gitignore 未忽略 ${required}`);
   }
 }
@@ -224,7 +274,14 @@ console.log(
   JSON.stringify(
     {
       ok: failures.length === 0,
-      routes: { implemented, pending, total: apiRegistry.endpoints.length },
+      // `implemented + pending` are per path while `endpoints` is per method, so
+      // report both totals rather than a `total` that does not add up.
+      routes: {
+        implemented,
+        pending,
+        paths: registryPaths.size,
+        endpointMethods: apiRegistry.endpoints.length,
+      },
       limitsChecked: Object.keys(limitsJson).length,
       errorCodesChecked: errorCodesJson.length,
       notes,

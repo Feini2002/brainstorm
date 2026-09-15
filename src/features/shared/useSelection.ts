@@ -48,6 +48,15 @@ export interface SelectionState {
   setVisible: (ids: readonly string[] | null) => void;
   /** Drop ids the server no longer has; returns the removed ids. */
   prune: (existingIds: readonly string[]) => string[];
+  /**
+   * Drop one id the client *knows* is gone, e.g. the record it just deleted.
+   *
+   * `prune` needs the full existing id list, which only a completed list read can
+   * provide. A delete can happen on a page that has no such read (the inbox), so
+   * without this the selection would keep a dead id until the user next visited
+   * the library — exactly the stale reference T021-R04 forbids.
+   */
+  dropDeleted: (id: string) => void;
   /** Clear the "removed" notice after the user has seen it. */
   acknowledgeRemoved: () => void;
 }
@@ -114,6 +123,15 @@ export function useSelectionStore(limit: number = SELECTION_LIMIT): SelectionSta
 
   const acknowledgeRemoved = useCallback(() => setRemovedIds([]), []);
 
+  const dropDeleted = useCallback((id: string) => {
+    const current = itemIdsRef.current;
+    if (!current.includes(id)) return;
+    setItemIds(current.filter((entry) => entry !== id));
+    // Reported like `prune` does: a selected item disappearing from the send
+    // scope must be explained, not silent (T021-C04).
+    setRemovedIds((previous) => (previous.includes(id) ? previous : [...previous, id]));
+  }, []);
+
   const prune = useCallback((existingIds: readonly string[]) => {
     const existing = new Set(existingIds);
     const removed = itemIdsRef.current.filter((id) => !existing.has(id));
@@ -142,12 +160,14 @@ export function useSelectionStore(limit: number = SELECTION_LIMIT): SelectionSta
       wouldExceed: (additional: number) => itemIds.length + additional > limit,
       setVisible,
       prune,
+      dropDeleted,
       acknowledgeRemoved,
     };
   }, [
     acknowledgeRemoved,
     add,
     clear,
+    dropDeleted,
     itemIds,
     limit,
     prune,

@@ -293,6 +293,20 @@ export const generationRequestSchema = z.strictObject({
 
 export type GenerationRequestInput = z.input<typeof generationRequestSchema>;
 
+/**
+ * Export format for `GET /api/views/{id}/export` (T060).
+ *
+ * A closed set rather than a free string: the registry types the response as
+ * `File`, and a caller asking for `format=pdf` must get a clear refusal instead of
+ * an empty download that looks like a broken PDF (T060-C06 「不能用不可用按钮制造
+ * 完整感」). Defaults to markdown, the format a person is most likely to want.
+ */
+export const viewExportQuerySchema = z.strictObject({
+  format: z.enum(['markdown', 'json']).default('markdown'),
+});
+
+export type ViewExportQueryInput = z.input<typeof viewExportQuerySchema>;
+
 export const flowGenerationRequestSchema = z.strictObject({
   requestKey: uuidSchema,
   selection: explicitSelectionSchema,
@@ -363,6 +377,29 @@ export const editViewSchema = z.strictObject({
 });
 
 export type EditViewInput = z.input<typeof editViewSchema>;
+
+/**
+ * Focused layout-save body (T047).
+ *
+ * Carries only what a debounced drag commit knows: the revision it started from,
+ * the positions it changed, and optionally the direction/viewport. It is
+ * deliberately not `EditView` — a drag must not be able to rename a view as a
+ * side effect of a typo in an unrelated field.
+ */
+export const saveGraphLayoutSchema = z.strictObject({
+  expectedRevision: z.int().nonnegative(),
+  positions: z.record(uuidSchema, z.strictObject({ x: coordinateSchema, y: coordinateSchema })),
+  direction: directionSchema.optional(),
+  viewport: z
+    .strictObject({
+      x: coordinateSchema,
+      y: coordinateSchema,
+      zoom: z.number().finite().min(LIMITS.viewZoomMin).max(LIMITS.viewZoomMax),
+    })
+    .optional(),
+});
+
+export type SaveGraphLayoutBody = z.input<typeof saveGraphLayoutSchema>;
 
 export const viewListQuerySchema = z.strictObject({
   kind: viewKindSchema.optional(),

@@ -82,6 +82,14 @@ export interface UseCaptureApi {
   organizeOutcome: OrganizeOutcome | null;
   /** Outcome text for the status line. */
   notice: string | null;
+  /**
+   * Advice that belongs with the draft: save stored but organize not run, or the
+   * last failure. Kept in the draft store so navigating away does not erase the
+   * explanation (T024-R04). Never blocks input (T025-R06).
+   */
+  inputHint: string | null;
+  /** Record a hint that must survive navigation, e.g. "model not configured". */
+  setInputHint: (value: string | null) => void;
   submit: () => Promise<void>;
   /** Re-send the last submission with the same key (idempotent replay). */
   retry: () => Promise<void>;
@@ -98,9 +106,19 @@ interface DraftSnapshot {
   text: string;
   sourceType: CaptureSourceType;
   sourceRef: string;
+  /**
+   * Durable hint that belongs next to the input rather than in a transient
+   * status line (T024-R04).
+   *
+   * Two facts need to survive navigation: the text was stored but organizing was
+   * never run, and the model connection is unusable. Both are about *what the
+   * user should do next with this draft*, so they live with the draft instead of
+   * vanishing when the user visits the library and comes back.
+   */
+  inputHint: string | null;
 }
 
-const EMPTY_DRAFT: DraftSnapshot = { text: '', sourceType: 'other', sourceRef: '' };
+const EMPTY_DRAFT: DraftSnapshot = { text: '', sourceType: 'other', sourceRef: '', inputHint: null };
 let draftSnapshot: DraftSnapshot = EMPTY_DRAFT;
 const draftListeners = new Set<() => void>();
 
@@ -150,7 +168,7 @@ export function newCaptureRequestId(): string {
 
 export function useCapture(options: UseCaptureOptions = {}): UseCaptureApi {
   const draftState = useSyncExternalStore(subscribeDraft, getDraft, getServerDraft);
-  const { text: draft, sourceType, sourceRef } = draftState;
+  const { text: draft, sourceType, sourceRef, inputHint } = draftState;
 
   const [phase, setPhase] = useState<CapturePhase>('idle');
   const [error, setError] = useState<ApiClientError | null>(null);
@@ -171,10 +189,27 @@ export function useCapture(options: UseCaptureOptions = {}): UseCaptureApi {
   useEffect(() => {
     draftRevisionRef.current = draftRevision;
   }, [draftRevision]);
+  // Read by `submit`, which runs from an event handler and must see the current
+  // phase without being re-created on every phase change.
+  const phaseRef = useRef(phase);
+  useEffect(() => {
+    phaseRef.current = phase;
+  }, [phase]);
 
+  /**
+   * Update the draft text.
+   *
+   * Typing the next note also retires the advice about the previous one. The hint
+   * is deliberately *not* cleared by a successful save: "保存并整理" without a
+   * model writes the hint while the save is still in flight, and the create
+   * response arriving afterwards would immediately erase the explanation the user
+   * just asked for (T013-R06). The hint describes the last submission, so the
+   * right moment to drop it is when a different submission begins — which is here.
+   */
   const setDraft = useCallback((value: string) => {
     patchDraft({ text: value });
     setDraftRevision((current) => current + 1);
+    if (draftSnapshot.inputHint !== null) patchDraft({ inputHint: null });
   }, []);
 
   const setSourceType = useCallback((value: CaptureSourceType) => {
@@ -183,6 +218,10 @@ export function useCapture(options: UseCaptureOptions = {}): UseCaptureApi {
 
   const setSourceRef = useCallback((value: string) => {
     patchDraft({ sourceRef: value });
+  }, []);
+
+  const setInputHint = useCallback((value: string | null) => {
+    patchDraft({ inputHint: value });
   }, []);
 
   /** The submission awaiting a definitive outcome, if any. */
@@ -247,6 +286,7 @@ export function useCapture(options: UseCaptureOptions = {}): UseCaptureApi {
             await options.organize(result.item);
             if (!mountedRef.current) return;
             setOrganizeOutcome({ ok: true, message: '整理完成' });
+            patchDraft({ inputHint: null });
           } catch (caught) {
             if (!mountedRef.current) return;
             setOrganizeOutcome({
@@ -255,6 +295,12 @@ export function useCapture(options: UseCaptureOptions = {}): UseCaptureApi {
                 caught instanceof ApiClientError
                   ? `原文已保存，但整理未完成：${caught.message}`
                   : '原文已保存，但整理未完成',
+            });
+            // T024-R04 / T025-R04: the AI step failed, the note did not. Put that
+            // beside the input so it survives navigation, and say what still works.
+            patchDraft({
+              inputHint:
+                '这条原文已经保存，只是自动整理没完成。你仍可以继续记录、改标签、建立关系；稍后在资料库里重新整理这一条即可。',
             });
           }
         }
@@ -266,6 +312,13 @@ export function useCapture(options: UseCaptureOptions = {}): UseCaptureApi {
           if (caught.code === 'CAPTURE_KEY_CONFLICT') pendingRef.current = null;
           // The server may have committed; the user retries the same key.
           setPhase(caught.retryable ? 'unknown' : 'failed');
+          // Persisted with the draft so the explanation cannot be lost by
+          // navigating away mid-problem (T024-R04).
+          patchDraft({
+            inputHint: caught.retryable
+              ? '这次的保存结果还不确定。重试会复用同一次请求，不会重复创建；你也可以先复制文本再离开。'
+              : `这次没能保存：${caught.message}。文本仍在下面，可以直接重试。`,
+          });
           return;
         }
         setError(
@@ -281,10 +334,19 @@ export function useCapture(options: UseCaptureOptions = {}): UseCaptureApi {
     [options],
   );
 
+  /**
+   * The in-flight guard lives here, not only on the disabled button.
+   *
+   * Ctrl+Enter calls `submit` directly, so a keyboard shortcut could otherwise
+   * start a second capture with a fresh key while the first is still saving —
+   * producing two records from one thought. Rejecting here keeps the button and
+   * the shortcut on one rule.
+   */
   const submit = useCallback(async () => {
     const snapshot = snapshotRef.current;
     const text = snapshot.text;
     if (text.trim().length === 0 || codePointLength(text) > LIMITS.rawTextCodePoints) return;
+    if (phaseRef.current === 'saving') return;
     const key = newCaptureRequestId();
     const revision = draftRevisionRef.current;
     pendingRef.current = { key, text, revision };
@@ -309,6 +371,7 @@ export function useCapture(options: UseCaptureOptions = {}): UseCaptureApi {
     setOrganizeOutcome(null);
     setLastSubmittedText(null);
     setPhase('idle');
+    patchDraft({ inputHint: null });
   }, []);
 
   return {
@@ -327,6 +390,8 @@ export function useCapture(options: UseCaptureOptions = {}): UseCaptureApi {
     outcome,
     organizeOutcome,
     notice,
+    inputHint,
+    setInputHint,
     submit,
     retry,
     dismissError,

@@ -1,0 +1,66 @@
+{
+  "$comment": "T052-R04 关系图异常样本：环、孤立节点、多分量、长标题、稀疏图，以及一个超过画布预算的规模描述。gate3.spec.ts 按 id 读取这里的原文，把它当作输入数据而不是注释；tests/fixtures/crud-seed.json 继续负责通用 CRUD 样本，两者分工不同。",
+  "cycle": {
+    "$comment": "T052-C04：A→B→C→A。三个节点互相成环，是布局引擎真正会遇到的形状；`extends` 是有向的，所以边的方向不需要额外排序。",
+    "items": [
+      {
+        "id": "cycle-a",
+        "rawText": "T052 环样本 A：把「收集」当成起点，但它并不是整条链路的起点。"
+      },
+      {
+        "id": "cycle-b",
+        "rawText": "T052 环样本 B：真正决定第二次是否还会被找回来的，是记录之间的连接。"
+      },
+      {
+        "id": "cycle-c",
+        "rawText": "T052 环样本 C：连接本身也需要被记录，否则三个节点之间只剩两条单向边。"
+      }
+    ],
+    "edges": [
+      { "sourceId": "cycle-a", "targetId": "cycle-b", "type": "extends" },
+      { "sourceId": "cycle-b", "targetId": "cycle-c", "type": "extends" },
+      { "sourceId": "cycle-c", "targetId": "cycle-a", "type": "related_to" }
+    ]
+  },
+  "isolated": {
+    "$comment": "T052-C04：与上面三个节点没有任何关系，和它们放进同一张视图会形成第二个连通分量。它必须被画出来而不是被布局丢掉。",
+    "id": "isolated-node",
+    "rawText": "T052 孤立节点：这条记录刻意不与任何别的记录建立关系，用来确认孤点不会被布局吞掉。"
+  },
+  "multiComponent": {
+    "$comment": "T052-C04：第二条连通分量，由两条相连的边组成，和 cycle 之间没有边。",
+    "items": [
+      {
+        "id": "component-two-x",
+        "rawText": "T052 第二分量 X：与环样本无关的一条支线，用来制造多个连通分量。"
+      },
+      {
+        "id": "component-two-y",
+        "rawText": "T052 第二分量 Y：它只与 X 相连，因此整张图会出现两个互不相连的部分。"
+      }
+    ],
+    "edges": [{ "sourceId": "component-two-x", "targetId": "component-two-y", "type": "causes" }]
+  },
+  "longTitle": {
+    "$comment": "T052-R04：标题长度顶到契约上限（limits.titleCodePoints，100 个码点），远超节点宽度。截断发生在 CSS 层（line-clamp-2），所以完整标题必须保留在节点原生 title、aria-label 与降级标签里 —— 用例断言这三件事，而不是一个固定字数。title 是人工可编辑字段（MANUAL_FIELDS），用例通过 PATCH 写入，不依赖模型整理。",
+    "id": "long-title",
+    "title": "T052 超长标题样本：这是一条刻意写得很长的标题，用来确认节点在画布上的高度和宽度受限时不会把布局整个撑歪，也不会因为截断而丢掉可以回溯的完整名称，用户在资料库和关系详情里仍然能看到它原本的样子。",
+    "rawText": "T052 超长标题样本的原文。标题可以很长，但真正被关系引用的是这段原文。"
+  },
+  "sparse": {
+    "$comment": "T052-R04 的稀疏一端：一条没有任何关系的记录。它和上面的密集样本放在一起，用来验证同一份读取路径对 0 条边和 3 条边都不需要特殊分支。",
+    "id": "sparse-only",
+    "rawText": "T052 稀疏样本：整张图只有这一条记录、零条关系时，页面也必须能用。"
+  },
+  "overBudget": {
+    "$comment": "T052-R04 的超限样本。数字来自 reference/contracts/limits.json，不在这里重复写死；用例用 limit 生成「刚好等于上限」的数据，再确认 truncated 与 shown/matched 两个计数。",
+    "limitKey": "graphNodes",
+    "edgeLimitKey": "graphEdges",
+    "prefix": "T052 超限节点",
+    "expectTruncated": true
+  },
+  "dangerousLabel": {
+    "$comment": "原样保留 <b> 与 & 这些字符，用来确认节点标签是按文本渲染而不是按 HTML 渲染（T050 可读性要求）。",
+    "text": "T052 标签转义样本：<b>不是粗体</b>，&amp; 也不是连接符，原样显示即可。"
+  }
+}

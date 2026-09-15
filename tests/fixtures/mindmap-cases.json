@@ -1,0 +1,129 @@
+{
+  "$comment": "T061 验收样本：把脑图生成链路上「模型可能返回的形状」固化成数据。gate4.spec.ts 把每一段 original 字符串当作真实模型答案逐字送入服务端的解析入口（tests/helpers/modelAnswers.ts），因此这些不是注释、也不是用来喂给页面看的假数据。tests/fixtures/graph-cases.json 继续负责关系图的形状，两者分工不同。",
+  "$shape": {
+    "valid": "合法答案：{ title, nodes[] }，节点形如 { id, parentId, label, itemIds, kind }。nodes 里用占位符 $A/$B/$C 表示「本次选中的第 N 条来源 id」，由用例在运行时替换成真实 UUID —— 样本本身不携带 id，避免样本与真实数据脱钩。",
+    "invalid": "结构非法答案：同为 { title, nodes[] }，但违反某条结构规则。expectMessage 是要在服务端错误文本里出现的片段，用于确认拒绝的是这条规则而不是别的原因。"
+  },
+  "valid": {
+    "singleSource": {
+      "$comment": "T061-C01：只选一条资料。合法的答案可以很小 —— 三个来源时也不能凭空扩写出十条分支。",
+      "title": "只有一个起点",
+      "nodes": [
+        { "id": "m1", "parentId": null, "label": "只有一个起点", "itemIds": ["$A"], "kind": "group" },
+        { "id": "m2", "parentId": "m1", "label": "先写问题再写方案", "itemIds": ["$A"], "kind": "note" }
+      ]
+    },
+    "multiSource": {
+      "$comment": "T061-C01：三条来源，其中一条被两个分支引用（重复引用而不是复制条目）。",
+      "title": "材料到视图",
+      "nodes": [
+        { "id": "m1", "parentId": null, "label": "材料到视图", "itemIds": ["$A", "$B", "$C"], "kind": "group" },
+        { "id": "m2", "parentId": "m1", "label": "收集这一步", "itemIds": ["$A"], "kind": "note" },
+        { "id": "m3", "parentId": "m1", "label": "连接这一步", "itemIds": ["$B"], "kind": "note" },
+        { "id": "m4", "parentId": "m1", "label": "同一条材料的另一个角度", "itemIds": ["$A"], "kind": "note" },
+        { "id": "m5", "parentId": "m4", "label": "第三份材料只出现在这里", "itemIds": ["$C"], "kind": "note" }
+      ]
+    },
+    "htmlLabel": {
+      "$comment": "T061-R02：标签里带 HTML 标签与 Markdown 图片语法。合法答案必须是合法的 —— 转义是编译期的责任，不是拒绝的理由。",
+      "title": "带标签的标题 <b>不该加粗</b>",
+      "nodes": [
+        { "id": "m1", "parentId": null, "label": "带标签的标题 <b>不该加粗</b>", "itemIds": ["$A"], "kind": "group" },
+        {
+          "id": "m2",
+          "parentId": "m1",
+          "label": "<img src=x onerror=alert(1)> 与 ![偷图](http://evil.example/tracker.png)",
+          "itemIds": ["$A"],
+          "kind": "note"
+        }
+      ]
+    },
+    "maxDepth": {
+      "$comment": "T061-R02：正好顶到 5 层（根算第 1 层）。刚好等于上限必须通过，多一层才该被拒。",
+      "title": "正好五层",
+      "nodes": [
+        { "id": "m1", "parentId": null, "label": "第一层", "itemIds": ["$A"], "kind": "group" },
+        { "id": "m2", "parentId": "m1", "label": "第二层", "itemIds": ["$A"], "kind": "group" },
+        { "id": "m3", "parentId": "m2", "label": "第三层", "itemIds": ["$A"], "kind": "group" },
+        { "id": "m4", "parentId": "m3", "label": "第四层", "itemIds": ["$A"], "kind": "group" },
+        { "id": "m5", "parentId": "m4", "label": "第五层", "itemIds": ["$A"], "kind": "note" }
+      ]
+    }
+  },
+  "invalid": {
+    "cycle": {
+      "$comment": "T061-C03：替身输出有环的树。m2 与 m3 互为父节点，两者都不在从根出发的链路上。",
+      "title": "有环的答案",
+      "nodes": [
+        { "id": "m1", "parentId": null, "label": "根", "itemIds": ["$A"], "kind": "group" },
+        { "id": "m2", "parentId": "m3", "label": "环上的甲", "itemIds": ["$A"], "kind": "note" },
+        { "id": "m3", "parentId": "m2", "label": "环上的乙", "itemIds": ["$B"], "kind": "note" }
+      ],
+      "expectMessage": "环"
+    },
+    "pureCycle": {
+      "$comment": "T061-C03：整张图没有根，每个节点都在环里。递归渲染器遇到它就没有起点。",
+      "title": "没有根的答案",
+      "nodes": [
+        { "id": "m1", "parentId": "m2", "label": "甲", "itemIds": ["$A"], "kind": "note" },
+        { "id": "m2", "parentId": "m1", "label": "乙", "itemIds": ["$B"], "kind": "note" }
+      ],
+      "expectMessage": "根"
+    },
+    "danglingParent": {
+      "$comment": "T061-R02：悬空子树。m2 指向一个不存在的父节点，它永远不会出现在任何遍历里。",
+      "title": "悬空的答案",
+      "nodes": [
+        { "id": "m1", "parentId": null, "label": "根", "itemIds": ["$A"], "kind": "group" },
+        { "id": "m2", "parentId": "m9", "label": "父节点不存在", "itemIds": ["$A"], "kind": "note" }
+      ],
+      "expectMessage": "父节点不存在"
+    },
+    "duplicateId": {
+      "$comment": "T061-R02：重复 id。同一个 id 出现两次会让「这个节点的子节点是谁」变成未定义，因此必须在这里就被挡住，而不是让浏览器渲染出一棵错位的树。",
+      "title": "重复 id 的答案",
+      "nodes": [
+        { "id": "m1", "parentId": null, "label": "根", "itemIds": ["$A"], "kind": "group" },
+        { "id": "m2", "parentId": "m1", "label": "重复甲", "itemIds": ["$A"], "kind": "note" },
+        { "id": "m2", "parentId": "m1", "label": "重复乙", "itemIds": ["$B"], "kind": "note" }
+      ],
+      "expectMessage": "重复"
+    },
+    "toolDeep": {
+      "$comment": "T061-R02：超出 5 层。第六层只挂一个叶节点，确保被拒的原因是深度而不是别的。",
+      "title": "太深了",
+      "nodes": [
+        { "id": "m1", "parentId": null, "label": "第一层", "itemIds": ["$A"], "kind": "group" },
+        { "id": "m2", "parentId": "m1", "label": "第二层", "itemIds": ["$A"], "kind": "group" },
+        { "id": "m3", "parentId": "m2", "label": "第三层", "itemIds": ["$A"], "kind": "group" },
+        { "id": "m4", "parentId": "m3", "label": "第四层", "itemIds": ["$A"], "kind": "group" },
+        { "id": "m5", "parentId": "m4", "label": "第五层", "itemIds": ["$A"], "kind": "group" },
+        { "id": "m6", "parentId": "m5", "label": "第六层", "itemIds": ["$A"], "kind": "note" }
+      ],
+      "expectMessage": "层"
+    },
+    "unselectedSource": {
+      "$comment": "T061-R02：无效 ID。叶节点引用了本次没有选中的来源 —— 这正是「模型自己补了一条事实」的形状。$UNSELECTED 由用例替换成一条真实存在但未选中的条目 id，而不是一个凭空编的 UUID，这样被拒的原因就只能是「不在选择里」。",
+      "title": "引用未选来源的答案",
+      "nodes": [
+        { "id": "m1", "parentId": null, "label": "根", "itemIds": ["$A"], "kind": "group" },
+        { "id": "m2", "parentId": "m1", "label": "引用未选中的资料", "itemIds": ["$UNSELECTED"], "kind": "note" }
+      ],
+      "expectMessage": "不在本次选择中"
+    },
+    "sourceFreeLeaf": {
+      "$comment": "T061-R02：只有分组、没有任何可回溯来源的答案。所有节点都是 group，整棵树没有任何 note 支撑。",
+      "title": "没有来源的答案",
+      "nodes": [
+        { "id": "m1", "parentId": null, "label": "根", "itemIds": ["$A"], "kind": "group" },
+        { "id": "m2", "parentId": "m1", "label": "凭空主题", "itemIds": ["$A"], "kind": "group" }
+      ],
+      "expectMessage": "没有可回溯的来源"
+    },
+    "notJson": {
+      "$comment": "T061-R03：不是 JSON。服务端必须先拒绝它，而不是把整段文字塞进某个字段。",
+      "raw": "这张脑图我这样理解：先收集，再连接，最后回看。",
+      "expectMessage": "JSON"
+    }
+  }
+}

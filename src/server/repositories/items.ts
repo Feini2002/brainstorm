@@ -53,7 +53,7 @@ const ITEM_WITH_TAGS_SQL = `
 `;
 
 export function findItemRow(db: DatabaseSync, id: UUID): Record<string, unknown> | null {
-  const row = db.prepare(`${ITEM_WITH_TAGS_SQL} WHERE id = ?`).get(id) as
+  const row = db.prepare(`${ITEM_WITH_TAGS_SQL} WHERE knowledge_items.id = ?`).get(id) as
     | Record<string, unknown>
     | undefined;
   return row ?? null;
@@ -87,7 +87,7 @@ export function findByCaptureRequestId(
   captureRequestId: UUID,
 ): { item: ItemDTO; captureRequestHash: string } | null {
   const row = db
-    .prepare(`${ITEM_WITH_TAGS_SQL} WHERE capture_request_id = ?`)
+    .prepare(`${ITEM_WITH_TAGS_SQL} WHERE knowledge_items.capture_request_id = ?`)
     .get(captureRequestId) as Record<string, unknown> | undefined;
   if (!row) return null;
   return {
@@ -238,9 +238,9 @@ export interface ListItemsResult {
 }
 
 const SORT_SQL: Record<CursorPayload['sort'], { order: string; column: string }> = {
-  newest: { order: 'DESC', column: 'created_at' },
-  oldest: { order: 'ASC', column: 'created_at' },
-  importance: { order: 'DESC', column: 'importance' },
+  newest: { order: 'DESC', column: 'knowledge_items.created_at' },
+  oldest: { order: 'ASC', column: 'knowledge_items.created_at' },
+  importance: { order: 'DESC', column: 'knowledge_items.importance' },
 };
 
 export interface ListItemsInput {
@@ -291,13 +291,17 @@ export function listItems(db: DatabaseSync, input: ListItemsInput): ListItemsRes
     .get(...params) as { total: number } | undefined;
   const totalMatched = Number(countRow?.total ?? 0);
 
+  // The cursor predicate is a WHERE condition like any other, so it is pushed
+  // into the same list. Concatenating it separately produced `... FROM t AND (...)`
+  // whenever no other filter was set (a real syntax error on page 2 of an
+  // unfiltered list), so both fragments now share one `WHERE` builder.
   const cursorParams: (string | number)[] = [];
-  let cursorClause = '';
   if (input.cursor) {
     const comparison = sortSpec.order === 'DESC' ? '<' : '>';
-    cursorClause =
-      ` AND (${sortSpec.column} ${comparison} ? ` +
-      `OR (${sortSpec.column} = ? AND knowledge_items.id ${comparison} ?))`;
+    where.push(
+      `(${sortSpec.column} ${comparison} ? ` +
+        `OR (${sortSpec.column} = ? AND knowledge_items.id ${comparison} ?))`,
+    );
     cursorParams.push(input.cursor.sortValue, input.cursor.sortValue, input.cursor.id);
   }
 
@@ -305,7 +309,7 @@ export function listItems(db: DatabaseSync, input: ListItemsInput): ListItemsRes
   const rows = db
     .prepare(
       `${ITEM_WITH_TAGS_SQL}
-        ${where.length > 0 ? `WHERE ${where.join(' AND ')}` : ''}${cursorClause}
+        ${where.length > 0 ? `WHERE ${where.join(' AND ')}` : ''}
         ORDER BY ${sortSpec.column} ${sortSpec.order}, knowledge_items.id ${sortSpec.order}
         LIMIT ?`,
     )
@@ -318,7 +322,9 @@ export function listItems(db: DatabaseSync, input: ListItemsInput): ListItemsRes
   let nextCursor: string | null = null;
   if (hasMore && pageRows.length > 0) {
     const last = pageRows[pageRows.length - 1];
-    const sortColumn = sortSpec.column;
+    // `sortColumn` is qualified (`knowledge_items.created_at`), while the row
+    // object is keyed by the bare column name, so the prefix is stripped here.
+    const sortColumn = sortSpec.column.split('.').pop() as string;
     const sortValueRaw = last[sortColumn];
     nextCursor = encodeCursor({
       sort: input.sort,
@@ -375,6 +381,89 @@ export function filterHash(filters: ItemListFilters, sort: CursorPayload['sort']
     tagId: filters.tagId ?? null,
     sort,
   });
+}
+
+/**
+ * Which of the supplied ids still exist.
+ *
+ * Used to bound a layout write: only live ids may keep a stored coordinate
+ * (T047-R04). This asks about the exact ids in the request instead of reading a
+ * page of items, because a page is capped by `limit` and would misreport every
+ * valid coordinate beyond the cap as "vanished". Ids are chunked so the statement
+ * stays well inside SQLite's bound-parameter limit.
+ */
+export function existingItemIds(db: DatabaseSync, ids: readonly string[]): Set<string> {
+  const unique = [...new Set(ids)];
+  const found = new Set<string>();
+  const CHUNK = 400;
+  for (let start = 0; start < unique.length; start += CHUNK) {
+    const chunk = unique.slice(start, start + CHUNK);
+    const placeholders = chunk.map(() => '?').join(', ');
+    const rows = db
+      .prepare(`SELECT id FROM knowledge_items WHERE id IN (${placeholders})`)
+      .all(...chunk) as { id: string }[];
+    for (const row of rows) found.add(String(row.id));
+  }
+  return found;
+}
+
+/**
+ * Read exactly the requested items, in the order the ids were given.
+ *
+ * A saved View's explicit selection is a *set of ids*, and the list endpoint is
+ * a *page ordered by recency*. Using the page to resolve the set made every
+ * selected item that fell outside the newest N rows look deleted — the view
+ * reported it as a missing source, and the graph silently dropped a node the
+ * user had deliberately saved. Reading by id removes the ceiling entirely.
+ *
+ * Unknown ids are simply absent from the result: "the item is gone" is a fact
+ * the caller decides how to report, not an error here.
+ */
+export function listItemsByIds(db: DatabaseSync, ids: readonly UUID[]): ItemDTO[] {
+  const unique = [...new Set(ids)];
+  if (unique.length === 0) return [];
+  const byId = new Map<string, ItemDTO>();
+  const CHUNK = 400;
+  for (let start = 0; start < unique.length; start += CHUNK) {
+    const chunk = unique.slice(start, start + CHUNK);
+    const placeholders = chunk.map(() => '?').join(', ');
+    const rows = db
+      .prepare(`${ITEM_WITH_TAGS_SQL} WHERE knowledge_items.id IN (${placeholders})`)
+      .all(...chunk) as Record<string, unknown>[];
+    for (const row of rows) {
+      const item = rowToItem(row);
+      byId.set(item.id, item);
+    }
+  }
+  // Preserve the caller's order so a snapshot's item list stays reproducible.
+  return unique.map((id) => byId.get(id)).filter((item): item is ItemDTO => item !== undefined);
+}
+
+/** Versions of exactly the requested items; absent ids mean the item is gone. */
+export function readItemVersionsByIds(
+  db: DatabaseSync,
+  ids: readonly UUID[],
+): Map<string, { rawVersion: number; revision: number }> {
+  const unique = [...new Set(ids)];
+  const result = new Map<string, { rawVersion: number; revision: number }>();
+  if (unique.length === 0) return result;
+  const CHUNK = 400;
+  for (let start = 0; start < unique.length; start += CHUNK) {
+    const chunk = unique.slice(start, start + CHUNK);
+    const placeholders = chunk.map(() => '?').join(', ');
+    const rows = db
+      .prepare(
+        `SELECT id, raw_version, revision FROM knowledge_items WHERE id IN (${placeholders})`,
+      )
+      .all(...chunk) as { id: string; raw_version: number; revision: number }[];
+    for (const row of rows) {
+      result.set(String(row.id), {
+        rawVersion: Number(row.raw_version),
+        revision: Number(row.revision),
+      });
+    }
+  }
+  return result;
 }
 
 /** Tags for an item, ordered by position. */

@@ -20,6 +20,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ItemDTO } from '@/domain/knowledge';
 import { ITEM_STATUS_LABELS, ITEM_TYPE_LABELS } from '@/domain/knowledge';
 import type { ManualField } from '@/domain/knowledge';
+import { runStateLabel } from '@/domain/runDto';
+import type { RunResult } from '@/domain/api';
 import { Button, InlineError, LoadingIndicator } from '@/components/ui/primitives';
 import { ApiClientError, apiRequest } from '@/features/shared/apiClient';
 import { DeleteItemDialog } from '@/features/shared/DeleteItemDialog';
@@ -28,6 +30,8 @@ import { RelationReviewPanel } from '@/features/shared/RelationReviewPanel';
 import { SourceReference } from '@/features/shared/SourceReference';
 import { StatusLine } from '@/features/shared/MutationStatus';
 import { formatTime } from '@/features/shared/formatTime';
+import { useRunStatus } from '@/features/shared/useRunStatus';
+import { RunDiagnosticsPanel } from '@/features/settings/RunDiagnostics';
 import { EditItemForm, type EditPatch } from '@/features/library/EditItemForm';
 
 export interface KnowledgeDrawerProps {
@@ -50,8 +54,66 @@ export function KnowledgeDrawer({ itemId, onClose, onChanged }: KnowledgeDrawerP
   const [saveNotice, setSaveNotice] = useState<string | null>(null);
   const [relationNotice, setRelationNotice] = useState<string | null>(null);
   const [relationRefresh, setRelationRefresh] = useState(0);
+  /**
+   * The organize run started from this drawer.
+   *
+   * Kept here so two things can happen together: the run is watched while it is
+   * in flight (T040-R06 — the drawer stays open and the status line reports the
+   * real state), and when it settles the record is re-read so the user sees the
+   * organized fields without reloading the page.
+   */
+  const [organizeRunId, setOrganizeRunId] = useState<string | null>(null);
+  const [organizing, setOrganizing] = useState(false);
   // Bumped by the retry button; state is only written from the async continuation.
   const [loadToken, setLoadToken] = useState(0);
+
+  const rereadItem = useCallback(async () => {
+    const loaded = await apiRequest<ItemDTO>(`/api/items/${itemId}`);
+    setItem(loaded);
+  }, [itemId]);
+
+  /**
+   * One organize attempt, started by the user from the detail drawer.
+   *
+   * A fresh request key makes this a new paid action; a retry after a failure is
+   * therefore deliberate rather than automatic (T035-C05). The drawer does not
+   * wait on the response to update its status: the run id comes back first when
+   * another call already holds the slot, and `useRunStatus` then reports the real
+   * outcome — which is what stops a reload from looking like a lost operation.
+   */
+  const organize = useCallback(async () => {
+    if (!item || organizing) return;
+    setOrganizing(true);
+    setSaveNotice(null);
+    try {
+      const result = await apiRequest<RunResult>(`/api/items/${item.id}/organize`, {
+        method: 'POST',
+        body: { requestKey: crypto.randomUUID(), expectedRevision: item.revision },
+      });
+      setOrganizeRunId(result.runId);
+      if (result.state !== 'running') {
+        await rereadItem();
+        onChanged?.({ id: item.id, deleted: false });
+      }
+    } catch (caught) {
+      setSaveNotice(
+        caught instanceof ApiClientError ? `整理未完成：${caught.message}` : '整理未完成',
+      );
+    } finally {
+      setOrganizing(false);
+    }
+  }, [item, organizing, onChanged, rereadItem]);
+
+  const runStatus = useRunStatus({
+    runId: organizeRunId,
+    onSettled: (run) => {
+      // Terminal state reached: re-read the record so the organized fields and
+      // the derived status on screen match what was actually committed.
+      if (run.state === 'succeeded') {
+        void rereadItem().then(() => onChanged?.({ id: itemId, deleted: false }));
+      }
+    },
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -248,6 +310,33 @@ export function KnowledgeDrawer({ itemId, onClose, onChanged }: KnowledgeDrawerP
             />
 
             <StatusLine message={saveNotice} />
+
+            {/*
+              The organize action lives here because this is where the user is
+              looking at one record and deciding whether it needs the model. While
+              the run is in flight the status line reports the *run's* state, not
+              a local guess: that is what makes "关掉页面不会自动整理完" honest
+              (T040-R06) instead of a spinner that claims progress it cannot see.
+            */}
+            <section className="flex flex-col gap-2" data-testid="drawer-organize-section">
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  variant="secondary"
+                  data-testid="drawer-organize"
+                  disabled={organizing || runStatus.polling}
+                  onClick={() => void organize()}
+                >
+                  {organizing ? '整理中…' : runStatus.polling ? '正在等待模型…' : '用模型整理这一条'}
+                </Button>
+                {runStatus.run ? (
+                  <span className="text-xs text-[var(--ink-muted)]" data-testid="drawer-run-state">
+                    运行状态：{runStateLabel(runStatus.run.state)}
+                  </span>
+                ) : null}
+              </div>
+              {runStatus.error ? <InlineError message={runStatus.error.message} /> : null}
+              {organizeRunId ? <RunDiagnosticsPanel runId={organizeRunId} /> : null}
+            </section>
 
             {editing ? (
               <EditItemForm

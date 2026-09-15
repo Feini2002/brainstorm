@@ -41,4 +41,6 @@ Node24受支持范围 + Next16/React/TypeScript/Tailwind；Node内置SQLite；Zo
 
 ## 7. 当前起点
 
-[当前任务](implementation/progress/NEXT_TASK.md)；[初始进度](implementation/progress/tasks.initial.json)；[任务机器清单](reference/contracts/tasks.json)。开始T001后按AGENTS协议逐项推进，不跳到最后的“生成所有页面”。
+[当前任务](implementation/progress/NEXT_TASK.md)；[初始进度](implementation/progress/tasks.initial.json)；[当前状态](implementation/progress/tasks.current.json)；[任务机器清单](reference/contracts/tasks.json)。开始T001后按AGENTS协议逐项推进，不跳到最后的“生成所有页面”。
+
+实施现状：G0（T001–T012）与 G1（T013–T026）已验收并有运行证据，报告见 [docs/progress](docs/progress/)。G2 起仍在推进。`tasks.initial.json` 是实施前的起跑状态，不随实施修改；实际完成情况查 `tasks.current.json`。
