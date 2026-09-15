@@ -4,19 +4,21 @@
   "tasks": [
     {
       "id": "T001",
-      "status": "implemented",
+      "status": "verified",
       "evidence": [
         "docs/progress/G0.md",
-        "implementation/progress/evidence/G0.md"
+        "implementation/progress/evidence/G012_audit.md",
+        "tests/unit/doctor.test.ts"
       ],
       "blockedBy": []
     },
     {
       "id": "T002",
-      "status": "implemented",
+      "status": "verified",
       "evidence": [
         "docs/progress/G0.md",
-        "implementation/progress/evidence/G0.md"
+        "implementation/progress/evidence/G0.md",
+        "tests/integration/dependencies.test.ts"
       ],
       "blockedBy": []
     },
@@ -58,55 +60,63 @@
     },
     {
       "id": "T007",
-      "status": "implemented",
+      "status": "verified",
       "evidence": [
         "docs/progress/G0.md",
-        "implementation/progress/evidence/G0.md"
+        "implementation/progress/evidence/G0.md#5-t007-本地请求令牌与来源防护可归属证据2026-09-15-复核",
+        "tests/integration/security-http.test.ts",
+        "tests/unit/session-client.test.ts",
+        "tests/e2e/gate4.spec.ts#T061-C02"
       ],
       "blockedBy": []
     },
     {
       "id": "T008",
-      "status": "implemented",
+      "status": "verified",
       "evidence": [
         "docs/progress/G0.md",
-        "implementation/progress/evidence/G0.md"
+        "implementation/progress/evidence/G012_audit.md",
+        "tests/integration/database-runtime.test.ts"
       ],
       "blockedBy": []
     },
     {
       "id": "T009",
-      "status": "implemented",
+      "status": "verified",
       "evidence": [
         "docs/progress/G0.md",
-        "implementation/progress/evidence/G0.md"
+        "implementation/progress/evidence/G012_audit.md",
+        "tests/integration/database-runtime.test.ts"
       ],
       "blockedBy": []
     },
     {
       "id": "T010",
-      "status": "implemented",
+      "status": "verified",
       "evidence": [
         "docs/progress/G0.md",
-        "implementation/progress/evidence/G0.md"
+        "implementation/progress/evidence/G012_audit.md",
+        "tests/integration/repositories.test.ts"
       ],
       "blockedBy": []
     },
     {
       "id": "T011",
-      "status": "implemented",
+      "status": "verified",
       "evidence": [
         "docs/progress/G0.md",
-        "implementation/progress/evidence/G0.md"
+        "implementation/progress/evidence/G012_audit.md",
+        "tests/integration/database-runtime.test.ts"
       ],
       "blockedBy": []
     },
     {
       "id": "T012",
-      "status": "implemented",
+      "status": "verified",
       "evidence": [
         "docs/progress/G0.md",
-        "implementation/progress/evidence/G0.md"
+        "implementation/progress/evidence/G012_audit.md",
+        "tests/contracts/guard.test.ts"
       ],
       "blockedBy": []
     },
@@ -121,10 +131,12 @@
     },
     {
       "id": "T014",
-      "status": "implemented",
+      "status": "verified",
       "evidence": [
         "docs/progress/G1.md",
-        "implementation/progress/evidence/G1.md"
+        "implementation/progress/evidence/G012_audit.md",
+        "tests/integration/capture.test.ts",
+        "tests/integration/capture-http.test.ts"
       ],
       "blockedBy": []
     },
@@ -193,181 +205,206 @@
     },
     {
       "id": "T022",
-      "status": "implemented",
+      "status": "verified",
       "evidence": [
         "docs/progress/G1.md",
-        "implementation/progress/evidence/G1.md"
+        "implementation/progress/evidence/G012_audit.md",
+        "tests/integration/relations.test.ts"
       ],
       "blockedBy": []
     },
     {
       "id": "T023",
-      "status": "implemented",
+      "status": "verified",
       "evidence": [
         "docs/progress/G1.md",
-        "implementation/progress/evidence/G1.md"
+        "implementation/progress/evidence/G012_audit.md",
+        "tests/integration/relations.test.ts"
       ],
       "blockedBy": []
     },
     {
       "id": "T024",
-      "status": "implemented",
+      "status": "verified",
       "evidence": [
         "docs/progress/G1.md",
-        "implementation/progress/evidence/G1.md"
+        "implementation/progress/evidence/G1.md",
+        "implementation/progress/evidence/G012_audit.md",
+        "tests/e2e/offline-crud.spec.ts"
       ],
       "blockedBy": []
     },
     {
       "id": "T025",
-      "status": "implemented",
+      "status": "verified",
       "evidence": [
         "docs/progress/G1.md",
-        "implementation/progress/evidence/G1.md"
+        "implementation/progress/evidence/G1.md",
+        "implementation/progress/evidence/G012_audit.md",
+        "tests/e2e/save-races.spec.ts"
       ],
       "blockedBy": []
     },
     {
       "id": "T026",
-      "status": "implemented",
+      "status": "verified",
       "evidence": [
         "docs/progress/G1.md",
-        "implementation/progress/evidence/G1.md"
+        "implementation/progress/evidence/G1.md",
+        "implementation/progress/evidence/G012_audit.md",
+        "tests/e2e/gate1.spec.ts",
+        "tests/fixtures/crud-seed.json"
       ],
       "blockedBy": []
     },
     {
       "id": "T027",
-      "status": "implemented",
+      "status": "verified",
       "evidence": [
         "docs/progress/G2.md",
-        "implementation/progress/evidence/G2.md"
+        "implementation/progress/evidence/G012_audit.md",
+        "tests/unit/llm-config.test.ts"
       ],
       "blockedBy": []
     },
     {
       "id": "T028",
-      "status": "implemented",
+      "status": "verified",
       "evidence": [
         "docs/progress/G2.md",
-        "implementation/progress/evidence/G2.md"
+        "implementation/progress/evidence/G012_audit.md",
+        "tests/unit/endpoint-policy.test.ts"
       ],
       "blockedBy": []
     },
     {
       "id": "T029",
-      "status": "implemented",
+      "status": "verified",
       "evidence": [
         "docs/progress/G2.md",
-        "implementation/progress/evidence/G2.md"
+        "implementation/progress/evidence/G012_audit.md",
+        "tests/integration/settings.test.ts"
       ],
       "blockedBy": []
     },
     {
       "id": "T030",
-      "status": "implemented",
+      "status": "verified",
       "evidence": [
         "docs/progress/G2.md",
-        "implementation/progress/evidence/G2.md"
+        "implementation/progress/evidence/G012_audit.md",
+        "tests/unit/redaction.test.ts"
       ],
       "blockedBy": []
     },
     {
       "id": "T031",
-      "status": "implemented",
+      "status": "verified",
       "evidence": [
         "docs/progress/G2.md",
-        "implementation/progress/evidence/G2.md"
+        "implementation/progress/evidence/G012_audit.md",
+        "tests/unit/llm-transport.test.ts"
       ],
       "blockedBy": []
     },
     {
       "id": "T032",
-      "status": "implemented",
+      "status": "verified",
       "evidence": [
         "docs/progress/G2.md",
-        "implementation/progress/evidence/G2.md"
+        "implementation/progress/evidence/G012_audit.md",
+        "tests/integration/connection-test.test.ts"
       ],
       "blockedBy": []
     },
     {
       "id": "T033",
-      "status": "implemented",
+      "status": "verified",
       "evidence": [
         "docs/progress/G2.md",
-        "implementation/progress/evidence/G2.md"
+        "implementation/progress/evidence/G012_audit.md",
+        "tests/unit/organize-prompt.test.ts"
       ],
       "blockedBy": []
     },
     {
       "id": "T034",
-      "status": "implemented",
+      "status": "verified",
       "evidence": [
         "docs/progress/G2.md",
-        "implementation/progress/evidence/G2.md"
+        "implementation/progress/evidence/G012_audit.md",
+        "tests/integration/candidate-search.test.ts"
       ],
       "blockedBy": []
     },
     {
       "id": "T035",
-      "status": "implemented",
+      "status": "verified",
       "evidence": [
         "docs/progress/G2.md",
-        "implementation/progress/evidence/G2.md"
+        "implementation/progress/evidence/G012_audit.md",
+        "tests/integration/run-lock.test.ts"
       ],
       "blockedBy": []
     },
     {
       "id": "T036",
-      "status": "implemented",
+      "status": "verified",
       "evidence": [
         "docs/progress/G2.md",
-        "implementation/progress/evidence/G2.md"
+        "implementation/progress/evidence/G012_audit.md",
+        "tests/integration/organize-service.test.ts"
       ],
       "blockedBy": []
     },
     {
       "id": "T037",
-      "status": "implemented",
+      "status": "verified",
       "evidence": [
         "docs/progress/G2.md",
-        "implementation/progress/evidence/G2.md"
+        "implementation/progress/evidence/G012_audit.md",
+        "tests/unit/structured-output.test.ts"
       ],
       "blockedBy": []
     },
     {
       "id": "T038",
-      "status": "implemented",
+      "status": "verified",
       "evidence": [
         "docs/progress/G2.md",
-        "implementation/progress/evidence/G2.md"
+        "implementation/progress/evidence/G012_audit.md",
+        "tests/integration/metadata-apply.test.ts"
       ],
       "blockedBy": []
     },
     {
       "id": "T039",
-      "status": "implemented",
+      "status": "verified",
       "evidence": [
         "docs/progress/G2.md",
-        "implementation/progress/evidence/G2.md"
+        "implementation/progress/evidence/G012_audit.md",
+        "tests/integration/relation-apply.test.ts"
       ],
       "blockedBy": []
     },
     {
       "id": "T040",
-      "status": "implemented",
+      "status": "verified",
       "evidence": [
         "docs/progress/G2.md",
-        "implementation/progress/evidence/G2.md"
+        "implementation/progress/evidence/G012_audit.md",
+        "tests/integration/run-recovery.test.ts"
       ],
       "blockedBy": []
     },
     {
       "id": "T041",
-      "status": "implemented",
+      "status": "verified",
       "evidence": [
         "docs/progress/G2.md",
-        "implementation/progress/evidence/G2.md"
+        "implementation/progress/evidence/G012_audit.md",
+        "tests/unit/run-diagnostics.test.ts",
+        "tests/integration/run-diagnostics.test.ts"
       ],
       "blockedBy": []
     },
@@ -560,14 +597,24 @@
     },
     {
       "id": "T062",
-      "status": "not_started",
-      "evidence": [],
+      "status": "verified",
+      "evidence": [
+        "docs/progress/G5.md",
+        "implementation/progress/evidence/G5.md",
+        "tests/unit/flow-intent.test.ts",
+        "tests/integration/flow-material-confirm.test.ts",
+        "tests/e2e/flow-intent.spec.ts"
+      ],
       "blockedBy": []
     },
     {
       "id": "T063",
-      "status": "not_started",
-      "evidence": [],
+      "status": "verified",
+      "evidence": [
+        "docs/progress/G5.md",
+        "implementation/progress/evidence/G5.md",
+        "tests/integration/flow-generation.test.ts"
+      ],
       "blockedBy": []
     },
     {
