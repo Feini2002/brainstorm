@@ -5,6 +5,10 @@
  * 关键点是四种**非 `sk-` 形态**的 Key：它们没有任何可被 `SECRET_PATTERNS`
  * 匹配的前缀，因此只有真正接上字面值层才可能消失。用 `sk-` canary 写这组用例
  * 会永远绿，也就证明不了接线存在。
+ *
+ * 本文件原为 `tests/integration/secret-redaction-wiring.test.ts`（T030 的交付证据）。
+ * T075-C02 要求"秘密全链"有单一归属目录，因此它与端点策略、隔离断言一起**移动**到
+ * `tests/security/`；T030 的用例编号与断言一字未改。
  */
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { DatabaseSync } from 'node:sqlite';
@@ -17,7 +21,7 @@ import { writeSettings } from '@/server/repositories/settings';
 import { runConnectionTest } from '@/server/services/testConnection';
 import { redactSecrets, clearRegisteredSecrets } from '@/server/observability/redaction';
 import { createTestDatabase, newId, openTestDatabase, type TestDatabase } from '../helpers/db';
-import { callRoute } from './helpers/http';
+import { callRoute } from '../integration/helpers/http';
 
 /** Azure 风格 32 位 hex。 */
 const AZURE_KEY = '0123456789abcdef0123456789abcdef';

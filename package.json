@@ -17,6 +17,7 @@
     "test:unit": "vitest run --project unit",
     "test:integration": "vitest run --project integration",
     "test:contracts": "vitest run --project contracts",
+    "test:security": "vitest run --project security",
     "test:e2e": "playwright test",
     "test": "vitest run",
     "check": "npm run contracts && npm run lint && npm run typecheck && npm run test && npm run build"

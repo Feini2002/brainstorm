@@ -754,8 +754,21 @@
     },
     {
       "id": "T075",
-      "status": "not_started",
-      "evidence": [],
+      "status": "verified",
+      "evidence": [
+        "docs/progress/G6.md",
+        "implementation/progress/evidence/G6.md",
+        "docs/security-checklist.md",
+        "tests/security/cross-site-matrix.test.ts",
+        "tests/security/secret-full-chain.test.ts",
+        "tests/security/secret-redaction-chain.test.ts",
+        "tests/security/outbound-redirect.test.ts",
+        "tests/security/source-url-no-fetch.test.ts",
+        "tests/security/graph-label-attack.test.ts",
+        "tests/security/threat-model-honesty.test.ts",
+        "tests/security/local-request-guard.test.ts",
+        "tests/e2e/security.spec.ts"
+      ],
       "blockedBy": []
     },
     {

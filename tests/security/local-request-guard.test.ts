@@ -5,9 +5,13 @@
  * 规格里的「必须断言 / 必须排除」变成对**真实路由处理函数**的直接断言：被拒绝的
  * 请求既不能写入数据库，也不能把令牌、秘密或内部路径带回响应。
  *
- * 直接调用 App Router 导出的处理函数（见 helpers/http.ts）而不是启动真实 server，
- * 因为被测试的正是守卫、schema 与事务这三段代码路径；真实浏览器路径由 e2e 覆盖，
- * 本文件不做 e2e 结论。
+ * 直接调用 App Router 导出的处理函数（见 `tests/integration/helpers/http.ts`）而不是启动
+ * 真实 server，因为被测试的正是守卫、schema 与事务这三段代码路径；真实浏览器路径由
+ * `tests/e2e/security.spec.ts` 覆盖，本文件不做 e2e 结论。
+ *
+ * 本文件原为 `tests/integration/security-http.test.ts`（T007 的交付证据）。T075 要求
+ * 安全断言有单一归属目录，因此**移动**到这里而不是再抄一份——T007 的用例编号与断言
+ * 一字未改。共用装置仍留在 integration 树下并被两个项目同时引用，而不是复制第二份。
  */
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
@@ -17,7 +21,7 @@ import { setLogSink } from '@/server/observability/redaction';
 import { APP_ORIGIN, APP_HOST, expectedHost, getSessionToken } from '@/server/security/localGuard';
 import type { SessionInfo } from '@/domain/api';
 import { createTestDatabase, newId, openTestDatabase, type TestDatabase } from '../helpers/db';
-import { TEST_HOST, TEST_ORIGIN, callRoute } from './helpers/http';
+import { TEST_HOST, TEST_ORIGIN, callRoute } from '../integration/helpers/http';
 
 let harness: TestDatabase;
 

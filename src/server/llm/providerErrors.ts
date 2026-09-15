@@ -113,16 +113,58 @@ export function parseRetryAfter(header: string | null): number | undefined {
   return undefined;
 }
 
+/**
+ * Every message in an error's `cause` chain, joined.
+ *
+ * Node's `fetch` reports a refused redirect as `TypeError('fetch failed')` with
+ * the reason on `error.cause.message` — measured on Node 24: the cause message is
+ * `'unexpected redirect'`. Reading only `error.message` therefore classified a
+ * redirect as `PROVIDER_NETWORK`, which told the user to go check their network
+ * and firewall when the provider *had* answered, and made `mayHaveBeenBilled()`
+ * true, asserting that a request which never left this machine might have been
+ * billed. The cause chain is also where some Node versions put the detail for an
+ * abort, so both branches below read it.
+ *
+ * The walk is bounded so a pathological `cause` cycle cannot hang error handling.
+ */
+function errorChainText(error: unknown): string {
+  const parts: string[] = [];
+  let current: unknown = error;
+  for (let depth = 0; depth < 5 && current !== null && current !== undefined; depth += 1) {
+    if (current instanceof Error) {
+      parts.push(current.name, current.message);
+      current = current.cause;
+      continue;
+    }
+    parts.push(String(current));
+    break;
+  }
+  return parts.join(' ');
+}
+
+/**
+ * Wording that means "a redirect was refused", not merely "the word redirect appeared".
+ *
+ * A phrase rather than the bare word on purpose: a DNS failure's cause message
+ * contains the *hostname* (`getaddrinfo ENOTFOUND redirect.example.com`), so a
+ * Base URL whose host happens to contain "redirect" would be misreported as a
+ * redirect — the same misdiagnosis this function is being fixed to avoid.
+ */
+const REDIRECT_REASON =
+  /unexpected redirect|redirect count exceeded|too many redirects|redirect not allowed|ERR_FR_REDIRECTION_FAILURE/iu;
+
 /** Map an outbound transport exception (pre-response) to a safe code. */
 export function classifyTransportError(error: unknown): AppError {
   if (error instanceof AppError) return error;
   const name = error instanceof Error ? error.name : '';
-  const message = error instanceof Error ? error.message : '';
+  // `String(error)` alone is `"TypeError: fetch failed"`, so the cause chain is
+  // what makes a refused redirect recognisable at all.
+  const message = errorChainText(error);
 
   if (name === 'AbortError' || /aborted|timed? ?out/iu.test(message)) {
     return new AppError('PROVIDER_TIMEOUT', '等待服务商响应超时，本次请求可能已到达服务商');
   }
-  if (/redirect/iu.test(message)) {
+  if (REDIRECT_REASON.test(message)) {
     return new AppError('PROVIDER_ENDPOINT', '服务商返回了重定向，已按安全设置拒绝跟随');
   }
   return new AppError('PROVIDER_NETWORK', '无法连接服务商，本次请求可能已到达服务商');

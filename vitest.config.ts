@@ -47,6 +47,30 @@ export default defineConfig({
       {
         extends: true,
         test: {
+          /*
+           * Security regression (T075).
+           *
+           * A separate project rather than a folder inside `integration`: the
+           * T007/T030 suites were *moved* here so a security rule has exactly
+           * one home (duplicating them would let one copy drift), and a moved
+           * file that no project collects fails silently — it would simply
+           * stop running. `vitest.config.ts` is the only place that can state
+           * "these files are collected"; its count is verified in the T075
+           * evidence rather than assumed.
+           *
+           * The environment is the same real-SQLite setup the integration
+           * project uses; nothing here is a stub suite.
+           */
+          name: 'security',
+          include: ['tests/security/**/*.test.ts'],
+          environment: 'node',
+          testTimeout: 30_000,
+          hookTimeout: 30_000,
+        },
+      },
+      {
+        extends: true,
+        test: {
           name: 'contracts',
           include: ['tests/contracts/**/*.test.ts'],
           environment: 'node',
