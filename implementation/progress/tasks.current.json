@@ -834,8 +834,15 @@
     },
     {
       "id": "T080",
-      "status": "not_started",
-      "evidence": [],
+      "status": "verified",
+      "evidence": [
+        "docs/operations/windows-setup.md",
+        "docs/operations/common-failures.md",
+        "scripts/doctor.mjs",
+        "tests/unit/doctor.test.ts",
+        "docs/progress/G6.md",
+        "implementation/progress/evidence/G6.md"
+      ],
       "blockedBy": []
     },
     {

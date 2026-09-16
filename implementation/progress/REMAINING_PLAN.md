@@ -8,6 +8,11 @@
 门禁基线：typecheck / lint / contracts / build exit 0；`npm test` 83 文件 1068 例 exit 0；
 gate5+gate4 冒烟 13 passed（全量 e2e 上次 T076 时 119 passed / 1 skipped）。
 
+**进度更新（2026-09-16）**：T077–T080 已完成并 `verified`；`npm test` 现在 83 文件 **1085 例**
+（unit 406 / integration 534 / security 103 / contracts 32 / browser 10）；e2e **132 passed / 1 skipped**；
+另有独立性能通道 `npm run test:perf` 12 例。当前 verified 79 / implemented 0 / blocked 1（T042）/ not_started 4（T081–T084）。
+本文件下面各节的"当前数字"写的是制定方案时的基线，按节内标注执行。
+
 ## 1. 未完成清单
 
 ### 1.1 进行中
@@ -21,9 +26,9 @@ gate5+gate4 冒烟 13 passed（全量 e2e 上次 T076 时 119 passed / 1 skipped
 
 | 任务 | 一句话目标 | 依赖 | 必交文件 |
 | --- | --- | --- | --- |
-| T078 | 六页浏览器端到端验收：八个场景真行为、console/pageerror 分类、桌面+窄屏 | T077 | `tests/e2e/`、`playwright.config.ts`、`docs/browser-test-map.md` |
-| T079 | 加载/查询/图形性能预算：五种场景分开测，中位数+尾部，生产/HMR 分开 | T050, T057, T066, T078 | `scripts/seed-benchmark.mjs`、`tests/performance/`、`docs/performance-report.md` |
-| T080 | Windows 安装、启动与故障手册 | T001, T002, T004, T073, T079 | `docs/operations/windows-setup.md`、`docs/operations/common-failures.md`、`scripts/doctor.mjs` |
+| T078 | 六页浏览器端到端验收：八个场景真行为、console/pageerror 分类、桌面+窄屏 | T077 | `tests/e2e/`、`playwright.config.ts`、`docs/browser-test-map.md` | ✅ 已完成（`evidence/G6.md` T078-1/2） |
+| T079 | 加载/查询/图形性能预算：五种场景分开测，中位数+尾部，生产/HMR 分开 | T050, T057, T066, T078 | `scripts/seed-benchmark.mjs`、`tests/performance/`、`docs/performance-report.md` | ✅ 已完成（`evidence/G6.md` T079-1） |
+| T080 | Windows 安装、启动与故障手册 | T001, T002, T004, T073, T079 | `docs/operations/windows-setup.md`、`docs/operations/common-failures.md`、`scripts/doctor.mjs` | ✅ 已完成（`evidence/G6.md` T080-1） |
 | T081 | 生产构建、依赖审计与发布材料 | T075, T078, T079, T080 | `docs/release/build-report.md`、`docs/release/dependency-audit.md`、`package.json`、`README.md` |
 | T082 | 中文文案、状态与无障碍终审 | T078, T081 | `docs/ux/copybook.md`、`docs/ux/accessibility.md`、`src/features/shared/StatusLabel.tsx` |
 | T083 | 任务证据、缺陷清单与交付状态 | T076–T082 | `docs/progress/`、`docs/release/acceptance-report.md`、`docs/release/known-issues.md` |
@@ -125,7 +130,7 @@ gate5+gate4 冒烟 13 passed（全量 e2e 上次 T076 时 119 passed / 1 skipped
 - **产物**：`docs/performance-report.md`：预算（目标）与实测分列；环境（CPU/内存/Node/Windows 版本）；失败样本原样保留。
 - **风险**：一万条种子跑全量 e2e 会拖慢——性能项用独立数据目录且不进 `npm test`；`package.json` 加 `test:perf` 脚本，不并入 `check`。
 
-### 3.4 T080 Windows 安装、启动与故障手册
+### 3.4 T080 Windows 安装、启动与故障手册 ✅ 已完成
 
 - **文件**：`docs/operations/windows-setup.md`（R01–R04：先 `node -v`/`npm -v`，`npm ci` 与 `npm install` 的区别，Playwright 浏览器下载单列，
   `build` 与 `start` 区别，Ctrl+C，数据目录与 Key 风险）；`docs/operations/common-failures.md`（R05/R06：TLS/代理诊断不建议关校验、排错顺序版本→端口→路径→权限→依赖→应用）；

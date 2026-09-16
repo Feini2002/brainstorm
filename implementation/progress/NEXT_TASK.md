@@ -1,12 +1,12 @@
 # 当前实施位置
 
-当前：**G6 进行中，T077、T078、T079 已验收（`verified`）**。T070–T079 已实测通过并在 `tasks.current.json`
-中为 `verified`。**T080–T084 尚未开始**。
+当前：**G6 进行中，T077、T078、T079、T080 已验收（`verified`）**。T070–T080 已实测通过并在 `tasks.current.json`
+中为 `verified`。**T081–T084 尚未开始**。
 G5（T062–T069）已完成并验收；G0–G4 已完成。真实 Provider 语义验收仍阻塞，见「已知阻塞」。
 
-**下一步：T080 Windows 安装、启动与故障手册。**
+**下一步：T081 生产构建、依赖审计与发布材料。**
 
-**本轮完成的 T079**（`evidence/G6.md` T079-1，报告见 `docs/performance-report.md`）：
+**上一轮完成的 T079**（`evidence/G6.md` T079-1，报告见 `docs/performance-report.md`）：
 
 1. **性能测量装置**：`scripts/seed-benchmark.mjs`（合成种子，拒绝用户 `.data`）、
    `scripts/run-perf.mjs`（`test:perf` 启动器）、`tests/performance/` 独立配置（端口 3210、
@@ -34,16 +34,30 @@ G5（T062–T069）已完成并验收；G0–G4 已完成。真实 Provider 语�
 `chromium-narrow` **已收集到 4 例并全部通过**（T078-C05 两条窄屏 + `gate1` T026-C01 核心采集/编辑/
 详情路径 + `backup-restore` T078-C01 设置页备份控件），见 `evidence/G6.md` T078-2。
 
-**剩余全部事项的方案**：[REMAINING_PLAN.md](REMAINING_PLAN.md)（P0 + T078–T084 的逐项文件、
-验证与风险；第 2 节的五条拍板点已由用户确认，其中 D1 已采纳、D2/D5 已执行）。
+**本轮的 T080**（`evidence/G6.md` T080-1）：
 
-最新验证（本机实测，2026-09-16，T079 完成后的全量一轮）：
+1. **两份手册**：`docs/operations/windows-setup.md`（安装 → 依赖 → 浏览器 → 构建/启动 → 日常流程 →
+   数据与 Key 位置 → 备份指引）与 `docs/operations/common-failures.md`（按「版本→端口→路径→权限→依赖→应用」
+   排序，含「不要做的事」清单）。
+2. **预检扩三项只读诊断**：端口占用与**占用者 pid**（`netstat -ano` 定位，只关那一个进程树）、
+   PATH 解释器一致性（`where.exe node` 对比 `process.execPath`）、代理/CA/TLS 状态（**只报变量名**）。
+   三项都**不参与**退出码判定。
+3. **新增 14 例**（unit 392 → 406，`tests/unit/doctor.test.ts` 5 → 19）：C01 路径形状、C02 旧 PATH、
+   C03 代理脱敏、C04 端口占用定位、C06 非破坏性预检与「禁止删 .data」文案。
+4. **查出并修掉 1 个真实缺陷**：预检**不读 `APP_PORT`/`APP_HOST`**，写死了 3000。
+   用户按手册设了端口再启动并被占用时，预检会报「3000 空闲」——一句真话但不是他需要的那句。
+   已抽出 `resolveLaunchTarget`，与 `start-local.mjs` 共用同一对变量与默认值。
+5. **变异对照**（端口探针恒报空闲）：先 `rg` 打印落点 `scripts/doctor.mjs:216`，再跑 → **1 failed**
+   （正是 C04 那句「被占时不能报空闲」），还原后 19 例复绿、工作区干净。
+6. **未执行**：真实企业代理后的完整安装、macOS/Linux、`cmd.exe` 实跑、真实坏盘演练（均在手册末尾单列）。
+
+最新验证（本机实测，2026-09-16，T080 完成后的全量一轮）：
 
 ```
 npm run typecheck   exit 0
 npm run lint        exit 0   （0 problems，全仓库）
 npm run contracts   exit 0   （pending 0；failures 空）
-npm test            exit 0   （83 文件 1071 例；unit 392 + integration 534 + security 103 + contracts 32 + browser 10 = 1071 ✓）
+npm test            exit 0   （83 文件 1085 例；unit 406 + integration 534 + security 103 + contracts 32 + browser 10 = 1085 ✓）
 npm run build       exit 0
 npx playwright test           exit 0   （132 passed / 1 skipped）
 npm run test:perf             exit 0   （12 passed；独立端口 3210、独立数据目录，不并入 npm test）
@@ -54,11 +68,12 @@ npm run test:perf             exit 0   （12 passed；独立端口 3210、独立
 （要求「未配置模型」这一前置），不是本轮引入，也不是 T042 的真实语义组。
 
 用例数轨迹（只增不减）：G5 时 548 → G6 前四项 896 → T074 后 944 → T075 后 1023 →
-T076 后 1054 → T077 收口 1068 → T077 收尾 1071 → **T079 无新增 vitest 例**（1071，性能用例走独立 `test:perf`）。
-五个 project 相加应等于整跑（392+534+103+32+10 = 1071），
+T076 后 1054 → T077 收口 1068 → T077 收尾 1071 → T079 无新增（性能走独立 `test:perf`）→
+**T080 后 1085**（+14，全在 `unit`：392 → 406）。
+五个 project 相加应等于整跑（406+534+103+32+10 = 1085），
 **总和一旦不等就说明某个 glob 收集不到文件了**（静默不跑，不报错）。
 
-e2e 轨迹：121 → T078 时 132（+11）→ **T079 仍 132**，1 条 skip 是 `gate2.spec.ts` 的既有条件跳过。
+e2e 轨迹：121 → T078 时 132（+11）→ **T079/T080 仍 132**，1 条 skip 是 `gate2.spec.ts` 的既有条件跳过。
 `npm run test:perf` 是**另一条独立通道**：12 例、端口 3210、数据目录 `.tmp-bench-data/`，
 不并入 `npm test`/`npm run check`（一万条种子要几十秒，且数字只在一台安静的机器上有意义）。
 
@@ -324,10 +339,9 @@ G1 期间的修复（分页游标 SQL、join 列名二义、`decodeEvidence` 字
 - **未执行**：CSP 生产配置实测（需先分别验证 Mermaid/Markmap 所需样式，前置到 G6 前）。
 - **未执行**：性能预算（属 T079）。
 
-## 下一步：G6 续做（T080 → T084）
+## 下一步：G6 续做（T081 → T084）
 
-**T080** Windows 安装、启动与故障手册（依赖 T001/T002/T004/T073/T079）
-→ **T081** 生产构建、依赖审计与发布材料（依赖 T075/T078/T079/T080）
+**T081** 生产构建、依赖审计与发布材料（依赖 T075/T078/T079/T080）
 → **T082** 中文文案与无障碍终审（依赖 T078/T081）
 → **T083** 任务证据与缺陷清单（依赖 T076–T082）
 → **T084** 最终用户旅程与 MVP 完成定义（依赖 T083）。
@@ -343,6 +357,9 @@ T078 起**依次串行**。串行不是保守：T078/T079/T084 都要跑 Playwri
 
 G6 续做新增的可复用能力：
 
+- **预检三项只读诊断**（T080）：端口占用 + 占用者 pid、PATH 解释器一致性、代理/CA/TLS 状态。
+  新增「检查某个地址」的诊断请走 `resolveLaunchTarget(env)`，与 `start-local.mjs` 共用同一对变量——
+  T080-1 修掉的缺陷就是两边各写一份默认值。
 - **性能装置**：`scripts/seed-benchmark.mjs`（`--items/--graph/--graph-edges/--mindmap/--flow/--flow-edges/--reset`，
   拒绝用户 `.data`）、`scripts/run-perf.mjs`、`tests/performance/support/perfEnv.ts`
   （`startBenchServer` 冷启动测量、`sample()` 中位数+p95+min/max、`environmentFacts()`）。
