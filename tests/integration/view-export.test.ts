@@ -134,7 +134,7 @@ describe('T060 导出服务', () => {
     // 先确认没改之前是"一致"的。
     const fresh = exportView(db, { id: viewId, format: 'markdown', now: NOW });
     expect(fresh.body).toContain('导出时来源版本与生成时一致');
-    expect(fresh.body).not.toContain('依据可能已过期');
+    expect(fresh.body).not.toContain('依据可能已变化');
 
     // 改写原文，让快照与实际版本分离。
     db.prepare(
@@ -142,7 +142,7 @@ describe('T060 导出服务', () => {
     ).run('改写之后', note.id);
 
     const stale = exportView(db, { id: viewId, format: 'markdown', now: NOW });
-    expect(stale.body).toContain('依据可能已过期');
+    expect(stale.body).toContain('依据可能已变化');
     expect(stale.body).toContain('1 条笔记已修改');
     expect(stale.body).toContain('不代表知识库的最新状态');
 

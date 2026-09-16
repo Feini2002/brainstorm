@@ -6,7 +6,7 @@
  *
  *  1. **"Why is this map out of date?"** The DTO carries `isStale` and
  *     `missingSources`, but not *how many* notes changed versus how many
- *     relations moved. "依据已过期" is true and useless; "1 条笔记已修改，1 条关系已
+ *     relations moved. "依据已变化" is true and useless; "1 条笔记已修改，1 条关系已
  *     变化" tells the user what to go and look at (T059-R01). The counts live
  *     here rather than on the DTO because the DTO's field set is a contract
  *     (`docs/03_contracts/03_dto_and_version_rules.md` §12) and this is a

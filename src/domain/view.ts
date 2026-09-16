@@ -338,7 +338,7 @@ export function describeStaleness(result: StalenessResult): string | null {
  * The contract asks for the specific reason rather than a blanket statement
  * (docs/03_contracts/09 §5), and the version numbers are the part a user can
  * verify: 「revision 从 3 变 4」 can be checked by opening the note, whereas
- * 「依据已过期」 cannot.
+ * 「依据已变化」 cannot.
  */
 export function describeSourceDrift(entry: SourceDrift): string {
   const noun = entry.kind === 'item' ? '笔记' : '关系';

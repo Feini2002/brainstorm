@@ -67,7 +67,7 @@ test.describe('T051 关系依据失效与图视图一致性', () => {
     // Show stale edges, which is the only way the edge can be inspected now.
     await page.getByTestId('graph-toggle-stale').click();
     await expect(page.getByTestId('graph-summary-nodes')).toContainText('1 条关系');
-    await expect(page.getByTestId('graph-freshness-notice')).toContainText('依据已过期');
+    await expect(page.getByTestId('graph-freshness-notice')).toContainText('依据已变化');
 
     await selectEdgeInList(page, relationId);
     const inspector = page.getByTestId('graph-inspector');
@@ -239,7 +239,7 @@ test.describe('T051 关系依据失效与图视图一致性', () => {
     expect(edited.status()).toBe(200);
 
     await page.getByTestId('graph-toggle-stale').click();
-    await expect(page.getByTestId('graph-freshness-notice')).toContainText('依据已过期');
+    await expect(page.getByTestId('graph-freshness-notice')).toContainText('依据已变化');
     await selectEdgeInList(page, relationId);
 
     // The manual edge is flagged like any other; a human judgement made against

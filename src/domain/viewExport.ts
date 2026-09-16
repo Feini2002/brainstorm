@@ -144,7 +144,7 @@ export function buildViewMarkdown(input: BuildViewExportInput): string {
   // no other way to learn that the basis has moved (T060-R05: 不能把旧图标为最新整理).
   const { freshness } = exported;
   if (freshness.reason !== null || freshness.missingSourceCount > 0) {
-    lines.push('', `> ⚠️ 依据可能已过期：${freshness.reason ?? `${freshness.missingSourceCount} 条来源已删除`}`);
+    lines.push('', `> ⚠️ 依据可能已变化：${freshness.reason ?? `${freshness.missingSourceCount} 条来源已删除`}`);
     lines.push('> 这份导出反映的是**生成当时**的材料，不代表知识库的最新状态。');
   } else {
     lines.push('', '> 导出时来源版本与生成时一致。');

@@ -203,7 +203,7 @@ test.describe('T060 脑图 Markdown 与 JSON 导出', () => {
     // reader with no application can learn the basis moved.
     expect(file.body).toContain('生成时间：');
     expect(file.body).toContain('导出时间：');
-    expect(file.body).toContain('依据可能已过期');
+    expect(file.body).toContain('依据可能已变化');
     expect(file.body).toContain('1 条笔记已修改');
     expect(file.body).toContain('不代表知识库的最新状态');
 

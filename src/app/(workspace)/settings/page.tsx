@@ -13,6 +13,7 @@ import { useCallback, useState } from 'react';
 import type { PublicLlmSettings } from '@/domain/knowledge';
 import { PageHeader } from '@/components/AppShell';
 import { SectionCard } from '@/components/ui/primitives';
+import { MODEL_REQUIRED_FOR, NO_MODEL_HINT } from '@/features/shared/StatusLabel';
 import { useWorkspace } from '@/features/shared/workspace';
 
 import { BackupPanel } from '@/features/settings/BackupPanel';
@@ -40,6 +41,25 @@ export default function SettingsPage() {
       />
 
       <LlmSettingsForm onSaved={onSaved} refreshToken={refreshToken} />
+
+      {/*
+        The no-key state, stated as a prerequisite rather than a failure
+        (T082-R03, T082-C03). Two sentences: what needs a model, and what does
+        not. Without the second one a missing key reads as "the app is not
+        working", which is the misconception this case exists to prevent.
+      */}
+      <section
+        className="rounded-lg border border-dashed border-[var(--line)] bg-[var(--surface-raised)] p-3"
+        aria-label="模型配置说明"
+        data-testid="settings-model-scope"
+      >
+        <p className="text-sm text-[var(--ink)]" data-testid="settings-model-required-for">
+          {MODEL_REQUIRED_FOR}
+        </p>
+        <p className="mt-1 text-xs text-[var(--ink-muted)]" data-testid="settings-model-optional">
+          {NO_MODEL_HINT}
+        </p>
+      </section>
 
       {savedRevision !== null ? (
         <p className="text-xs text-[var(--ink-muted)]" data-testid="settings-last-saved-revision">

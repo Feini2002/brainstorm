@@ -34,6 +34,7 @@ import {
   TextInput,
 } from '@/components/ui/primitives';
 import { apiRequest, type QueryParams } from '@/features/shared/apiClient';
+import { EMPTY_STATES } from '@/features/shared/StatusLabel';
 import { KnowledgeCard } from '@/features/shared/KnowledgeCard';
 import { useApiQuery } from '@/features/shared/useApiQuery';
 import { useSelection } from '@/features/shared/workspace';
@@ -294,11 +295,7 @@ export function LibraryPage({ onOpen, refreshToken = 0 }: LibraryPageProps) {
       {!state.loading && !state.error && items.length === 0 ? (
         <EmptyState
           title={query.q.trim().length > 0 ? '没有匹配的记录' : '资料库还是空的'}
-          description={
-            query.q.trim().length > 0
-              ? '换个关键字，或清除筛选。搜索只做字面匹配，不会自动理解同义表达。'
-              : '去收件箱记录第一条，保存后就会出现在这里。'
-          }
+          description={query.q.trim().length > 0 ? EMPTY_STATES.noMatches : EMPTY_STATES.noItems}
         />
       ) : null}
 

@@ -336,11 +336,32 @@ test.describe('T026 离线知识库闭环验收', () => {
 
     // The organize-dependent pages state their status plainly rather than showing
     // an empty canvas that would look like a working feature.
-    for (const route of ['/graph', '/mindmap', '/flow'] as const) {
-      await page.goto(route);
+    //
+    // 「库里没有视图」不是这三页能保证的前置：套件共用一个数据库，先跑的用例会留下
+    // 已保存的视图，而页面会按产品设计自动打开列表里的第一张（那是功能，不是缺陷）。
+    // 所以这里断言的是与残留状态无关的那部分——**每个依赖模型的动作都必须当场说出
+    // 前提**：没有选中材料时不许假装能生成。原来的宽泛正则在空库时靠空态文案偶然
+    // 成立，一旦有视图就不成立，而它本来要证明的正是「不把没做的能力画成做完了」。
+    const projections = [
+      { route: '/graph', marker: '这里只是投影', note: '关系图自称只读投影' },
+      { route: '/mindmap', marker: '还没有选中材料', note: '生成脑图在无选中材料时说明前提' },
+      { route: '/flow', marker: '当前没有选中材料', note: '生成流程图在无选中材料时说明前提' },
+    ] as const;
+
+    // 顺便证一件比文案更硬的事：只浏览这三页不该产生任何生成调用。
+    const generationCalls: string[] = [];
+    page.on('request', (request) => {
+      if (request.method() === 'POST' && request.url().includes('/generate')) {
+        generationCalls.push(request.url());
+      }
+    });
+
+    for (const projection of projections) {
+      await page.goto(projection.route);
       await expect(page.locator('main h1')).toBeVisible();
-      await expect(page.locator('main')).toContainText(/正在实现|暂不可用|配置模型|还没有/);
+      await expect(page.locator('main'), projection.note).toContainText(projection.marker);
     }
+    expect(generationCalls, '只浏览投影页不得产生任何生成调用').toEqual([]);
 
     // Local capabilities are the ones actually offered.
     await page.goto('/inbox');

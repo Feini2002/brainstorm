@@ -17,6 +17,7 @@
  * input area or the user cannot keep writing (T025-R06).
  */
 import { Button, InlineError } from '@/components/ui/primitives';
+import { ACTIONS, waitingLabel } from '@/features/shared/StatusLabel';
 
 export type MutationPhase = 'idle' | 'saving' | 'saved' | 'unknown' | 'failed';
 
@@ -71,7 +72,7 @@ export function SavePhaseStatus({
   if (phase === 'saving') {
     return (
       <p role="status" aria-live="polite" data-testid="save-phase" className="min-h-5 text-xs text-[var(--ink-muted)]">
-        正在保存…
+        {waitingLabel('save')}
       </p>
     );
   }
@@ -80,7 +81,7 @@ export function SavePhaseStatus({
     return (
       <div data-testid="save-phase" className="text-xs text-[var(--warn-ink)]">
         <p role="status" aria-live="polite">
-          保存结果未知：请求可能已经提交。重试会复用同一次请求，不会重复创建。
+          {ACTIONS.save}结果未知：请求可能已经提交。重试会复用同一次请求，不会重复创建。
         </p>
         {onRetry ? (
           <Button variant="secondary" className="mt-1" onClick={onRetry}>
@@ -93,7 +94,7 @@ export function SavePhaseStatus({
 
   if (phase === 'failed') {
     return (
-      <InlineError message={message ?? '保存失败'}>
+      <InlineError message={message ?? `${ACTIONS.save}失败`}>
         {onRetry ? (
           <Button variant="secondary" onClick={onRetry}>
             重试
@@ -106,7 +107,7 @@ export function SavePhaseStatus({
   if (phase === 'saved') {
     return (
       <StatusLine
-        message={stored ? (message ?? '已保存') : message}
+        message={stored ? (message ?? `已${ACTIONS.save}`) : message}
         {...(onDismiss ? { onDismiss } : {})}
         testId="save-phase"
       />

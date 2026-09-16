@@ -195,7 +195,7 @@ describe('T043 图谱读取范围', () => {
     expect(graph.scope.matchedNodeCount).toBeGreaterThan(graph.scope.shownNodeCount);
   });
 
-  it('T043-C06 过期边默认不参与，可切换查看并标记为依据过期', () => {
+  it('T043-C06 过期边默认不参与，可切换查看并标记为依据已变化', () => {
     const a = capture('过期依据的甲');
     const b = capture('过期依据的乙');
     const edgeId = link(a, b, 'related_to');
@@ -210,7 +210,7 @@ describe('T043 图谱读取范围', () => {
     const defaultGraph = readGraph();
     expect(defaultGraph.edges.map((edge) => edge.id)).not.toContain(edgeId);
     expect(defaultGraph.freshness.byRelationId[edgeId]).toBe('stale');
-    expect(defaultGraph.freshness.notice).toContain('依据已过期');
+    expect(defaultGraph.freshness.notice).toContain('依据已变化');
 
     const withStale = readGraph({ includeStale: true });
     const staleEdge = withStale.edges.find((edge) => edge.id === edgeId);

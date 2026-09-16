@@ -1,17 +1,28 @@
 /**
- * Shared status wording for graph edges (T044-R03, T048-R02).
+ * Shared status wording for graph edges (T044-R03, T048-R02, T082-R02).
  *
  * Two rules drive this file:
  *
  *  - **Never colour alone.** A `suggested` edge is marked with the words
- *    「待确认」, and a stale one with 「依据过期」, so the distinction survives a
+ *    「待确认」, and a stale one with 「依据已变化」, so the distinction survives a
  *    greyscale print, a colour-blind viewer and a dark theme (T050-R04).
  *  - **Never call a score a correctness rate.** `score` is how strongly the
  *    model judged two notes related; 「关联评分」 says that and 「置信度」 does
  *    not. A user who reads 0.8 as "80% correct" would over-trust the model.
+ *
+ * The stale wording comes from `features/shared/StatusLabel` rather than being
+ * spelled here, so the canvas badge, the graph legend, the list row and the
+ * exported file cannot drift into three different phrases for one state
+ * (T082-R02). The previous text was 「依据过期」, which reads as a *date* passing
+ * rather than as evidence that needs re-reading.
  */
 import type { RelationFreshness } from '@/domain/staleness';
 import type { ReviewStatus } from '@/domain/knowledge';
+import {
+  SCORE_DISCLAIMER,
+  SCORE_LABEL,
+  STALE_BADGE,
+} from '@/features/shared/StatusLabel';
 
 export const REVIEW_STATUS_BADGE: Record<ReviewStatus, string | null> = {
   suggested: '待确认',
@@ -22,7 +33,7 @@ export const REVIEW_STATUS_BADGE: Record<ReviewStatus, string | null> = {
 
 export const FRESHNESS_BADGE: Record<RelationFreshness, string | null> = {
   fresh: null,
-  stale: '依据过期',
+  stale: STALE_BADGE,
   missing: '端点已删除',
 };
 
@@ -42,12 +53,12 @@ export function reviewStatusBadge(
 }
 
 /** Explanation of what `score` means, shown next to the number (T048-R02). */
-export const SCORE_LABEL = '关联评分';
+export { SCORE_LABEL };
 
 export function describeScore(origin: 'ai' | 'manual', score: number | null): string {
   if (origin === 'manual') return '人工建立，没有模型评分';
   if (score === null) return '本次模型没有给出评分';
-  return `${SCORE_LABEL} ${score.toFixed(2)}（模型判断的关联强度，不是正确率）`;
+  return `${SCORE_LABEL} ${score.toFixed(2)}（${SCORE_DISCLAIMER}）`;
 }
 
 /** Line style per relation type family, so type is readable without colour. */

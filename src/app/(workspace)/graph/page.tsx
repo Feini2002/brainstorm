@@ -32,6 +32,7 @@ import { LIMITS } from '@/domain/limits';
 import { PageHeader } from '@/components/AppShell';
 import { Button, Field, LoadingIndicator, SectionCard, Select } from '@/components/ui/primitives';
 import { apiRequest } from '@/features/shared/apiClient';
+import { DeleteViewDialog } from '@/features/shared/DeleteViewDialog';
 import { useWorkspace } from '@/features/shared/workspace';
 import { GraphFilters } from '@/features/graph/GraphFilters';
 import { GraphInspector } from '@/features/graph/GraphInspector';
@@ -53,7 +54,7 @@ const KnowledgeGraph = dynamic(
   () => import('@/features/graph/KnowledgeGraph').then((module) => module.KnowledgeGraph),
   {
     ssr: false,
-    loading: () => <LoadingIndicator label="正在加载画布" />,
+    loading: () => <LoadingIndicator label="正在加载关系图画布" />,
   },
 );
 
@@ -136,6 +137,8 @@ export default function GraphPage() {
   const [saveBusy, setSaveBusy] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [fitToken, setFitToken] = useState(0);
+  /** Set while the delete-view confirmation is open (T082-R05, T082-C05). */
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   const view = viewState.status === 'ready' ? viewState.view : null;
   const viewList = useMemo(
@@ -407,6 +410,35 @@ export default function GraphPage() {
   const loading = !viewReady || (query.loading && !graph);
   const error = query.error;
 
+  /**
+   * Delete the open graph view — the view only.
+   *
+   * The knowledge items and relations are untouched; what goes is the saved read
+   * scope and the stored layout (T053-R03, T082-R05). Afterwards the list is
+   * re-read and the page falls back to the whole library rather than keeping a
+   * scope that no longer exists. `expectedRevision` is the revision shown, so a
+   * layout change made in another window surfaces as a conflict.
+   */
+  const deleteView = useCallback(async () => {
+    const target = view;
+    if (!target) return;
+    await apiRequest<{ deletedId: string }>(`/api/views/${target.id}`, {
+      method: 'DELETE',
+      body: { expectedRevision: target.revision },
+    });
+    const list = await apiRequest<{ views: ViewListItem[] }>('/api/views', {
+      query: { kind: 'graph', limit: 50 },
+    });
+    const next = list.views[0];
+    if (!next) {
+      adoptView(null, []);
+    } else {
+      const loaded = await apiRequest<ViewDTO>(`/api/views/${next.id}`);
+      adoptView(loaded, list.views);
+    }
+    setConfirmingDelete(false);
+  }, [adoptView, view]);
+
   return (
     <>
       <PageHeader title="关系图" description="节点来自知识条目，边来自关系；这里只是投影，不改动原文。" />
@@ -451,9 +483,24 @@ export default function GraphPage() {
             </Select>
           </Field>
           {view ? (
-            <span className="text-xs text-[var(--ink-muted)]" data-testid="graph-scope-hint">
-              读取范围来自这个视图的选择；清除它不会删除任何知识。
-            </span>
+            <>
+              <span className="text-xs text-[var(--ink-muted)]" data-testid="graph-scope-hint">
+                读取范围来自这个视图的选择；清除它不会删除任何知识。
+              </span>
+              {/*
+                Deleting a saved *view*. It lives beside the scope picker because
+                it is a statement about the saved projection, and it says what it
+                does not touch — the knowledge stays, only the read scope and the
+                stored layout go (T082-R05).
+              */}
+              <Button
+                variant="danger"
+                data-testid="graph-delete-view"
+                onClick={() => setConfirmingDelete(true)}
+              >
+                删除这个视图
+              </Button>
+            </>
           ) : null}
         </section>
 
@@ -606,6 +653,15 @@ export default function GraphPage() {
           )
         ) : null}
       </div>
+
+      {confirmingDelete && view ? (
+        <DeleteViewDialog
+          viewName={view.name}
+          kindLabel="关系图"
+          onCancel={() => setConfirmingDelete(false)}
+          onConfirm={deleteView}
+        />
+      ) : null}
     </>
   );
 }

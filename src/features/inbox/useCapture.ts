@@ -28,6 +28,7 @@ import type { ItemDTO } from '@/domain/knowledge';
 import { LIMITS } from '@/domain/limits';
 import { codePointLength } from '@/domain/text';
 import { ApiClientError, apiRequest } from '@/features/shared/apiClient';
+import { ACTIONS, failureKeepingSaved } from '@/features/shared/StatusLabel';
 import { canSubmitDraft, hasUnsavedDraft } from './captureShortcuts';
 
 export type CaptureSourceType = ItemDTO['sourceType'];
@@ -314,7 +315,9 @@ export function useCapture(options: UseCaptureOptions = {}): UseCaptureApi {
         setOutcome({ item: result.item, replayed: result.replayed, stored: true });
         setLastSubmittedText(text);
         setPhase('saved');
-        setNotice(result.replayed ? '这条内容已经保存过，未重复创建' : '已保存');
+        setNotice(
+          result.replayed ? `这条内容已经${ACTIONS.save}过，未重复创建` : `已${ACTIONS.save}`,
+        );
         options.onCreated?.(result);
 
         // Second step, kept visibly separate: whatever happens here, the record
@@ -323,7 +326,7 @@ export function useCapture(options: UseCaptureOptions = {}): UseCaptureApi {
           try {
             await options.organize(result.item);
             if (!mountedRef.current) return;
-            setOrganizeOutcome({ ok: true, message: '整理完成' });
+            setOrganizeOutcome({ ok: true, message: `${ACTIONS.organize}完成` });
             patchDraft({ inputHint: null });
           } catch (caught) {
             if (!mountedRef.current) return;
@@ -331,14 +334,13 @@ export function useCapture(options: UseCaptureOptions = {}): UseCaptureApi {
               ok: false,
               message:
                 caught instanceof ApiClientError
-                  ? `原文已保存，但整理未完成：${caught.message}`
-                  : '原文已保存，但整理未完成',
+                  ? failureKeepingSaved(ACTIONS.organize, caught.message)
+                  : failureKeepingSaved(ACTIONS.organize, '未知原因'),
             });
             // T024-R04 / T025-R04: the AI step failed, the note did not. Put that
             // beside the input so it survives navigation, and say what still works.
             patchDraft({
-              inputHint:
-                '这条原文已经保存，只是自动整理没完成。你仍可以继续记录、改标签、建立关系；稍后在资料库里重新整理这一条即可。',
+              inputHint: `${ACTIONS.organize}没完成，原文已经${ACTIONS.save}好。你仍可以继续记录、改标签、建立关系；稍后在资料库里重新${ACTIONS.organize}这一条即可。`,
             });
           }
         }
@@ -354,15 +356,15 @@ export function useCapture(options: UseCaptureOptions = {}): UseCaptureApi {
           // navigating away mid-problem (T024-R04).
           patchDraft({
             inputHint: caught.retryable
-              ? '这次的保存结果还不确定。重试会复用同一次请求，不会重复创建；你也可以先复制文本再离开。'
-              : `这次没能保存：${caught.message}。文本仍在下面，可以直接重试。`,
+              ? `这次的${ACTIONS.save}结果还不确定。重试会复用同一次请求，不会重复创建；你也可以先复制文本再离开。`
+              : `这次没能${ACTIONS.save}：${caught.message}。文本仍在下面，可以直接重试。`,
           });
           return;
         }
         setError(
           new ApiClientError({
             code: 'INTERNAL',
-            message: '保存时出现未预期错误',
+            message: `${ACTIONS.save}时出现未预期错误`,
             retryable: false,
           }),
         );

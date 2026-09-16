@@ -253,7 +253,7 @@ export function importKnowledge(db: DatabaseSync, input: ImportConfirmInput): Im
       bundleHash: actualHash,
       warnings: [
         ...report.warnings,
-        '知识已恢复，但来源过期提示与模型配置需要你自行确认；导入不会自动请求 AI 重新整理。',
+        '知识已恢复，但来源变化提示与模型配置需要你自行确认；导入不会自动请求 AI 重新整理。',
       ],
     };
   });

@@ -148,7 +148,20 @@ export function InlineError({ message, children }: { message: string; children?:
   );
 }
 
-export function LoadingIndicator({ label = '加载中' }: { label?: string }) {
+/**
+ * The one loader atom.
+ *
+ * `label` is required and must name the action being waited on (T082-R03). It
+ * used to default to 「加载中」, which meant every caller that forgot the prop
+ * announced the same thing whether it was refetching the graph, searching the
+ * library or reading a backup file — indistinguishable to a screen-reader user,
+ * and useless for telling "the app is thinking" from "the app is stuck". A new
+ * call site now has to say which of those it is.
+ *
+ * The ellipsis is added here rather than by each caller so the punctuation cannot
+ * drift between 「正在搜索…」 and 「正在搜索...」.
+ */
+export function LoadingIndicator({ label }: { label: string }) {
   return (
     <span role="status" aria-live="polite" className="text-sm text-[var(--ink-muted)]">
       {label}…

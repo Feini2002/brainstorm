@@ -11,6 +11,7 @@
 import { ITEM_STATUS_LABELS, ITEM_TYPE_LABELS, SOURCE_TYPE_LABELS, type ItemDTO } from '@/domain/knowledge';
 import { cardPreview, cardTitle, showsStaleBadge } from './cardDisplay';
 import { formatTime } from './formatTime';
+import { STALE_HINT } from '@/features/shared/StatusLabel';
 
 export interface KnowledgeCardProps {
   item: ItemDTO;
@@ -91,7 +92,7 @@ export function KnowledgeCard({ item, onOpen, selection, actions }: KnowledgeCar
         <span>{ITEM_TYPE_LABELS[item.type]}</span>
         <span aria-hidden="true">·</span>
         <span>{SOURCE_TYPE_LABELS[item.sourceType]}</span>
-        {stale ? <span className="text-[var(--warn)]">来源版本已变化，需要重新整理</span> : null}
+        {stale ? <span className="text-[var(--warn)]">{STALE_HINT}</span> : null}
         {item.tags.map((tag) => (
           <span
             key={tag}

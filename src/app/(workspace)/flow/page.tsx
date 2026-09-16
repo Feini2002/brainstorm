@@ -39,6 +39,7 @@ import { FlowIntentForm } from '@/features/flow/FlowIntentForm';
 import { FlowSourcePanel } from '@/features/flow/FlowSourcePanel';
 import { MermaidRenderer } from '@/features/flow/MermaidRenderer';
 import { SavedFlowList } from '@/features/flow/SavedFlowList';
+import { DeleteViewDialog } from '@/features/shared/DeleteViewDialog';
 import { ViewFreshnessBanner } from '@/features/shared/ViewFreshnessBanner';
 import { ApiClientError, apiRequest } from '@/features/shared/apiClient';
 import { useApiQuery } from '@/features/shared/useApiQuery';
@@ -193,6 +194,8 @@ export default function FlowPage() {
   const [openError, setOpenError] = useState<string | null>(null);
   const [refreshingList, setRefreshingList] = useState(false);
   const [freshnessVersion, setFreshnessVersion] = useState(0);
+  /** Set while the delete-view confirmation is open (T082-R05, T082-C05). */
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   const view = viewState.status === 'ready' ? viewState.view : null;
   const viewList = useMemo(
@@ -297,6 +300,33 @@ export default function FlowPage() {
       }
     })();
   }, [loadList]);
+
+  /**
+   * Delete the open flow view — the view only (T082-R05, T082-C05).
+   *
+   * The knowledge behind it is untouched: this removes one projection row. The
+   * list is re-read afterwards and the newest remaining flow adopted, so the
+   * page never keeps showing a view that no longer exists. `expectedRevision`
+   * comes from the view on screen, so a rename made elsewhere fails as a
+   * conflict rather than being silently discarded.
+   */
+  const deleteView = useCallback(async () => {
+    const target = view;
+    if (!target) return;
+    await apiRequest<{ deletedId: string }>(`/api/views/${target.id}`, {
+      method: 'DELETE',
+      body: { expectedRevision: target.revision },
+    });
+    const list = await loadList();
+    const next = list[0];
+    if (!next) {
+      viewSeq.current += 1;
+      adoptView(null, []);
+    } else {
+      await loadView(next.id, list);
+    }
+    setConfirmingDelete(false);
+  }, [adoptView, loadList, loadView, view]);
 
   /**
    * Freshness is read, never inferred from the DTO.
@@ -511,6 +541,21 @@ export default function FlowPage() {
           </p>
         ) : null}
 
+        {view ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="danger"
+              data-testid="flow-delete-view"
+              onClick={() => setConfirmingDelete(true)}
+            >
+              删除这张视图
+            </Button>
+            <span className="text-xs text-[var(--ink-muted)]">
+              删除的是这个流程视图，知识条目与关系不受影响。
+            </span>
+          </div>
+        ) : null}
+
         {loading ? <LoadingIndicator label="正在读取流程图" /> : null}
 
         {viewState.status === 'ready' && content === null ? (
@@ -575,6 +620,15 @@ export default function FlowPage() {
           </>
         ) : null}
       </div>
+
+      {confirmingDelete && view ? (
+        <DeleteViewDialog
+          viewName={view.name}
+          kindLabel="流程"
+          onCancel={() => setConfirmingDelete(false)}
+          onConfirm={deleteView}
+        />
+      ) : null}
     </>
   );
 }

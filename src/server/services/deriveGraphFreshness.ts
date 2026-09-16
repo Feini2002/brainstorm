@@ -67,7 +67,7 @@ export function freshnessOfRelation(
  * Classify a whole relation list and summarise it.
  *
  * The summary covers every relation passed in, including ones the caller will go
- * on to hide. A count computed after filtering would report "0 条依据过期" for a
+ * on to hide. A count computed after filtering would report "0 条依据已变化" for a
  * graph that merely defaulted to hiding exactly those edges.
  */
 export function deriveGraphFreshness(

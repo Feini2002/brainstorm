@@ -217,7 +217,7 @@ test.describe('T050 大图降级、无障碍与可读性', () => {
     await legend.locator('summary').click();
     await expect(legend).toContainText('虚线：待确认的模型建议');
     await expect(legend).toContainText('实线：已确认的关系');
-    await expect(legend).toContainText('点线：依据已过期');
+    await expect(legend).toContainText('点线：依据已变化');
   });
 
   test('T050-C04 知识量远超画布预算时说明当前范围并保留检索入口', async ({ page }) => {

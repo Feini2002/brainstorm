@@ -24,6 +24,11 @@ import { describeRelation, REVIEW_STATUS_LABELS } from '@/domain/relation';
 import { ApiClientError, apiRequest } from '@/features/shared/apiClient';
 import { useApiQuery } from '@/features/shared/useApiQuery';
 import { Button, InlineError, LoadingIndicator } from '@/components/ui/primitives';
+import {
+  EMPTY_STATES,
+  STALE_LABEL,
+  describeScoreMeaning,
+} from '@/features/shared/StatusLabel';
 
 export interface RelationReviewPanelProps {
   item: Pick<ItemDTO, 'id'>;
@@ -144,7 +149,7 @@ export function RelationReviewPanel({
       ) : null}
 
       {relations !== null && relations.length === 0 ? (
-        <p className="text-sm text-[var(--ink-muted)]">这条记录还没有关系。</p>
+        <p className="text-sm text-[var(--ink-muted)]">{EMPTY_STATES.noRelations}</p>
       ) : null}
 
       {relations !== null && relations.length > 0 ? (
@@ -163,12 +168,16 @@ export function RelationReviewPanel({
                 )}
               </p>
 
+              {/*
+                One vocabulary for the score, shared with the graph inspector and
+                the canvas badge. `relation.score` is a null-able number and a
+                manual relation has none at all, so the third case is spelled out
+                rather than rendered as "0.00" (T082-R02).
+              */}
               <p className="text-xs text-[var(--ink-muted)]">
                 {RELATION_TYPE_LABELS[relation.type]} · {ORIGIN_LABELS[relation.origin]} ·{' '}
-                {REVIEW_STATUS_LABELS[relation.reviewStatus]}
-                {relation.score === null
-                  ? ' · 无模型评分（人工判定）'
-                  : ` · 模型评分 ${relation.score.toFixed(2)}（不是正确概率）`}
+                {REVIEW_STATUS_LABELS[relation.reviewStatus]} ·{' '}
+                {describeScoreMeaning({ origin: relation.origin, score: relation.score })}
               </p>
 
               {relation.reason.trim().length > 0 ? (
@@ -183,7 +192,7 @@ export function RelationReviewPanel({
 
               {relation.isStale ? (
                 <p className="text-xs text-[var(--warn-ink)]">
-                  来源原文已修改，这条判断基于旧版本，需要重新确认才会更新依据。
+                  {STALE_LABEL}：这条判断基于旧版本的原文，需要重新确认才会更新依据。
                 </p>
               ) : null}
 

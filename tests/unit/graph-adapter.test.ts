@@ -169,7 +169,7 @@ describe('T044 领域图到 React Flow 适配', () => {
       freshness: { r1: 'stale' },
     });
     expect(result.edges[0].data?.freshness).toBe('stale');
-    expect(result.edges[0].data?.badge).toBe('依据过期');
+    expect(result.edges[0].data?.badge).toBe('依据已变化');
   });
 
   it('T044 默认新鲜度来自边的 isStale，不假定 Service 一定传入', () => {

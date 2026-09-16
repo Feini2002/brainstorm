@@ -162,7 +162,7 @@ export function ExportFlow({ viewId, freshness, sanitizedSvg, isSanitizedSvgSafe
       {stale ? (
         <p className="text-xs text-[var(--warn-ink)]" data-testid="export-flow-stale-warning">
           {freshness?.reason ?? '来源版本已变化'}
-          ，导出的文件会写明生成时间与过期状态，不会被标成最新整理。
+          ，导出的文件会写明生成时间与依据是否已变化，不会被标成最新整理。
         </p>
       ) : null}
 

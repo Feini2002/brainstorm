@@ -10,6 +10,7 @@
  */
 import type { ApiClientError } from '@/features/shared/apiClient';
 import { Button, EmptyState, InlineError } from '@/components/ui/primitives';
+import { EMPTY_STATES } from '@/features/shared/StatusLabel';
 
 export interface GraphEmptyStateProps {
   /** True when the library has records but the filter matched none. */
@@ -24,7 +25,7 @@ export function GraphNoData({ filtered, onOpenLibrary, onResetFilters }: GraphEm
       <div data-testid="graph-empty-filtered">
         <EmptyState
           title="当前筛选没有匹配到知识"
-          description="筛选只改变读取范围，不会删除任何知识。放宽条件即可看到更多节点。"
+          description={EMPTY_STATES.noMatches}
           action={
             <div className="flex flex-wrap gap-2">
               <Button variant="secondary" onClick={onResetFilters}>

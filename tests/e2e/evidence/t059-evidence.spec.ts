@@ -86,7 +86,7 @@ test('capture T059 freshness banner and regeneration confirmation', async ({ pag
   );
   expect(response.status(), 'Markdown 导出应返回 200').toBe(200);
   const body = await response.text();
-  expect(body).toContain('依据可能已过期');
+  expect(body).toContain('依据可能已变化');
   await writeFile(
     'implementation/progress/evidence/assets/T060-exported-markdown.md',
     body,

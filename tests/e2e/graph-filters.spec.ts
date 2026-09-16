@@ -241,7 +241,7 @@ test.describe('T048 图筛选、关系阈值与选择稳定性', () => {
     });
     await openScopedGraph(page, viewId, 2);
     await expect(page.getByTestId('graph-summary-nodes')).toContainText('1 条关系');
-    await expect(page.getByTestId('graph-toggle-stale')).toContainText('显示过期关系');
+    await expect(page.getByTestId('graph-toggle-stale')).toContainText('显示依据已变化的关系');
 
     // Move the endpoint's raw text — the only change that invalidates recorded
     // evidence. A title edit deliberately would not (see T051-C02).
@@ -256,9 +256,14 @@ test.describe('T048 图筛选、关系阈值与选择稳定性', () => {
     expect(edited.status()).toBe(200);
 
     await page.getByTestId('graph-toggle-stale').click();
-    await expect(page.getByTestId('graph-toggle-stale')).toContainText('隐藏过期关系');
+    await expect(page.getByTestId('graph-toggle-stale')).toContainText('隐藏依据已变化的关系');
     await expect(page.getByTestId('graph-summary-nodes')).toContainText('1 条关系');
-    await expect(page.getByTestId('graph-freshness-notice')).toContainText('原文已变化');
+    // T082-R02 renamed this state: 「过期」 read as "the data is bad", while
+    // 「依据已变化」 says what actually happened (the recorded evidence was drawn
+    // from an older raw version). The case's requirement is unchanged — the notice
+    // must explain the classification — so the assertion follows the wording the
+    // product now uses.
+    await expect(page.getByTestId('graph-freshness-notice')).toContainText('依据已变化');
 
     // Hide it again: the edge leaves the canvas, and the number of hidden stale
     // edges is stated so "it vanished" is never silent.

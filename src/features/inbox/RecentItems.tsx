@@ -12,6 +12,7 @@ import type { ItemPageResult } from '@/domain/api';
 import { Button, EmptyState, InlineError, LoadingIndicator } from '@/components/ui/primitives';
 import { timelineSummary } from '@/features/shared/cardDisplay';
 import { KnowledgeCard } from '@/features/shared/KnowledgeCard';
+import { EMPTY_STATES } from '@/features/shared/StatusLabel';
 import { useApiQuery } from '@/features/shared/useApiQuery';
 import { useSelection } from '@/features/shared/workspace';
 
@@ -54,7 +55,7 @@ export function RecentItems({ onOpen, refreshToken = 0, limit = DEFAULT_LIMIT }:
     return (
       <EmptyState
         title="还没有记录"
-        description="上面写一句话就会出现在这里。即使没有配置模型，保存原文也能正常工作。"
+        description={EMPTY_STATES.noItems}
       />
     );
   }

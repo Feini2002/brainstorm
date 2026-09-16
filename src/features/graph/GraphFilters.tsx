@@ -13,6 +13,12 @@ import type { GraphFilter, ItemType, ReviewStatus, TagDTO } from '@/domain/knowl
 import { ITEM_TYPE_LABELS, ITEM_TYPES, REVIEW_STATUSES } from '@/domain/knowledge';
 import { Button, Field, Select } from '@/components/ui/primitives';
 import { RELATION_TYPE_META } from '@/domain/relations';
+import {
+  SCORE_DISCLAIMER,
+  SCORE_LABEL,
+  STALE_BADGE,
+  STALE_HINT,
+} from '@/features/shared/StatusLabel';
 
 export interface GraphFiltersProps {
   filter: GraphFilter;
@@ -101,9 +107,9 @@ export function GraphFilters({
         </Field>
 
         <Field
-          label="最低关联评分"
+          label={`最低${SCORE_LABEL}`}
           htmlFor="graph-filter-score"
-          hint="模型判断的关联强度，不是正确率；人工关系没有评分，不受此项影响"
+          hint={`${SCORE_DISCLAIMER}；人工关系没有评分，不受此项影响`}
         >
           <Select
             id="graph-filter-score"
@@ -143,17 +149,17 @@ export function GraphFilters({
           disabled={disabled}
           onClick={() => patch({ includeStale: filter.includeStale === true ? undefined : true })}
         >
-          {filter.includeStale === true ? '隐藏过期关系' : '显示过期关系'}
+          {filter.includeStale === true ? '隐藏依据已变化的关系' : '显示依据已变化的关系'}
         </Button>
         {filter.includeStale !== true && hiddenStaleCount > 0 ? (
           <span className="text-xs text-[var(--warn-ink)]" data-testid="graph-stale-hidden">
-            有 {hiddenStaleCount} 条关系的原文已变化，依据已过期，默认隐藏
+            有 {hiddenStaleCount} 条关系的原文已变化，{STALE_HINT}，默认隐藏
           </span>
         ) : null}
       </div>
 
       <p className="text-xs text-[var(--ink-muted)]">
-        虚线表示待确认建议，点线表示依据过期；颜色之外的线型同样表达状态。
+        虚线表示待确认建议，点线表示依据已变化；颜色之外的线型同样表达状态。
       </p>
 
       {/*
@@ -184,8 +190,8 @@ export function GraphFilters({
           <ul className="flex flex-col gap-1 text-[var(--ink)]">
             <li>实线：已确认的关系</li>
             <li>虚线：待确认的模型建议</li>
-            <li>点线：依据已过期（原文版本已变化）</li>
-            <li>线上文字：待确认 / 依据过期 / 端点已删除</li>
+            <li>点线：依据已变化（原文版本改动过，旧依据仍然保留）</li>
+            <li>线上文字：待确认 / {STALE_BADGE} / 端点已删除</li>
           </ul>
         </div>
       </details>

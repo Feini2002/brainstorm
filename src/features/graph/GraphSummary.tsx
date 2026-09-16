@@ -19,6 +19,7 @@
 import type { GraphReadResponse } from '@/domain/graph';
 import { REVIEW_STATUS_LABELS } from '@/domain/relation';
 import { Button } from '@/components/ui/primitives';
+import { STALE_LABEL } from '@/features/shared/StatusLabel';
 
 export interface GraphSummaryProps {
   graph: GraphReadResponse;
@@ -133,7 +134,7 @@ export function GraphSummary({
                 <span className="text-xs text-[var(--ink-muted)]">
                   {REVIEW_STATUS_LABELS[edge.reviewStatus]}
                   {edge.origin === 'manual' ? '·人工' : '·AI'}
-                  {edge.freshness !== 'fresh' ? '·依据过期' : ''}
+                  {edge.freshness !== 'fresh' ? `·${STALE_LABEL}` : ''}
                 </span>
               </li>
             ))}

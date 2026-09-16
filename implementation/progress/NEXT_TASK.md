@@ -1,10 +1,34 @@
 # 当前实施位置
 
-当前：**G6 进行中，T077、T078、T079、T080、T081 已验收（`verified`）**。T070–T081 已实测通过并在 `tasks.current.json`
-中为 `verified`。**T082–T084 尚未开始**。
+当前：**G6 进行中，T077–T082 已验收（`verified`）**。T070–T082 已实测通过并在 `tasks.current.json`
+中为 `verified`。**T083、T084 尚未开始**。
 G5（T062–T069）已完成并验收；G0–G4 已完成。真实 Provider 语义验收仍阻塞，见「已知阻塞」。
 
-**下一步：T082 中文文案、状态与无障碍终审。**
+**下一步：T083 任务证据、缺陷清单与交付状态。**
+
+**上一轮完成的 T082**（`evidence/G6.md` T082-1；手册见 `docs/ux/copybook.md`、
+`docs/ux/accessibility.md`）：
+
+1. **状态词表集中到一处**：`src/features/shared/StatusLabel.tsx` 承载 `ACTIONS`（保存/整理/
+   生成/审核四词分开）、`SCORE_LABEL`/`SCORE_DISCLAIMER`（关联评分，不称正确率）、
+   `STALE_LABEL`/`STALE_HINT`（依据已变化，不称数据损坏）、`EMPTY_STATES`（空数据/无匹配/
+   无关系/未选材料四态分开）、`NO_MODEL_HINT`+`MODEL_REQUIRED_FOR`、`DANGER_SCOPE`、
+   `failureKeepingSaved`。各处改为引用，不改行为。
+2. **`LoadingIndicator` 的 `label` 改为必填**，六页每一处等待都写清在等哪个动作（「正在加载」
+   这种万能词被类型系统挡住）。
+3. **8 例 e2e**（`tests/e2e/a11y-and-copy.spec.ts`）：C01 失败保留原文、C02 过期解释、
+   C03 无 Key 空态、C04 150% 字号六页关键控件、C04b 抽屉焦点、C05 删除范围、C06 文本替代两条。
+4. **查出并修掉 1 个真实缺陷**：`KnowledgeDrawer` 声明了 `aria-modal="true"` 却从不把焦点移入、
+   也没有焦点陷阱——读屏宣告「模态」而键盘在遮罩下面游走，数到「关闭」要按的次数比抽屉里的
+   可聚焦控件还多。已补「移入焦点 + Tab 首尾回卷 + 关闭归还打开者」。
+5. **新用例当场抓出上一处修复的第二个缺陷**：焦点归还原先记的是刚被聚焦的关闭按钮（effect 声明
+   顺序错），卸载后该节点已不在文档里，于是焦点落到 `<body>`——键盘路径一去不回。已合并为一个
+   effect 并前置声明，顺序在注释里写明是承重的。
+6. **变异对照**：撤销「移入焦点」→ C04b 红在 `toBeFocused`；撤销「Tab 回卷」→ C04b 红在
+   「第 4 次 Tab 之后焦点仍应留在抽屉里」。两处均还原、`.mutbak` 为 0。
+7. **顺带修掉两条用例侧未同步**（不是产品缺陷）：`graph-filters.spec.ts:261` 仍断言「原文已变化」；
+   `gate1.spec.ts:342` 的宽泛正则**依赖「库里没有视图」这一残留状态**，与累积库的实际不符——
+   已换成与顺序无关的前提文案断言，并新增「只浏览三页不得产生任何生成调用」的记账断言。
 
 **上一轮完成的 T079**（`evidence/G6.md` T079-1，报告见 `docs/performance-report.md`）：
 
@@ -81,7 +105,7 @@ G5（T062–T069）已完成并验收；G0–G4 已完成。真实 Provider 语�
    （正是 C04 那句「被占时不能报空闲」），还原后 19 例复绿、工作区干净。
 6. **未执行**：真实企业代理后的完整安装、macOS/Linux、`cmd.exe` 实跑、真实坏盘演练（均在手册末尾单列）。
 
-最新验证（本机实测，2026-09-16，T081 完成后的全量一轮）：
+最新验证（本机实测，2026-09-16，T082 完成后的全量一轮）：
 
 ```
 npm run typecheck   exit 0
@@ -89,7 +113,7 @@ npm run lint        exit 0   （0 problems，全仓库）
 npm run contracts   exit 0   （pending 0；failures 空）
 npm test            exit 0   （83 文件 1085 例；unit 406 + integration 534 + security 103 + contracts 32 + browser 10 = 1085 ✓）
 npm run build       exit 0
-npx playwright test           exit 0   （132 passed / 1 skipped）
+npx playwright test           exit 0   （140 passed / 1 skipped）
 npm run test:perf             exit 0   （12 passed；独立端口 3210、独立数据目录，不并入 npm test）
 ```
 
@@ -99,12 +123,13 @@ npm run test:perf             exit 0   （12 passed；独立端口 3210、独立
 
 用例数轨迹（只增不减）：G5 时 548 → G6 前四项 896 → T074 后 944 → T075 后 1023 →
 T076 后 1054 → T077 收口 1068 → T077 收尾 1071 → T079 无新增（性能走独立 `test:perf`）→
-T080 后 1085（+14，全在 `unit`：392 → 406）→ **T081 无新增 1085**（交付物是干净目录实测与三份发布材料，
-不是新用例）。
+T080 后 1085（+14，全在 `unit`：392 → 406）→ T081 无新增 1085（交付物是干净目录实测与三份发布材料，
+不是新用例）→ **T082 仍 1085**（8 例全在 e2e；T082 改的是文案与焦点，不为它写复述实现的单测）。
 五个 project 相加应等于整跑（406+534+103+32+10 = 1085），
 **总和一旦不等就说明某个 glob 收集不到文件了**（静默不跑，不报错）。
 
-e2e 轨迹：121 → T078 时 132（+11）→ **T079/T080/T081 仍 132**，1 条 skip 是 `gate2.spec.ts` 的既有条件跳过。
+e2e 轨迹：121 → T078 时 132（+11）→ T079/T080/T081 仍 132 → **T082 后 140（+8）**；
+1 条 skip 是 `gate2.spec.ts` 的既有条件跳过。
 `npm run test:perf` 是**另一条独立通道**：12 例、端口 3210、数据目录 `.tmp-bench-data/`，
 不并入 `npm test`/`npm run check`（一万条种子要几十秒，且数字只在一台安静的机器上有意义）。
 
@@ -133,7 +158,8 @@ G5 门禁报告：`docs/progress/G5.md`（T062–T069 全部 verified）。
 | T078 | 六页浏览器端到端验收 | `tests/e2e/support/consoleWatch.ts`、`fixtures.ts`、`narrow-and-ime.spec.ts`、`backup-restore.spec.ts`、`docs/browser-test-map.md`、`GenerateMindmapAction.tsx` | 新增 11 例（e2e 121 → 132）；变异 C05 红 1；**查出并修掉脑图无「第一次生成」入口**（evidence T078-1/2） | verified |
 | T079 | 加载、查询与图形性能预算 | `scripts/seed-benchmark.mjs`、`scripts/run-perf.mjs`、`tests/performance/`、`docs/performance-report.md` | 12 例（`npm run test:perf`）；R04 用进程内 `setAuthorizer` 计数 + 对照校准；变异（按行读）红 2；**查出并修掉种子空快照缺陷**（evidence T079-1） | verified |
 | T081 | 生产构建、依赖审计与发布材料 | `docs/release/build-report.md`、`docs/release/dependency-audit.md`、`README.md`（重写安装运行）、`package.json`（vitest 4.1.11 / esbuild）、`.gitattributes`、`vitest.config.mjs` | 干净目录（`git archive` 653 文件）全链 exit 0；真实 API 11 项断言；`npm audit` 与 `--omit=dev` 均 0 条；**查出并修掉 3 个真实缺陷**（换行符不确定 / `APP_*` 污染测试 / esbuild 隐式依赖） | verified |
-| T082–T084 | 文案无障碍 / 交付证据 / 最终验收 | — | — | not_started |
+| T082 | 中文文案、状态与无障碍终审 | `src/features/shared/StatusLabel.tsx`、`docs/ux/copybook.md`、`docs/ux/accessibility.md`、`KnowledgeDrawer.tsx`（焦点）、`LoadingIndicator`（label 必填） | `tests/e2e/a11y-and-copy.spec.ts` 8 例（C01–C06）；变异 2 处（撤销移入焦点 / 撤销 Tab 回卷）均红在正确断点；**查出并修掉抽屉声称 aria-modal 却不移入焦点、也无焦点陷阱**（evidence T082-1） | verified |
+| T083–T084 | 交付证据 / 最终验收 | — | — | not_started |
 
 T077 已查明、接手者可直接用的事实（不必再探）：
 

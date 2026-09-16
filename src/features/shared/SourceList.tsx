@@ -35,6 +35,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ItemDTO, SourceSnapshot, UUID } from '@/domain/knowledge';
 import { Button, InlineError, LoadingIndicator } from '@/components/ui/primitives';
 import { ApiClientError, apiRequest } from '@/features/shared/apiClient';
+import { MISSING_SOURCE_LABEL } from '@/features/shared/StatusLabel';
 
 export interface SourceListProps {
   /** Ids this node cites, in the tree's own order. Duplicates are removed here. */
@@ -178,7 +179,7 @@ export function SourceList({ itemIds, snapshot, onOpenItem, nodeLabel }: SourceL
       <header className="flex flex-wrap items-baseline justify-between gap-2">
         <h3 className="text-sm font-semibold text-[var(--ink)]">来源材料</h3>
         <span className="text-xs text-[var(--ink-muted)]" data-testid="source-list-count">
-          {rows === null ? '读取中' : `${rows.length} 条（已去重）`}
+          {rows === null ? null : `${rows.length} 条（已去重）`}
         </span>
       </header>
 
@@ -192,11 +193,11 @@ export function SourceList({ itemIds, snapshot, onOpenItem, nodeLabel }: SourceL
         </InlineError>
       ) : null}
 
-      {rows === null && !error ? <LoadingIndicator label="正在读取来源" /> : null}
+      {rows === null && !error ? <LoadingIndicator label="正在读取这张视图的来源" /> : null}
 
       {rows !== null && rows.length === 0 && !error ? (
         <p className="text-sm text-[var(--ink-muted)]">
-          这个节点没有记录来源。它可能是旧版本生成的，无法核对依据。
+          这个节点没有记录来源。它可能是旧版本生成的，无法核对依据，也不会因此改动任何知识条目。
         </p>
       ) : null}
 
@@ -214,7 +215,7 @@ export function SourceList({ itemIds, snapshot, onOpenItem, nodeLabel }: SourceL
                 <span className="min-w-0 break-words text-sm text-[var(--ink)]">
                   {row.item
                     ? row.item.title.trim() || row.item.capturedText.split('\n')[0] || '未命名记录'
-                    : `来源已删除（${row.id.slice(0, 8)}…）`}
+                    : `${MISSING_SOURCE_LABEL}（${row.id.slice(0, 8)}…）`}
                 </span>
                 {row.item ? (
                   <Button
@@ -229,14 +230,15 @@ export function SourceList({ itemIds, snapshot, onOpenItem, nodeLabel }: SourceL
 
               {row.missing ? (
                 <p className="text-xs text-[var(--warn-ink)]" data-testid="source-missing">
-                  这条来源已经被删除。脑图保留生成时的样子，不会因此重建或去掉这个节点。
+                  {MISSING_SOURCE_LABEL}。这张视图保留生成时的样子，不会因此重建或去掉这个节点，
+                  也不会自动删除或改写任何知识条目。
                 </p>
               ) : null}
 
               {row.changed ? (
                 <p className="text-xs text-[var(--warn-ink)]" data-testid="source-changed">
                   生成时是 v{row.snapshotRawVersion}，当前已是 v{row.item!.rawVersion}；
-                  下面的脑图仍是生成时的快照。
+                  下面的内容仍是生成当时的快照。
                 </p>
               ) : null}
 

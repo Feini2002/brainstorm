@@ -22,7 +22,7 @@ export interface GraphNode {
    * The raw text version this node's content corresponds to.
    *
    * Carried so a client can compare an edge's recorded endpoint version against
-   * the live one and show 「依据过期」 without a second request (T051-R01).
+   * the live one and show 「依据已变化」 without a second request (T051-R01).
    */
   rawVersion: number;
   isStructured: boolean;

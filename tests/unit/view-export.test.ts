@@ -227,7 +227,7 @@ describe('T060 脑图导出', () => {
     expect(markdown).toContain('2026-09-14T08:00:00.000Z');
     expect(markdown).toContain(EXPORTED_AT);
     // 明确写出过期，而不是留白让读者以为是"最新整理"。
-    expect(markdown).toContain('依据可能已过期');
+    expect(markdown).toContain('依据可能已变化');
     expect(markdown).toContain('1 条笔记已修改');
     expect(markdown).toContain('不代表知识库的最新状态');
 

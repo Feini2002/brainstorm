@@ -51,6 +51,7 @@ import { MindmapOutline } from '@/features/mindmap/MindmapOutline';
 import { MindmapRenderer } from '@/features/mindmap/MindmapRenderer';
 import { RegenerateAction, type RegenerateOutcome } from '@/features/mindmap/RegenerateAction';
 import { SourceList } from '@/features/shared/SourceList';
+import { DeleteViewDialog } from '@/features/shared/DeleteViewDialog';
 import { ViewFreshnessBanner } from '@/features/shared/ViewFreshnessBanner';
 import { ApiClientError, apiRequest } from '@/features/shared/apiClient';
 import { useApiQuery } from '@/features/shared/useApiQuery';
@@ -78,6 +79,8 @@ export default function MindmapPage() {
   const [fitToken, setFitToken] = useState(0);
   const [expandLevel, setExpandLevel] = useState(2);
   const [openError, setOpenError] = useState<string | null>(null);
+  /** Set while the delete-view confirmation is open (T082-R05, T082-C05). */
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   const view = viewState.status === 'ready' ? viewState.view : null;
   const viewList = useMemo(
@@ -299,6 +302,35 @@ export default function MindmapPage() {
     [adoptView],
   );
 
+  /**
+   * Delete the open view — the view only.
+   *
+   * The server removes the view row and nothing else (T053-R03); this handler
+   * then re-reads the list and adopts whatever is newest, rather than leaving a
+   * canvas showing a projection that no longer exists. `expectedRevision` is the
+   * revision the page displayed, so a change made in another window surfaces as a
+   * conflict instead of being discarded.
+   */
+  const deleteView = useCallback(async () => {
+    const target = view;
+    if (!target) return;
+    await apiRequest<{ deletedId: string }>(`/api/views/${target.id}`, {
+      method: 'DELETE',
+      body: { expectedRevision: target.revision },
+    });
+    const list = await apiRequest<{ views: ViewSummaryDTO[] }>('/api/views', {
+      query: { kind: 'mindmap', limit: 50 },
+    });
+    const next = list.views[0];
+    if (!next) {
+      adoptView(null, []);
+    } else {
+      const loaded = await apiRequest<ViewDTO>(`/api/views/${next.id}`);
+      adoptView(loaded, list.views);
+    }
+    setConfirmingDelete(false);
+  }, [adoptView, view]);
+
   const loading = !viewReady;
 
   return (
@@ -315,6 +347,18 @@ export default function MindmapPage() {
                 onClick={() => setFitToken((value) => value + 1)}
               >
                 适应窗口
+              </Button>
+              {/*
+                Deleting a *view* sits next to the read controls, not inside the
+                canvas: it is about the saved projection, not about the notes, and
+                it must stay reachable when the canvas cannot render (T082-R05).
+              */}
+              <Button
+                variant="danger"
+                data-testid="mindmap-delete-view"
+                onClick={() => setConfirmingDelete(true)}
+              >
+                删除这张视图
               </Button>
             </div>
           ) : null
@@ -468,6 +512,15 @@ export default function MindmapPage() {
           </>
         ) : null}
       </div>
+
+      {confirmingDelete && view ? (
+        <DeleteViewDialog
+          viewName={view.name}
+          kindLabel="脑图"
+          onCancel={() => setConfirmingDelete(false)}
+          onConfirm={deleteView}
+        />
+      ) : null}
     </>
   );
 }

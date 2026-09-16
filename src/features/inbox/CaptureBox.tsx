@@ -19,6 +19,7 @@ import { SOURCE_TYPE_LABELS } from '@/domain/knowledge';
 import { LIMITS } from '@/domain/limits';
 import { Button, Field, InlineError, Select, TextArea } from '@/components/ui/primitives';
 import { SavePhaseStatus } from '@/features/shared/MutationStatus';
+import { ACTIONS, waitingFor } from '@/features/shared/StatusLabel';
 import { shouldSubmitFromKeyboard } from './captureShortcuts';
 import { useCapture, type CaptureResult } from './useCapture';
 
@@ -84,8 +85,12 @@ export function CaptureBox({
       // Never lose the text: save first, then explain that organizing needs a
       // model. The explanation is written into the draft store rather than local
       // state so navigating to the settings page and back does not erase it
-      // (T024-R04/R06).
-      capture.setInputHint('整理功能需要先在设置里配置模型；这条原文仍会照常保存。');
+      // (T024-R04/R06). The copy comes from the shared vocabulary so this hint and
+      // the empty-state hint in Settings say the same thing about the same
+      // prerequisite (T082-R03, T082-C03).
+      capture.setInputHint(
+        `${ACTIONS.organize}需要先在设置里配置模型；这条原文仍会照常保存，离线功能不受影响。`,
+      );
       void capture.submit();
       return;
     }
@@ -130,7 +135,7 @@ export function CaptureBox({
             disabled={!capture.canSubmit}
             onClick={() => void capture.submit()}
           >
-            {saving ? '保存中…' : '只保存'}
+            {saving ? waitingFor(ACTIONS.save) : '只保存'}
           </Button>
           <Button
             variant="secondary"

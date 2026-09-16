@@ -196,7 +196,7 @@ export function buildFlowMermaid(input: BuildFlowExportInput): string {
 
   if (exported.freshness.reason !== null || exported.freshness.missingSourceCount > 0) {
     lines.push(
-      `%% ⚠️ 依据可能已过期：${exported.freshness.reason ?? `${exported.freshness.missingSourceCount} 条来源已删除`}`,
+      `%% ⚠️ 依据可能已变化：${exported.freshness.reason ?? `${exported.freshness.missingSourceCount} 条来源已删除`}`,
     );
     lines.push('%% 这份导出反映生成当时的材料，不代表知识库的最新状态。');
   }

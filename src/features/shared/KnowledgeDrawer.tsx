@@ -15,7 +15,7 @@
  * organize have separate outcomes (T025-R04): reporting "saved" must survive a
  * later failure that only concerns the model.
  */
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { ItemDTO } from '@/domain/knowledge';
 import { ITEM_STATUS_LABELS, ITEM_TYPE_LABELS } from '@/domain/knowledge';
@@ -173,6 +173,48 @@ export function KnowledgeDrawer({ itemId, onClose, onChanged }: KnowledgeDrawerP
     return () => window.removeEventListener('keydown', onKey);
   }, [confirmingDelete, onClose]);
 
+  const closeRef = useRef<HTMLButtonElement>(null);
+  /**
+   * The element that had focus before this drawer opened, so it can be restored.
+   *
+   * Captured in the *same* effect that moves focus in, and that effect is declared
+   * before the one that focuses the close button — the order is load-bearing. An
+   * earlier version read `document.activeElement` from a separate effect declared
+   * after the focus effect, so it recorded the close button (just focused, and gone
+   * once the drawer unmounts) instead of the card the user actually came from. The
+   * symptom was focus landing on `<body>` after Escape: the keyboard path worked one
+   * way and not back.
+   */
+  const openerRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    openerRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    return () => {
+      const opener = openerRef.current;
+      if (opener !== null && document.contains(opener)) {
+        opener.focus({ preventScroll: true });
+      }
+    };
+  }, []);
+
+  /**
+   * The drawer claims `aria-modal="true"`, so the keyboard must actually arrive here.
+   *
+   * Without this the panel is announced as a modal while focus stays on whatever
+   * opened it (a card's button behind the overlay): the next Tab presses walk the
+   * page *underneath* the scrim, and reaching 「关闭」 can take more presses than the
+   * drawer has focusable elements. The two halves of a modal are load-bearing
+   * together — claiming modality without moving focus is worse than not claiming it,
+   * because assistive technology announces a trap that is not there.
+   *
+   * Focus goes to the close button rather than the panel: the panel is not
+   * focusable, and 「关闭」 is the one control always present (the body can still be
+   * loading). `preventScroll` keeps the drawer's own scroll position at the top.
+   */
+  useEffect(() => {
+    closeRef.current?.focus({ preventScroll: true });
+  }, []);
+
   const submitEdit = useCallback(
     async (patch: EditPatch, options: { unlockFields?: ManualField[] }) => {
       if (!item) return;
@@ -225,6 +267,44 @@ export function KnowledgeDrawer({ itemId, onClose, onChanged }: KnowledgeDrawerP
     return map;
   }, [candidates, item]);
 
+  /**
+   * Keep Tab inside the drawer while it is open.
+   *
+   * Moving focus in is only half the modal contract: without containment, tabbing
+   * past the last control lands on the page behind the scrim (still focusable, just
+   * covered), and the user has no way back except counting Shift+Tabs. This walks
+   * the drawer's own visible focusable elements and wraps at both ends.
+   *
+   * A keydown handler rather than `inert` on the background, because the background
+   * belongs to the layout this component does not own — `inert` would require every
+   * page to co-operate. The handler is scoped to the panel element, so it cannot
+   * interfere with anything else on the page.
+   */
+  const panelRef = useRef<HTMLElement>(null);
+  const onKeyDown = useCallback((event: React.KeyboardEvent<HTMLElement>) => {
+    if (event.key !== 'Tab') return;
+    const panel = panelRef.current;
+    if (panel === null) return;
+    const focusable = Array.from(
+      panel.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ),
+    ).filter((element) => element.offsetParent !== null);
+    if (focusable.length === 0) return;
+    const first = focusable[0]!;
+    const last = focusable[focusable.length - 1]!;
+    const active = document.activeElement;
+    if (event.shiftKey && (active === first || active === panel)) {
+      event.preventDefault();
+      last.focus();
+      return;
+    }
+    if (!event.shiftKey && active === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  }, []);
+
   return (
     <div className="fixed inset-0 z-40 flex justify-end bg-black/30" role="presentation">
       <aside
@@ -232,18 +312,25 @@ export function KnowledgeDrawer({ itemId, onClose, onChanged }: KnowledgeDrawerP
         aria-modal="true"
         aria-labelledby="drawer-title"
         data-testid="knowledge-drawer"
+        ref={panelRef}
+        onKeyDown={onKeyDown}
         className="flex h-full w-full max-w-xl flex-col overflow-y-auto border-l border-[var(--line)] bg-[var(--surface)] p-4"
       >
         <header className="mb-3 flex items-start justify-between gap-2">
           <h2 id="drawer-title" className="text-base font-semibold text-[var(--ink)]">
             {item ? item.title.trim() || '未命名记录' : '记录详情'}
           </h2>
-          <Button variant="ghost" data-testid="drawer-close" onClick={onClose}>
+          <Button
+            variant="ghost"
+            data-testid="drawer-close"
+            ref={closeRef}
+            onClick={onClose}
+          >
             关闭
           </Button>
         </header>
 
-        {loading ? <LoadingIndicator label="正在读取" /> : null}
+        {loading ? <LoadingIndicator label="正在读取这条记录" /> : null}
 
         {loadError ? (
           <InlineError message={loadError.message}>

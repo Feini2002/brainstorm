@@ -337,7 +337,7 @@ describe('T068 流程导出', () => {
     // 生成时间与导出时间都要在，且两者不同。
     expect(mermaid).toContain('2026-09-14T08:00:00.000Z');
     expect(mermaid).toContain(EXPORTED_AT);
-    expect(mermaid).toContain('依据可能已过期');
+    expect(mermaid).toContain('依据可能已变化');
     expect(mermaid).toContain('1 条笔记已修改');
     expect(mermaid).toContain('不代表知识库的最新状态');
     // 正文照常完整。

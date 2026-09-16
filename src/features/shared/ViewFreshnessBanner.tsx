@@ -46,7 +46,7 @@ export function ViewFreshnessBanner({
   return (
     <section
       role="status"
-      aria-label="来源过期情况"
+      aria-label="来源变化情况"
       data-testid="view-freshness-banner"
       data-stale={freshness.isStale ? 'true' : 'false'}
       className="flex flex-col gap-2 rounded-lg border border-[var(--warn-line,var(--line))] bg-[var(--surface)] p-3 text-sm"
@@ -60,7 +60,7 @@ export function ViewFreshnessBanner({
         {freshness.generatedAt
           ? `（生成于 ${formatTime(freshness.generatedAt).absolute}）`
           : ''}
-        ，不会被自动改写。重新生成会新建一张，旧图继续保留。
+        ，不会被自动改写。重新生成会新建一张，旧图继续保留，所以「来源已变化」不等于数据损坏。
       </p>
 
       {shown.length > 0 ? (

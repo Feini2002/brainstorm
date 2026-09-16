@@ -75,7 +75,7 @@ function RelationEdgeView({
               transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
               pointerEvents: 'none',
             }}
-            className="rounded-sm border border-[var(--line)] bg-[var(--surface)] px-1 text-[10px] text-[var(--ink-muted)]"
+            className="rounded-sm border border-[var(--line)] bg-[var(--surface)] px-1 text-xs text-[var(--ink-muted)]"
           >
             {badge}
           </span>

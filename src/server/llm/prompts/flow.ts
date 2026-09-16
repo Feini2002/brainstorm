@@ -130,7 +130,7 @@ export function buildFlowMessages(input: FlowPromptInput): FlowPrompt {
     '   - sequence：材料明确写了先后步骤；',
     '   - dependency：材料里有已确认的 depends_on 依赖关系（写进 relationIds）；',
     '   - association：两件事有联系，但谈不上因果，也没有先后（用「相关」这类词说明）；',
-    '   - causal：只有当下面提供的关系里存在已确认（reviewStatus 为 accepted）、未过期、类型为 causes 的关系，且它的两端正好是这两个节点引用的来源时才能使用，方向与该关系一致。**没有这种依据时绝对不要输出 causal。**',
+    '   - causal：只有当下面提供的关系里存在已确认（reviewStatus 为 accepted）、依据未变化、类型为 causes 的关系，且它的两端正好是这两个节点引用的来源时才能使用，方向与该关系一致。**没有这种依据时绝对不要输出 causal。**',
     '   - hypothesis：你自己为了帮助思考而补的排列或推断。这是允许的，但 label 必须明确写出「推测」或「建议」，不能用确定的因果语气。',
     '5. 每条边的 label 都必须写清楚这是什么关系，不能留空，不能只写箭头。',
     '6. 用户只表达了相关时，不要把结果升级成因果。宁可少画几条边，也不要为了填满画面编造因果。',

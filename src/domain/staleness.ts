@@ -140,6 +140,22 @@ export function deriveGraphFreshnessFromDto(
 }
 
 /**
+ * Canonical wording for a relation whose recorded evidence no longer matches the
+ * current raw text (T082-R02).
+ *
+ * Defined in the domain, next to the state it names, so the graph badge, the
+ * filter toggle, the freshness notice and the export all read one string. The
+ * word is 「依据已变化」 and not 「过期」: what happened is that the *evidence*
+ * moved, not that a stored record spoiled on a date. 「过期」 also collides with
+ * the session-expiry message in `server/http/errors`, which is a different event
+ * entirely.
+ */
+export const STALE_LABEL = '依据已变化';
+
+/** Longer form for a list with room, naming the action that resolves it. */
+export const STALE_HINT = '依据已变化，需重新整理';
+
+/**
  * Human-readable notice, or `null` when every relation is fresh.
  *
  * The wording says what happened and what the user can do; it never claims the
@@ -152,13 +168,13 @@ export function describeFreshness(counts: {
 }): string | null {
   const parts: string[] = [];
   if (counts.staleCount > 0) {
-    parts.push(`${counts.staleCount} 条关系的原文已变化，依据已过期`);
+    parts.push(`${counts.staleCount} 条关系的${STALE_LABEL}（原文被改过）`);
   }
   if (counts.missingCount > 0) {
     parts.push(`${counts.missingCount} 条关系的端点已删除`);
   }
   if (parts.length === 0) return null;
-  return `${parts.join('；')}。可重新整理来源，或切换「显示过期关系」查看旧依据。`;
+  return `${parts.join('；')}。可重新整理来源，或切换「显示依据已变化的关系」查看旧依据。`;
 }
 
 function relationKey(relation: RelationVersionPair): string {

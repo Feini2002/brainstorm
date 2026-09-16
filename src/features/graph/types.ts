@@ -54,7 +54,7 @@ export interface KnowledgeEdgeData extends Record<string, unknown> {
   revision: number;
   /** Full natural-language sentence, used in the inspector, not on the canvas. */
   sentence: string;
-  /** Short on-canvas text mark (e.g. 「待确认」「依据过期」). */
+  /** Short on-canvas text mark (e.g. 「待确认」「依据已变化」). */
   badge: string | null;
 }
 

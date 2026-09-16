@@ -8,9 +8,9 @@
 门禁基线：typecheck / lint / contracts / build exit 0；`npm test` 83 文件 1068 例 exit 0；
 gate5+gate4 冒烟 13 passed（全量 e2e 上次 T076 时 119 passed / 1 skipped）。
 
-**进度更新（2026-09-16）**：T077–T081 已完成并 `verified`；`npm test` 现在 83 文件 **1085 例**
-（unit 406 / integration 534 / security 103 / contracts 32 / browser 10）；e2e **132 passed / 1 skipped**；
-另有独立性能通道 `npm run test:perf` 12 例。当前 verified 80 / implemented 0 / blocked 1（T042）/ not_started 3（T082–T084）。
+**进度更新（2026-09-16）**：T077–T082 已完成并 `verified`；`npm test` 现在 83 文件 **1085 例**
+（unit 406 / integration 534 / security 103 / contracts 32 / browser 10）；e2e **140 passed / 1 skipped**；
+另有独立性能通道 `npm run test:perf` 12 例。当前 verified 81 / implemented 0 / blocked 1（T042）/ not_started 2（T083、T084）。
 本文件下面各节的"当前数字"写的是制定方案时的基线，按节内标注执行。
 
 ## 1. 未完成清单
@@ -30,7 +30,7 @@ gate5+gate4 冒烟 13 passed（全量 e2e 上次 T076 时 119 passed / 1 skipped
 | T079 | 加载/查询/图形性能预算：五种场景分开测，中位数+尾部，生产/HMR 分开 | T050, T057, T066, T078 | `scripts/seed-benchmark.mjs`、`tests/performance/`、`docs/performance-report.md` | ✅ 已完成（`evidence/G6.md` T079-1） |
 | T080 | Windows 安装、启动与故障手册 | T001, T002, T004, T073, T079 | `docs/operations/windows-setup.md`、`docs/operations/common-failures.md`、`scripts/doctor.mjs` | ✅ 已完成（`evidence/G6.md` T080-1） |
 | T081 | 生产构建、依赖审计与发布材料 | T075, T078, T079, T080 | `docs/release/build-report.md`、`docs/release/dependency-audit.md`、`package.json`、`README.md` | ✅ 已完成（`evidence/G6.md` T081-1） |
-| T082 | 中文文案、状态与无障碍终审 | T078, T081 | `docs/ux/copybook.md`、`docs/ux/accessibility.md`、`src/features/shared/StatusLabel.tsx` |
+| T082 | 中文文案、状态与无障碍终审 | T078, T081 | `docs/ux/copybook.md`、`docs/ux/accessibility.md`、`src/features/shared/StatusLabel.tsx` | ✅ 已完成（`evidence/G6.md` T082-1；e2e 132 → 140，查出并修掉抽屉模态缺陷） |
 | T083 | 任务证据、缺陷清单与交付状态 | T076–T082 | `docs/progress/`、`docs/release/acceptance-report.md`、`docs/release/known-issues.md` |
 | T084 | 最终用户旅程与 MVP 完成定义 | T083 | `tests/e2e/final-journey.spec.ts`、`docs/release/final-acceptance.md`、`README.md` |
 

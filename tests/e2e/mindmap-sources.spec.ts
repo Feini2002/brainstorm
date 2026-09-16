@@ -255,7 +255,7 @@ test.describe('T058 脑图大纲、来源映射与回跳', () => {
     await expect(missing).toHaveAttribute('data-state', 'missing');
     await expect(page.getByTestId('source-missing')).toBeVisible();
     // "而非无限加载": the row is finished, so no spinner is left behind.
-    await expect(page.getByTestId('source-list').getByText('正在读取来源')).toHaveCount(0);
+    await expect(page.getByTestId('source-list').getByText('正在读取这张视图的来源')).toHaveCount(0);
     // The surviving source is unaffected, which is what keeps the row honest.
     await expect(
       page.getByTestId('source-list-item').filter({ hasText: kept.text }),

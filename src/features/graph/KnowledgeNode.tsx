@@ -55,7 +55,7 @@ function KnowledgeNodeView({ data, selected }: NodeProps<KnowledgeFlowNode>) {
           {data.summary}
         </span>
       ) : null}
-      <span className={`mt-auto flex items-center gap-2 text-[10px] ${tone}`}>
+      <span className={`mt-auto flex items-center gap-2 text-xs ${tone}`}>
         <span>{ITEM_TYPE_LABELS[data.type as keyof typeof ITEM_TYPE_LABELS] ?? data.type}</span>
         {data.degree > 0 ? <span>· {data.degree} 条关系</span> : <span>· 暂无关系</span>}
         {data.isStructured ? <span>· 已整理</span> : null}

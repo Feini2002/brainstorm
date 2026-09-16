@@ -1,17 +1,21 @@
 'use client';
 
 /**
- * Delete confirmation (T020-R01).
+ * Delete confirmation (T020-R01, T082-R05).
  *
  * Deleting knowledge is irreversible from the UI, so it always requires an
  * explicit confirmation that names the record and states the consequence
  * (relations are removed with it; saved views keep their history but go stale).
+ * The sentence itself lives in `DANGER_SCOPE.deleteItem` next to the other two
+ * irreversible actions, so the item dialog, the view dialog and the key removal
+ * notice cannot drift into describing the same kind of act three ways (T082-R05).
  * A keyboard shortcut in the graph view must not reach this action directly.
  */
 import { useEffect, useRef, useState } from 'react';
 
 import { Button, InlineError } from '@/components/ui/primitives';
 import { ApiClientError } from '@/features/shared/apiClient';
+import { DANGER_SCOPE } from '@/features/shared/StatusLabel';
 
 export interface DeleteItemDialogProps {
   /** Title or a short excerpt, so the dialog names what is being deleted. */
@@ -66,12 +70,9 @@ export function DeleteItemDialog({
         <h2 id="delete-title" className="text-base font-semibold text-[var(--ink)]">
           删除这条记录？
         </h2>
-        <p className="mt-2 text-sm text-[var(--ink-muted)]">
-          「{itemLabel}」的原文与整理结果都会被删除，无法撤销。
-          {relationCount > 0
-            ? `与它相关的 ${relationCount} 条关系会一并删除。`
-            : ''}
-          已经保存的图表不会被删除，但会提示来源已变化。
+        <p className="mt-2 text-sm text-[var(--ink-muted)]" data-testid="delete-item-scope">
+          「{itemLabel}」{DANGER_SCOPE.deleteItem}
+          {relationCount > 0 ? `与它相关的 ${relationCount} 条关系会一并删除。` : ''}
         </p>
 
         {error ? (

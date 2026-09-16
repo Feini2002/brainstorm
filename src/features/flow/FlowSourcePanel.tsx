@@ -205,7 +205,7 @@ export function FlowSourcePanel({
           </ul>
         )}
         <p className="text-xs text-[var(--ink-muted)]">
-          关系的审核状态与版本由知识库维护；如果它被拒绝或改动，上面的过期提示会说明这张图依据的是旧版本。
+          关系的审核状态与版本由知识库维护；如果它被拒绝或改动，上面的依据已变化提示会说明这张图依据的是旧版本。
         </p>
       </div>
     </section>

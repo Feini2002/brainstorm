@@ -862,12 +862,17 @@
       ],
       "blockedBy": []
     },
-    {
-      "id": "T082",
-      "status": "not_started",
-      "evidence": [],
-      "blockedBy": []
-    },
+  {
+    "id": "T082",
+    "status": "verified",
+    "evidence": [
+      "implementation/progress/evidence/G6.md#T082-1",
+      "docs/ux/copybook.md",
+      "docs/ux/accessibility.md",
+      "tests/e2e/a11y-and-copy.spec.ts"
+    ],
+    "blockedBy": []
+  },
     {
       "id": "T083",
       "status": "not_started",
