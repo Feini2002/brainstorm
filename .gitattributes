@@ -1,0 +1,17 @@
+# Line endings are part of the build material (T081-C01).
+#
+# Found by the T081 clean-room run: this repo ships tests that assert on file
+# *content* (`tests/contracts/guard.test.ts` reads `.gitignore`,
+# `tests/unit/doctor.test.ts` reads the `docs/operations/*.md` command blocks).
+# Committed blobs are LF, but with `core.autocrlf=true` — the default on many
+# Windows installs — `git archive`/checkout rewrites them to CRLF, so those
+# assertions passed in the author's working tree and failed in a fresh
+# extraction of the same commit. Pinning the eol makes the checked-out bytes
+# identical to the committed bytes on every machine.
+#
+# `text=auto` keeps git's binary detection, so `feini-brain-mvp-spec-v2.zip`
+# and other binaries are untouched.
+#
+# If a Windows batch/PowerShell entry point is ever added, it needs its own
+# `eol=crlf` rule; none is tracked today.
+* text=auto eol=lf
