@@ -8,9 +8,9 @@
 门禁基线：typecheck / lint / contracts / build exit 0；`npm test` 83 文件 1068 例 exit 0；
 gate5+gate4 冒烟 13 passed（全量 e2e 上次 T076 时 119 passed / 1 skipped）。
 
-**进度更新（2026-09-16）**：T077–T080 已完成并 `verified`；`npm test` 现在 83 文件 **1085 例**
+**进度更新（2026-09-16）**：T077–T081 已完成并 `verified`；`npm test` 现在 83 文件 **1085 例**
 （unit 406 / integration 534 / security 103 / contracts 32 / browser 10）；e2e **132 passed / 1 skipped**；
-另有独立性能通道 `npm run test:perf` 12 例。当前 verified 79 / implemented 0 / blocked 1（T042）/ not_started 4（T081–T084）。
+另有独立性能通道 `npm run test:perf` 12 例。当前 verified 80 / implemented 0 / blocked 1（T042）/ not_started 3（T082–T084）。
 本文件下面各节的"当前数字"写的是制定方案时的基线，按节内标注执行。
 
 ## 1. 未完成清单
@@ -29,7 +29,7 @@ gate5+gate4 冒烟 13 passed（全量 e2e 上次 T076 时 119 passed / 1 skipped
 | T078 | 六页浏览器端到端验收：八个场景真行为、console/pageerror 分类、桌面+窄屏 | T077 | `tests/e2e/`、`playwright.config.ts`、`docs/browser-test-map.md` | ✅ 已完成（`evidence/G6.md` T078-1/2） |
 | T079 | 加载/查询/图形性能预算：五种场景分开测，中位数+尾部，生产/HMR 分开 | T050, T057, T066, T078 | `scripts/seed-benchmark.mjs`、`tests/performance/`、`docs/performance-report.md` | ✅ 已完成（`evidence/G6.md` T079-1） |
 | T080 | Windows 安装、启动与故障手册 | T001, T002, T004, T073, T079 | `docs/operations/windows-setup.md`、`docs/operations/common-failures.md`、`scripts/doctor.mjs` | ✅ 已完成（`evidence/G6.md` T080-1） |
-| T081 | 生产构建、依赖审计与发布材料 | T075, T078, T079, T080 | `docs/release/build-report.md`、`docs/release/dependency-audit.md`、`package.json`、`README.md` |
+| T081 | 生产构建、依赖审计与发布材料 | T075, T078, T079, T080 | `docs/release/build-report.md`、`docs/release/dependency-audit.md`、`package.json`、`README.md` | ✅ 已完成（`evidence/G6.md` T081-1） |
 | T082 | 中文文案、状态与无障碍终审 | T078, T081 | `docs/ux/copybook.md`、`docs/ux/accessibility.md`、`src/features/shared/StatusLabel.tsx` |
 | T083 | 任务证据、缺陷清单与交付状态 | T076–T082 | `docs/progress/`、`docs/release/acceptance-report.md`、`docs/release/known-issues.md` |
 | T084 | 最终用户旅程与 MVP 完成定义 | T083 | `tests/e2e/final-journey.spec.ts`、`docs/release/final-acceptance.md`、`README.md` |
@@ -46,7 +46,7 @@ gate5+gate4 冒烟 13 passed（全量 e2e 上次 T076 时 119 passed / 1 skipped
 | --- | --- | --- | --- |
 | **G-1 备份/恢复没有页面入口** | `src/app/(workspace)/settings/page.tsx:60` 原文："导出、导入与备份属于交付阶段的任务，本页暂不提供按钮"。T070–T084 没有任何任务的 `targetFiles` 认领这个 UI。但 T078-R01 八场景含"导出恢复"，T084-R05 要求"导出整库，停止应用，在独立空库恢复"作为**用户旅程**；契约 `05_settings_and_security.md` §6 写"设置页允许删除 Key 后继续离线记录和**导出**"，`10_backup_bundle.md` §1 标题是"明确恢复格式，而**不只**提供下载按钮"（预设有按钮）。`docs/operations/backup-recovery.md:19` 已经在告诉用户"用应用内的逻辑导出（设置页或 `GET /api/export`）"——**设置页那半句现在是假的** | T078/T084 的导出恢复场景要么只能用 `page.request` 直打 API（那不是用户旅程），要么被卡住 | 按 AGENTS.md"清单外共享模块：先指出缺陷与受影响任务，再做最小扩展并补回归"，在 T078 之前加一个**前置 P0**：设置页备份区（导出下载 + 选文件→校验→确认空库→恢复），只接既有 `/api/export`、`/api/import/validate`、`/api/import`，不新增服务层。**这是补契约已要求的入口，不是范围扩张**；但因为它改了任务外文件，第 2 节列为需要用户确认的决定 |
 | **G-2 状态词表** | T083-R01：任务状态限定 `not_started / in_progress / blocked / verified`。仓库从 G0 起用 `implemented`（`tasks.initial.json` 的 note 定义了它），当前 T042、T077 就是这个值 | T083 做逐任务证据表时会撞词表 | T077 收尾升 `verified` 时顺手把 T042 改成 `blocked`（真实原因写在 G2.md，`blockedBy` 字段是任务 ID 列表，不放自由文本）；此后不再产生 `implemented`。`tasks.initial.json` 不动 |
-| **G-3 README 过期** | `README.md` "实施现状"段仍写"已验收 G0 与 G1，G2 起仍在实施中" | T081/T084 把 README 列入 `targetFiles`，会在那时重写；此前它对读者是误导 | 归 T081 处理，不单独提交 |
+| **G-3 README 过期** | `README.md` "实施现状"段仍写"已验收 G0 与 G1，G2 起仍在实施中" | T081/T084 把 README 列入 `targetFiles`，会在那时重写；此前它对读者是误导 | **已关闭（T081）**：README「安装与运行」重写，并在开头加「当前交付状态」表列出未验证项 |
 | **G-4 e2e 装置缺两项 T078 硬性要求** | `playwright.config.ts` 只有一个 `Desktop Chrome` project（R05 要求常规桌面 + 窄屏）；`pageerror` 监听只在 `flow-lifecycle.spec.ts` 一处（R03 要求全局监听并**区分**预期错误提示与未处理异常，且不允许全局屏蔽） | 属 T078 本体，不是矛盾；列在这里是因为要改 `playwright.config.ts` 与 `tests/e2e/support/harness.ts` 这两个所有 spec 共用的文件，改坏会让 120 例一起红 | T078 第一步先做装置、跑全量确认 119/1 不变，再加场景（**已做**：`consoleWatch` fixture + `chromium-narrow` project，全量仍 119/1）。**遗留**：`chromium-narrow` 至今收集不到用例，因为还没有任何用例打 `@narrow` 标记——这是 T078 尚未完成的部分 |
 | **G-5 脑图没有「第一次生成」入口** | 选择条承诺「生成思维导图」，`/mindmap` 空态也写着「从选择条进入这里生成」，但该页只有读的一半 + T059 的 `RegenerateAction`（`view === null` 时不渲染）。`docs/02_architecture/03_ui_information_design.md:36` 已写明两页**共享** `GenerateAction`，Flow 有、Mindmap 没有 | 全新库**造不出第一张脑图**：T078-R01 的「脑图生成」场景无法以用户旅程完成，T078-R02/C03 又要求按钮有真实行为 | **已修**（`evidence/G6.md` T078-1）：新增 `GenerateMindmapAction`，只接既有 `/api/views/mindmap/generate`，不新增服务层；补 2 例 e2e + 变异对照（删渲染块 → 2 failed）。**连带查出** `zoomIn`/`zoomWheel` 直接对画布中心下手、不校验落点在视口内，画布一被内容推下去缩放就静默失效；已改为先滚入视口并硬断言 |
 
@@ -56,7 +56,7 @@ gate5+gate4 冒烟 13 passed（全量 e2e 上次 T076 时 119 passed / 1 skipped
 | --- | --- | --- |
 | **D1** 备份/恢复页面入口（G-1） | 作为 P0 加在设置页，独立提交，e2e 归 T078（**用户已采纳**） | 不加 UI：T078/T084 导出恢复场景改为 `page.request` 直打 API + 手册指引，并把"设置页无入口"写进 `known-issues.md` 与 `backup-recovery.md` |
 | **D2** 状态词表（G-2） | T077 收尾时 T042 → `blocked`，此后禁用 `implemented`（**已执行**：T042 → `blocked`，T077 → `verified`） | 保持现状到 T083 再统一改 |
-| **D3** T081 依赖审计需要 registry 网络 | 有网就跑 `npm audit --omit=dev` 与 `npm ls --all`，逐项处理、**不用 `audit fix --force`**；无网记 `blocked` 并写明 | — |
+| **D3** T081 依赖审计需要 registry 网络 | 有网就跑 `npm audit --omit=dev` 与 `npm ls --all`，逐项处理、**不用 `audit fix --force`**；无网记 `blocked` 并写明 | **已执行（有网）**：两项审计均 0 条；2 条 moderate 升 vitest 至 4.1.11 后清零，未用 `audit fix` |
 | **D4** T042 真实 Key | 始终由用户提供并自己在设置页配置；执行者不接触 Key 值 | 无 Key 则 T042 在最终交付里单列"未执行" |
 | **D5** T079 大样本（一万条）种子 | 用 `scripts/seed-benchmark.mjs` 写进**独立临时数据目录**（`BRAIN_DATA_DIR`），跑完删除；永不写 `.data` | — |
 
@@ -139,7 +139,7 @@ gate5+gate4 冒烟 13 passed（全量 e2e 上次 T076 时 119 passed / 1 skipped
   复用 `docs/runtime-report.md`、`docs/dependency-report.md`（T001/T002 产物）与 `backup-recovery.md`（T073），不复制内容，链接过去。
 - **不做**：不宣称 macOS/Linux 兼容；不演练真坏盘。
 
-### 3.5 T081 生产构建、依赖审计与发布材料
+### 3.5 T081 生产构建、依赖审计与发布材料 ✅ 已完成
 
 - **R01 干净目录**：`git worktree add` 或复制到临时目录 → `npm ci` → `lint`/`typecheck`/`test`/`build`/`start`，每条退出码进 `docs/release/build-report.md`。
 - **R02/R03**：`start-local.mjs` 绑定回环、数据目录受控（既有）；确认 `.next` 与发布 zip 不含 `.data`、`tests/e2e/.data*`（`rg`/`Get-ChildItem` 实扫）。
