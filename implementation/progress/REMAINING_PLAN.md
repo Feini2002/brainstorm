@@ -1,0 +1,186 @@
+# 未完成事项与实施方案（截至 `397697a`，2026-09-16）
+
+本文件回答两个问题：**还剩什么**，**按什么顺序、改哪些文件、用什么证据把它做完**。
+它是方案，不是进度报告；进度以 `tasks.current.json` 与 `NEXT_TASK.md` 为准，
+任何一项做完后按第 5 节的节奏更新那两处，再回来把本文件对应行划掉。
+
+状态基线：verified 75 / implemented 2（T042、T077）/ not_started 7（T078–T084），共 84。
+门禁基线：typecheck / lint / contracts / build exit 0；`npm test` 83 文件 1068 例 exit 0；
+gate5+gate4 冒烟 13 passed（全量 e2e 上次 T076 时 119 passed / 1 skipped）。
+
+## 1. 未完成清单
+
+### 1.1 进行中
+
+| 项 | 现状 | 缺的是什么 |
+| --- | --- | --- |
+| **T077** API 与 SQLite 集成测试 | `implemented`。C01/C04/C06 有新增用例（14 例）与三处变异对照；C05 复用 `T072-C03` | **C02** 同键并发采集的 UNIQUE 竞态分支零驱动；**C03** 整理提交在 `INSERT INTO relations` 切点无注入用例；C01 无变异对照。逐条见 `evidence/G6.md` T077-6 |
+
+### 1.2 未开始（T078–T084，全部 `targetFiles` 目前**均不存在**，只有 `scripts/doctor.mjs`、`README.md`、`docs/operations/backup-recovery.md` 已有）
+
+| 任务 | 一句话目标 | 依赖 | 必交文件 |
+| --- | --- | --- | --- |
+| T078 | 六页浏览器端到端验收：八个场景真行为、console/pageerror 分类、桌面+窄屏 | T077 | `tests/e2e/`、`playwright.config.ts`、`docs/browser-test-map.md` |
+| T079 | 加载/查询/图形性能预算：五种场景分开测，中位数+尾部，生产/HMR 分开 | T050, T057, T066, T078 | `scripts/seed-benchmark.mjs`、`tests/performance/`、`docs/performance-report.md` |
+| T080 | Windows 安装、启动与故障手册 | T001, T002, T004, T073, T079 | `docs/operations/windows-setup.md`、`docs/operations/common-failures.md`、`scripts/doctor.mjs` |
+| T081 | 生产构建、依赖审计与发布材料 | T075, T078, T079, T080 | `docs/release/build-report.md`、`docs/release/dependency-audit.md`、`package.json`、`README.md` |
+| T082 | 中文文案、状态与无障碍终审 | T078, T081 | `docs/ux/copybook.md`、`docs/ux/accessibility.md`、`src/features/shared/StatusLabel.tsx` |
+| T083 | 任务证据、缺陷清单与交付状态 | T076–T082 | `docs/progress/`、`docs/release/acceptance-report.md`、`docs/release/known-issues.md` |
+| T084 | 最终用户旅程与 MVP 完成定义 | T083 | `tests/e2e/final-journey.spec.ts`、`docs/release/final-acceptance.md`、`README.md` |
+
+### 1.3 阻塞
+
+| 项 | 原因 | 解除条件 |
+| --- | --- | --- |
+| **T042** 真实模型语义验收 | `BLOCKED_BY_EXTERNAL_CREDENTIAL`：需要用户自己的 API Key；确定性三组已通过并提交（`0b34c4b`），语义组诚实 `skip` | 用户在设置页配置 Key 后跑 `npx playwright test tests/e2e/gate2.spec.ts`；结果只能由那次真实运行写入 `evidence/G2.md`，不得用替身补 |
+
+### 1.4 契约矛盾与无主缺口（做 T078 之前必须先定，否则会在中途撞上）
+
+| 编号 | 事实 | 后果 | 建议处理 |
+| --- | --- | --- | --- |
+| **G-1 备份/恢复没有页面入口** | `src/app/(workspace)/settings/page.tsx:60` 原文："导出、导入与备份属于交付阶段的任务，本页暂不提供按钮"。T070–T084 没有任何任务的 `targetFiles` 认领这个 UI。但 T078-R01 八场景含"导出恢复"，T084-R05 要求"导出整库，停止应用，在独立空库恢复"作为**用户旅程**；契约 `05_settings_and_security.md` §6 写"设置页允许删除 Key 后继续离线记录和**导出**"，`10_backup_bundle.md` §1 标题是"明确恢复格式，而**不只**提供下载按钮"（预设有按钮）。`docs/operations/backup-recovery.md:19` 已经在告诉用户"用应用内的逻辑导出（设置页或 `GET /api/export`）"——**设置页那半句现在是假的** | T078/T084 的导出恢复场景要么只能用 `page.request` 直打 API（那不是用户旅程），要么被卡住 | 按 AGENTS.md"清单外共享模块：先指出缺陷与受影响任务，再做最小扩展并补回归"，在 T078 之前加一个**前置 P0**：设置页备份区（导出下载 + 选文件→校验→确认空库→恢复），只接既有 `/api/export`、`/api/import/validate`、`/api/import`，不新增服务层。**这是补契约已要求的入口，不是范围扩张**；但因为它改了任务外文件，第 2 节列为需要用户确认的决定 |
+| **G-2 状态词表** | T083-R01：任务状态限定 `not_started / in_progress / blocked / verified`。仓库从 G0 起用 `implemented`（`tasks.initial.json` 的 note 定义了它），当前 T042、T077 就是这个值 | T083 做逐任务证据表时会撞词表 | T077 收尾升 `verified` 时顺手把 T042 改成 `blocked`（真实原因写在 G2.md，`blockedBy` 字段是任务 ID 列表，不放自由文本）；此后不再产生 `implemented`。`tasks.initial.json` 不动 |
+| **G-3 README 过期** | `README.md` "实施现状"段仍写"已验收 G0 与 G1，G2 起仍在实施中" | T081/T084 把 README 列入 `targetFiles`，会在那时重写；此前它对读者是误导 | 归 T081 处理，不单独提交 |
+| **G-4 e2e 装置缺两项 T078 硬性要求** | `playwright.config.ts` 只有一个 `Desktop Chrome` project（R05 要求常规桌面 + 窄屏）；`pageerror` 监听只在 `flow-lifecycle.spec.ts` 一处（R03 要求全局监听并**区分**预期错误提示与未处理异常，且不允许全局屏蔽） | 属 T078 本体，不是矛盾；列在这里是因为要改 `playwright.config.ts` 与 `tests/e2e/support/harness.ts` 这两个所有 spec 共用的文件，改坏会让 120 例一起红 | T078 第一步先做装置、跑全量确认 119/1 不变，再加场景 |
+
+## 2. 需要用户拍板的决定（不拍板就按"建议"执行，并在提交信息里注明）
+
+| 决定 | 建议 | 不采纳的替代 |
+| --- | --- | --- |
+| **D1** 备份/恢复页面入口（G-1） | 作为 P0 加在设置页，独立提交，e2e 归 T078 | 不加 UI：T078/T084 导出恢复场景改为 `page.request` 直打 API + 手册指引，并把"设置页无入口"写进 `known-issues.md` 与 `backup-recovery.md` |
+| **D2** 状态词表（G-2） | T077 收尾时 T042 → `blocked`，此后禁用 `implemented` | 保持现状到 T083 再统一改 |
+| **D3** T081 依赖审计需要 registry 网络 | 有网就跑 `npm audit --omit=dev` 与 `npm ls --all`，逐项处理、**不用 `audit fix --force`**；无网记 `blocked` 并写明 | — |
+| **D4** T042 真实 Key | 始终由用户提供并自己在设置页配置；执行者不接触 Key 值 | 无 Key 则 T042 在最终交付里单列"未执行" |
+| **D5** T079 大样本（一万条）种子 | 用 `scripts/seed-benchmark.mjs` 写进**独立临时数据目录**（`BRAIN_DATA_DIR`），跑完删除；永不写 `.data` | — |
+
+## 3. 执行顺序与逐项方案
+
+串行，不并发：T078/T079/T084 都要占 3100 端口与 `.next`。每项的固定动作见 AGENTS.md「执行流程」，
+这里只写**本项特有**的输入、文件、产物、验证与风险。
+
+### 3.0 T077 收尾（从 `evidence/G6.md` T077-6 第 1 条开始，不重新盘点）
+
+- **C02**：`tests/integration/capture.test.ts` 新增 1–2 例。推荐确定性交错：`new DatabaseSync(harness.databasePath)` 开第二个连接，
+  复用 `organize-service.test.ts` `T036-C04` 的 `db.prepare` 拦截范式，让连接 B 对 `capture_request_id = ?` 的第一次查询返回空，
+  `INSERT` 真实撞 A 已写入的 UNIQUE → 进入 `createCapture` 的 catch 分支。断言：`knowledge_items` 恰 1 行、B 得到 `replayed: true` 且 `item.id` 等于 A、
+  `datasetRevision` 只 +1。**不要**用 `Promise.all` 包两个同步调用。
+- **C03**：`tests/integration/organize-service.test.ts` 新增 1 例，注入点 `INSERT INTO relations`（用同一拦截范式）。
+  断言 `title/summary/item_tags/structured_base_raw_version` 全部回到注入前、`relations` 为 0（这次不是空洞的——元数据与标签**已经写过**）、
+  Run 为 `failed` 且没有 `running` 残留。
+- **变异**：C02 把 catch 分支改成直接 `throw`（不重放）→ 新例应红；C03 去掉 `withTransaction` 的 `ROLLBACK` → 新例应红。还原复绿，`git status` 干净。
+- **文档**：`docs/api-test-map.md` 第 3 节 R03/R04 两行改成新用例名；`evidence/G6.md` T077-8 追加实测；`G6.md` 表行与第 10 节；`NEXT_TASK.md` 指针到 P0/T078；
+  `tasks.current.json` T077 → `verified`，T042 → `blocked`（D2）。
+- **验证**：`npm test`、`npx playwright test tests/e2e/gate5.spec.ts tests/e2e/gate4.spec.ts`。提交。
+
+### 3.1 P0 备份/恢复页面入口（D1 采纳时执行；独立提交）
+
+- **允许文件**：`src/app/(workspace)/settings/page.tsx`（替换那段"暂不提供按钮"）、新增 `src/features/settings/BackupPanel.tsx`、
+  `docs/operations/backup-recovery.md:19`（让"设置页"那半句变真）。**不改**服务层与路由。
+- **行为**：导出 = `apiDownload('/api/export')`（`src/features/shared/apiClient.ts` 已有）→ `saveBlobAs`；
+  恢复 = 选文件 → 前端读 JSON → `POST /api/import/validate` 显示 counts/warnings → 勾选"我确认目标是空库"→ `POST /api/import`（带 `expectedBundleHash` 与 `confirmEmptyRestore: true`）→ 成功后提示"重新载入"。
+  非空库返回 `IMPORT_NONEMPTY`（409）时**原样显示**契约文案，不做"合并"。
+- **文案**（T082-R05 提前遵守）：说明"逻辑备份不含 Key""恢复只允许空库""恢复不触发整理"。
+- **验证**：`tests/e2e/backup-restore.spec.ts`（归 T078 计数）：导出文件可被 `importBundle` 校验；在 `restartDataDir()` 的空库上恢复后原文/标签/关系/视图 id 一致、Key 未被覆盖；非空库 409。
+  组件层不写单测复述实现，靠 e2e。
+
+### 3.2 T078 六页浏览器端到端验收
+
+- **先做装置（G-4），跑全量确认不变，再加场景**：
+  - `playwright.config.ts` 增加第二个 project `chromium-narrow`（桌面窄屏，如 1024×720；**不是手机**，本项目桌面专用），
+    只挑 `@narrow` 标记的用例跑，避免 120 例翻倍。
+  - `tests/e2e/support/harness.ts` 新增 `watchPageErrors(page)` fixture：收集 `console.error` 与 `pageerror`，
+    **白名单只允许契约错误码文案**（如 `MODEL_NOT_CONFIGURED` 的预期提示），其余在 `afterEach` 断言为空。不得 `page.on('pageerror', () => {})` 吞掉。
+  - 现有 20 个 spec 逐个接入该 fixture；先跑全量，任何新红都是**真实的未处理异常**，按缺陷处理而不是加白名单。
+- **八场景映射到既有 spec**（`docs/browser-test-map.md` 就写这张表）：首次启动 → `gate1`（空库首屏）；设置连接 → `offline-crud` + `gate2`；
+  保存整理 → `gate1`/`gate2`；搜索编辑 → `gate1`/`save-races`；图谱审核 → `gate3`/`graph-inspector`；脑图生成 → `gate4`；流程生成 → `gate5`；
+  **导出恢复 → 新 `backup-restore.spec.ts`（依赖 P0）**。每个场景至少一例满足 R02"变更后读取或重启确认"（`restartServer.ts` 已有）。
+- **R04**：真实模型场景只在 `BRAIN_E2E_REAL_MODEL=1` 且用户配置了 Key 时执行，默认 `skip` 并打印原因；替身场景走 `BRAIN_SCRIPTED_PROVIDER`。
+- **R06**：trace 是 `retain-on-failure`，设置页 Key 输入用 `type=password` 且 e2e 只用显然不可用的标记秘密（`sk-test-SENTINEL` 类）；
+  在 `docs/browser-test-map.md` 写明检查方法：失败后 `rg` 扫 `test-results/` 不得出现标记秘密。
+- **验证**：`npm run build && npx playwright test`（全量），用例数只增不减；上一 Gate 冒烟即全量本身。
+
+### 3.3 T079 加载、查询与图形性能预算
+
+- **种子**：`scripts/seed-benchmark.mjs`（`.mjs`，不参与 `tsc`，理由同 `inspect-data.mjs`）：写入指定临时目录，参数 `--items 100|1000|10000 --graph 200 --mindmap 120 --flow 40`。
+  用 `node:sqlite` 直写并复用 `001_initial.sql` 的约束；**拒绝**目标目录等于用户 `.data`（复用 `isUserDataDir`）。
+- **测量**：`tests/performance/*.perf.ts` 用 Playwright 在**生产构建**上测五个场景（R01 分开），各取 ≥7 次样本，报中位数与 p95/max（R05）；
+  冷启动（`start-local.mjs start` 到 `/api/health` 200）与暖请求分开；模型网络耗时用脚本替身固定为 0 并单列"未测真实网络"。
+  开发 HMR 只记一次手工观察值并标注环境。
+- **R04 审计**：用 T074 的 `apiLatency` 与 SQLite `EXPLAIN QUERY PLAN` 查 N+1；`useRunStatus` 轮询频率；`MindmapRenderer` 实例数（`destroy()` 那条历史缺陷）；
+  `useLayoutPersistence` 防抖是否每帧写。发现问题**局部修**并补回归（R06）。
+- **产物**：`docs/performance-report.md`：预算（目标）与实测分列；环境（CPU/内存/Node/Windows 版本）；失败样本原样保留。
+- **风险**：一万条种子跑全量 e2e 会拖慢——性能项用独立数据目录且不进 `npm test`；`package.json` 加 `test:perf` 脚本，不并入 `check`。
+
+### 3.4 T080 Windows 安装、启动与故障手册
+
+- **文件**：`docs/operations/windows-setup.md`（R01–R04：先 `node -v`/`npm -v`，`npm ci` 与 `npm install` 的区别，Playwright 浏览器下载单列，
+  `build` 与 `start` 区别，Ctrl+C，数据目录与 Key 风险）；`docs/operations/common-failures.md`（R05/R06：TLS/代理诊断不建议关校验、排错顺序版本→端口→路径→权限→依赖→应用）；
+  `scripts/doctor.mjs` 若需补检查项（如代理变量提示），只加只读探测。
+- **验证**：命令块在本机 PowerShell **逐条实跑**并把输出粘进 `evidence/G6.md`；命令块不用反斜杠续行（R01）。
+  复用 `docs/runtime-report.md`、`docs/dependency-report.md`（T001/T002 产物）与 `backup-recovery.md`（T073），不复制内容，链接过去。
+- **不做**：不宣称 macOS/Linux 兼容；不演练真坏盘。
+
+### 3.5 T081 生产构建、依赖审计与发布材料
+
+- **R01 干净目录**：`git worktree add` 或复制到临时目录 → `npm ci` → `lint`/`typecheck`/`test`/`build`/`start`，每条退出码进 `docs/release/build-report.md`。
+- **R02/R03**：`start-local.mjs` 绑定回环、数据目录受控（既有）；确认 `.next` 与发布 zip 不含 `.data`、`tests/e2e/.data*`（`rg`/`Get-ChildItem` 实扫）。
+- **R04**：`npm audit --omit=dev`（D3）、`npm ls --all --depth=0`，许可清单用 `package-lock.json` 派生；每条 advisory 写处理决定。
+- **R05/R06**：README 重写"安装与运行"（修 G-3），并**明确写**：真实模型验收未执行（T042 blocked）、只在本机 Windows 验证。
+- **验证**：报告里每条命令可复现；`npm run check` 通过。
+
+### 3.6 T082 中文文案、状态与无障碍终审
+
+- **R01/R02/R03**：`rg` 全量扫 `src/features`、`src/app` 的用户可见字串，按"保存/整理/生成/审核"四词、"关联评分/依据已变化"、
+  "loading 只用于等待"三条规则列出违例；新建 `src/features/shared/StatusLabel.tsx` 承载状态词表，各处改为引用（不改行为）。
+  `docs/ux/copybook.md` 记录词表与每条改动前后。
+- **R04/R06**：`tests/e2e/a11y.spec.ts`：纯键盘完成录入→导航→详情→审核→导出；图有文本替代（`GraphSummary` 已有）；
+  `page.emulateMedia`/放大字号 150% 下关键按钮仍在视口且可点。`docs/ux/accessibility.md` 写实测与未覆盖（屏幕阅读器人工检查未做则如实写）。
+- **R05**：核对三处危险动作文案（删 View 不删知识、删 Key 不删笔记、恢复只允许空库）——P0 已按此写。
+- **验证**：全量 e2e；文案改动不改逻辑，不为它写复述实现的单测。
+
+### 3.7 T083 任务证据、缺陷清单与交付状态
+
+- **R01**：脚本从 `tasks.current.json` 生成 84 行表（状态、evidence 路径存在性实检），词表按 G-2；`verified` 无证据文件即报错。
+- **R02**：`docs/release/acceptance-report.md` 逐 Gate 引用任务与用例 ID 和证据节；截图只作辅助不作数据库验收。
+- **R03/R04**：`docs/release/known-issues.md`：CSP 未启用、日志文件轮转未实现、T042 未执行、`0.0.0.0` 守卫宽限、组合字符只断言计数、
+  多浏览器与真机未测、坏盘人工作业未演练——每条写复现条件、影响、临时处理、是否阻塞发布。
+- **R05/R06**：交付目录扫描（无 `.data`/Key/`node_modules`）；发布结论按四条硬性不变量（原文不丢、无秘密泄露、无静默覆盖、可恢复）逐条给证据指针。
+
+### 3.8 T084 最终用户旅程与 MVP 完成定义
+
+- `tests/e2e/final-journey.spec.ts`：R01–R05 一条长旅程，用 `restartServer.ts` 做"停止应用"，恢复到 `restartDataDir()` 的空库；
+  模型步骤用脚本替身，真实模型段按 R04 规则 skip 并单列。
+- `docs/release/final-acceptance.md`：R06 四清单——已实现 / 未实现 / 真实验证 / 未验证；不新增登录、协同、向量库。
+- README 收尾。**这是 G6 出口条件本身**：T084 通过前不得宣布 MVP 完成。
+
+## 4. 每项固定验证与提交节奏
+
+```
+每项开始：读 docs/04_tasks/G6/T0xx_*.md + docs/05_tests/G6/T0xx_cases.md（六个用例逐条列到 evidence）
+每项结束：npm run typecheck && npm run lint && npm run contracts && npm test
+          npm run build && npx playwright test          （T078 起全量；此前至少 gate5+gate4 冒烟）
+          变异对照 ≥1 处（先打印注入落地，再还原，git status 干净）
+          tasks.current.json / docs/progress/G6.md / evidence/G6.md / NEXT_TASK.md
+          一项一提交，中文提交信息写明"做了什么 / 没做什么 / 实测数字"
+永不：写 .data、把 Key 值放进任何文件或日志、用替身冒充真实模型通过、删既有验收、推送/开 PR/部署
+```
+
+用例数守恒检查：五个 vitest project 之和必须等于整跑（当前 392+531+103+32+10 = 1068）；e2e 只增不减（当前 120）。
+
+## 5. 风险登记
+
+| 风险 | 触发 | 缓解 |
+| --- | --- | --- |
+| 改 `harness.ts` / `playwright.config.ts` 让 120 例一起红 | T078 第一步 | 先只加装置不加场景，全量绿再继续；新红一律按真实异常处理 |
+| `E2E_STALE_BUILD` 守卫拦住 | 改任何 `src/` 后直接跑 e2e | 这是守卫正常工作；`npm run build` 后再跑，不要绕过 |
+| 一万条种子写错目录 | T079 | `seed-benchmark.mjs` 复用 `isUserDataDir` 拒绝 `.data`；`user-data-guard.test.ts` 是它的回归 |
+| `npm audit` 无网 | T081 | 记 `blocked`，不伪造结果 |
+| 变异脚本路径没落地却"全绿" | 任何变异对照 | 先 `rg` 打印注入行号再跑（T077-3 记录过一次险情） |
+| 子代理/并行"假成功" | 若再派发 | 本方案默认主执行者串行；派发需用户明确授权，且结果以磁盘差异与实跑为准 |
+
+## 6. 完成定义（何时可以说"做完了"）
+
+1. T077–T084 全部 `verified`，每项六用例在 `evidence/G6.md` 有命令、退出码与结论；T042 `blocked` 单列。
+2. `docs/progress/G6.md` 改为通过报告，G6 出口四条（实现位置与测试记录、成功/失败分支、无 Key 可回归、无未登记依赖与秘密泄露）逐条有证据。
+3. `docs/release/final-acceptance.md` 的四清单成立，README 与实际一致。
+4. 最终交付：逐 Gate 结论表、本地复现命令清单、未执行/阻塞项、真实缺陷清单、每 Gate 提交 hash。
