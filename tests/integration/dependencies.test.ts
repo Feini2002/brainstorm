@@ -255,8 +255,16 @@ describe('T002 依赖解析、锁定与下载', () => {
     expect(result.status, '不一致的锁文件必须让安装失败').not.toBe(0);
     expect(result.output).toContain('EUSAGE');
     expect(result.output).toContain('in sync');
-    // 报错必须点出差异双方，否则用户无法知道要修哪一行。
-    expect(result.output).toMatch(/lock file's vitest@3\.2\.7 does not satisfy vitest@3\.0\.0/u);
+    // 报错必须点出差异双方，否则用户无法知道要修哪一行。锁定版本从 lockfile 读，
+    // 不写死数字：升级一个依赖不应该让这条断言变成「先改测试」的任务。
+    const lockedVitest = lockVersionOf('vitest') ?? '';
+    expect(lockedVitest, '锁文件里没有 vitest，这条用例的前提不成立').not.toBe('');
+    expect(result.output).toMatch(
+      new RegExp(
+        `lock file's vitest@${lockedVitest.replaceAll('.', '\\.')} does not satisfy vitest@3\\.0\\.0`,
+        'u',
+      ),
+    );
     // 「必须排除：悄悄换最新版」——失败路径不能顺手改写锁文件或留下半装的树。
     expect(sha256(path.join(directory, 'package-lock.json'))).toBe(lockBefore);
     expect(existsSync(path.join(directory, 'node_modules', 'vitest'))).toBe(false);

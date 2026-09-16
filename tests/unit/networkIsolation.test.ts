@@ -11,7 +11,7 @@
 import { describe, expect, it } from 'vitest';
 import net from 'node:net';
 
-import config from '../../vitest.config';
+import config from '../../vitest.config.mjs';
 import { isLoopbackHost } from './support/networkGuard';
 
 describe('T076-C06 单元测试进程对外网 fail-closed', () => {
