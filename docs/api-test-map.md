@@ -60,8 +60,11 @@
   `import.test.ts`（恢复后重开读回）、`views.test.ts`。
 - 本轮补上了两种各自缺的那一半：
   - `edit-item.test.ts` 新增 **T077-C01**：经**真实仓储**写入 → `closeDb` → 重开 →
-    手写 SQL 与仓储读回都断言，且版本与写入时的响应逐字段一致。
+    手写 SQL 与仓储读回都断言，且版本与写入时的响应逐字段一致（原文、标题、摘要、
+    类型、重要性、人工锁定字段、来源、时间戳、过期标记共 13 个字段）。
     （既有那条走手写 SQL，只证明磁盘路径正确；反过来内存替身不能证明磁盘路径正确，两者各证一半。）
+  - **变异对照**：把 `decodeItemRow` 的 `revision` 改成读 `raw_version` → 7 例红，
+    其中包含 **T077-C01**（本轮补的）。这是 T077-6 第 3 条"未做变异对照"的收口。
 
 ### T077-R02 非法请求在写库前被阻止，合法请求提交后返回一致 DTO
 
@@ -75,7 +78,7 @@
 
 | 竞态 | 入口 | 状态 |
 | --- | --- | --- |
-| 重复采集（同 `captureRequestId`） | `capture.test.ts`、`capture-http.test.ts` —— **全部是顺序重放** | **缺口**：`createCapture` 里 `UNIQUE constraint failed` 的竞态分支零驱动（T077-C02，见 evidence T077-6） |
+| 重复采集（同 `captureRequestId`） | `capture.test.ts` 新增 **`T077-C02`** 两例：第二个连接 + `db.prepare` 拦截把第一次查找伪造成"空"，让 `INSERT` 真实撞上唯一索引 | 已覆盖（本轮补齐） |
 | 重复 Run（同 `requestKey` 只注册一次） | `run-lock.test.ts`（`T035-C01`/`C02`） | 已覆盖 |
 | 两窗口编辑（CAS 409） | `edit-item.test.ts`（`T019-C03`），同 Item 并发 organize 在 `run-lock.test.ts` | 已覆盖 |
 | 导入空库竞态 | `import.test.ts` 的 `T072-C03`（校验成功后另一请求创建条目 → 提交时重新检查并拒绝） | 已覆盖（T077-C05 复用） |
@@ -84,12 +87,22 @@
 
 `import.test.ts` 的 `T072-C02` 一组：关系插入失败、视图插入失败、重复 ID。
 断言都是"先写入的条目也被回滚"+"目标仍为空"，不是只看抛没抛错。
-**变异证据**：早前把 `withTransaction` 的 `ROLLBACK` 去掉，这一组会红。
+**变异证据**：把 `withTransaction` 的 `ROLLBACK` 去掉 → `T077-C03` 红 1 例（本轮重量过）。
 
-**具名差距（T077-C03 原句"元数据更新后关系写入抛错"）**：整理提交 `commitOrganize` 的顺序是
+**T077-C03「元数据更新后关系写入抛错」现已补齐**：整理提交 `commitOrganize` 的顺序是
 元数据 → `item_tags` → 关系 → `completeRun`。`organize-service.test.ts` `T036-C04` 的注入点在
 `item_tags`（关系之**前**），它对"关系为 0"的断言因此是空洞的；`T072-C02` 注入在关系处但属于导入。
-**整理提交里 `INSERT INTO relations` 这个切点没有用例**，待补（复用 `T036-C04` 的 `db.prepare` 拦截范式）。
+本轮新增的 `T077-C03` 把注入点推到 **`INSERT INTO relations`**，并让元数据与标签**先真的写进去**，
+断言标题/摘要/类型/重要性/关键词/`structured_base_raw_version`/`revision` 全部回到注入前、
+`item_tags` 为 0、`relations` 为 0、Run 为 `failed` 且无 `running` 残留。
+**变异证据**：去掉 `withTransaction` 的 `ROLLBACK` → 红 1 例。
+
+写这条用例时踩到两个真实约束，记下来以免重复：
+- 引用必须**逐字**出现在被引用条目的原文里，否则建议被证据校验丢弃，
+  `INSERT INTO relations` 根本不会被调用，注入无从落地（`armed` 仍为 true）。
+  这正好说明"注入必须打印落地行号"不是仪式。
+- 服务层的 `organizeItem` 走 `setTransport` 注入替身即可，不必起真实路由；
+  直接调服务时一条显式 `adapter` 会绕过进程级替身，两者只能选一条。
 
 ### T077-R05 错误码、HTTP 状态与 envelope 三者一致，日志无秘密
 
@@ -110,8 +123,9 @@
 
 ## 4. 未覆盖 / 覆盖不足（如实列出）
 
-- **T077 本身尚未验收**（`implemented`）：C02 并发采集竞态分支零驱动、C03 整理提交的关系切点无注入用例、
-  C01 新增用例无变异对照。逐条与恢复点见 `implementation/progress/evidence/G6.md` T077-6/T077-7。
+- **T077 已验收**（`verified`）：C01/C02/C03/C04/C05/C06 六条用例都有实测入口，
+  C01/C04/C06 有变异对照（C02/C03 本轮新增对照，见第 3 节）。
+  详细命令、退出码与结论见 `implementation/progress/evidence/G6.md` T077-8。
 - **`tests/helpers/database.ts` 未按任务 `targetFiles` 字面创建**：既有 `tests/helpers/db.ts`
   承担同一职责（隔离目录、`closeDb`、`newId`、`frozenClock`），为一个文件名再造一份会让装置有两个家。
   若验收坚持文件名，改为从 `database.ts` re-export，不复制实现。

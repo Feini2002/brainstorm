@@ -423,7 +423,7 @@
     },
     {
       "id": "T042",
-      "status": "implemented",
+      "status": "blocked",
       "evidence": [
         "docs/progress/G2.md",
         "implementation/progress/evidence/G2.md"
@@ -789,14 +789,16 @@
     },
     {
       "id": "T077",
-      "status": "implemented",
+      "status": "verified",
       "evidence": [
         "docs/api-test-map.md",
         "docs/progress/G6.md",
         "implementation/progress/evidence/G6.md",
         "tests/integration/user-data-guard.test.ts",
         "tests/integration/freshness-route.test.ts",
-        "tests/integration/edit-item.test.ts"
+        "tests/integration/edit-item.test.ts",
+        "tests/integration/capture.test.ts",
+        "tests/integration/organize-service.test.ts"
       ],
       "blockedBy": []
     },

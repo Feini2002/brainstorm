@@ -12,9 +12,7 @@ gate5+gate4 冒烟 13 passed（全量 e2e 上次 T076 时 119 passed / 1 skipped
 
 ### 1.1 进行中
 
-| 项 | 现状 | 缺的是什么 |
-| --- | --- | --- |
-| **T077** API 与 SQLite 集成测试 | `implemented`。C01/C04/C06 有新增用例（14 例）与三处变异对照；C05 复用 `T072-C03` | **C02** 同键并发采集的 UNIQUE 竞态分支零驱动；**C03** 整理提交在 `INSERT INTO relations` 切点无注入用例；C01 无变异对照。逐条见 `evidence/G6.md` T077-6 |
+无。T077 已收尾为 `verified`（2026-09-16）。
 
 ### 1.2 未开始（T078–T084，全部 `targetFiles` 目前**均不存在**，只有 `scripts/doctor.mjs`、`README.md`、`docs/operations/backup-recovery.md` 已有）
 
@@ -47,8 +45,8 @@ gate5+gate4 冒烟 13 passed（全量 e2e 上次 T076 时 119 passed / 1 skipped
 
 | 决定 | 建议 | 不采纳的替代 |
 | --- | --- | --- |
-| **D1** 备份/恢复页面入口（G-1） | 作为 P0 加在设置页，独立提交，e2e 归 T078 | 不加 UI：T078/T084 导出恢复场景改为 `page.request` 直打 API + 手册指引，并把"设置页无入口"写进 `known-issues.md` 与 `backup-recovery.md` |
-| **D2** 状态词表（G-2） | T077 收尾时 T042 → `blocked`，此后禁用 `implemented` | 保持现状到 T083 再统一改 |
+| **D1** 备份/恢复页面入口（G-1） | 作为 P0 加在设置页，独立提交，e2e 归 T078（**用户已采纳**） | 不加 UI：T078/T084 导出恢复场景改为 `page.request` 直打 API + 手册指引，并把"设置页无入口"写进 `known-issues.md` 与 `backup-recovery.md` |
+| **D2** 状态词表（G-2） | T077 收尾时 T042 → `blocked`，此后禁用 `implemented`（**已执行**：T042 → `blocked`，T077 → `verified`） | 保持现状到 T083 再统一改 |
 | **D3** T081 依赖审计需要 registry 网络 | 有网就跑 `npm audit --omit=dev` 与 `npm ls --all`，逐项处理、**不用 `audit fix --force`**；无网记 `blocked` 并写明 | — |
 | **D4** T042 真实 Key | 始终由用户提供并自己在设置页配置；执行者不接触 Key 值 | 无 Key 则 T042 在最终交付里单列"未执行" |
 | **D5** T079 大样本（一万条）种子 | 用 `scripts/seed-benchmark.mjs` 写进**独立临时数据目录**（`BRAIN_DATA_DIR`），跑完删除；永不写 `.data` | — |
@@ -58,19 +56,19 @@ gate5+gate4 冒烟 13 passed（全量 e2e 上次 T076 时 119 passed / 1 skipped
 串行，不并发：T078/T079/T084 都要占 3100 端口与 `.next`。每项的固定动作见 AGENTS.md「执行流程」，
 这里只写**本项特有**的输入、文件、产物、验证与风险。
 
-### 3.0 T077 收尾（从 `evidence/G6.md` T077-6 第 1 条开始，不重新盘点）
+### 3.0 T077 收尾（**已完成，2026-09-16**）
 
-- **C02**：`tests/integration/capture.test.ts` 新增 1–2 例。推荐确定性交错：`new DatabaseSync(harness.databasePath)` 开第二个连接，
-  复用 `organize-service.test.ts` `T036-C04` 的 `db.prepare` 拦截范式，让连接 B 对 `capture_request_id = ?` 的第一次查询返回空，
-  `INSERT` 真实撞 A 已写入的 UNIQUE → 进入 `createCapture` 的 catch 分支。断言：`knowledge_items` 恰 1 行、B 得到 `replayed: true` 且 `item.id` 等于 A、
-  `datasetRevision` 只 +1。**不要**用 `Promise.all` 包两个同步调用。
-- **C03**：`tests/integration/organize-service.test.ts` 新增 1 例，注入点 `INSERT INTO relations`（用同一拦截范式）。
-  断言 `title/summary/item_tags/structured_base_raw_version` 全部回到注入前、`relations` 为 0（这次不是空洞的——元数据与标签**已经写过**）、
-  Run 为 `failed` 且没有 `running` 残留。
-- **变异**：C02 把 catch 分支改成直接 `throw`（不重放）→ 新例应红；C03 去掉 `withTransaction` 的 `ROLLBACK` → 新例应红。还原复绿，`git status` 干净。
-- **文档**：`docs/api-test-map.md` 第 3 节 R03/R04 两行改成新用例名；`evidence/G6.md` T077-8 追加实测；`G6.md` 表行与第 10 节；`NEXT_TASK.md` 指针到 P0/T078；
-  `tasks.current.json` T077 → `verified`，T042 → `blocked`（D2）。
-- **验证**：`npm test`、`npx playwright test tests/e2e/gate5.spec.ts tests/e2e/gate4.spec.ts`。提交。
+- **C02**：`capture.test.ts` 新增 2 例（第二个连接 + `db.prepare` 拦截造确定性交错）。
+  **过程中查出一个真实产品缺陷**：`withTransaction` 已把 `UNIQUE constraint failed` 改写为
+  `数据唯一性冲突`，而 `createCapture` 只匹配原始 sqlite 文本，分支永远进不去，
+  并发输家会得到 500 而不是"重放赢家"。已修 `src/server/services/items.ts` 的
+  `isCaptureKeyViolation`；两处变异对照（去掉重放分支、退回只看原始文本）各红 2 例。
+- **C03**：`organize-service.test.ts` 新增 1 例，注入点 `INSERT INTO relations`，
+  元数据与标签**先真实写入**再断言一起回滚；去掉 `ROLLBACK` 的变异红 2 例。
+- **C01**：补齐 13 字段逐字段比对；变异 `decodeItemRow` 的 `revision` 改读 `raw_version` → 红 7 例。
+- **文档**：`docs/api-test-map.md` 第 3/4 节、`evidence/G6.md` T077-8、`G6.md` 表行与第 10/10c 节、
+  `NEXT_TASK.md` 指针、`tasks.current.json` T077 → `verified`、T042 → `blocked`（D2，已执行）。
+- **验证**：`npm test` 1071 例 exit 0；五个 project 之和 = 整跑；gate5+gate4 冒烟 13 passed。
 
 ### 3.1 P0 备份/恢复页面入口（D1 采纳时执行；独立提交）
 

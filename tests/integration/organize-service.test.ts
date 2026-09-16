@@ -339,6 +339,106 @@ describe('T036 整理主流程', () => {
     ).toBe(0);
   });
 
+  it('T077-C03 关系写入抛错时，同一次提交里已写入的元数据、标签与结构化基线一起回滚', async () => {
+    // T036-C04 的注入点在 `INSERT INTO item_tags`，位于元数据之后、关系之**前**——
+    // 它对「关系为 0」的断言因此是空洞的（关系根本还没写）。T072-C02 注入在关系处，
+    // 但那是导入服务。整理提交里**关系写入本身**抛错这个切点此前没有用例。
+    // 这里把注入点推到 `INSERT INTO relations`，并让元数据与标签**先真的写进去**，
+    // 这样「一起回滚」才有可观察的内容，而不是回滚一个空集合。
+    const target = seedTarget();
+    const other = seedOther('关于专注力的旧笔记：番茄钟、时间块都试过。', '专注力练习');
+
+    const transport = new ScriptedTransport({
+      replies: [
+        () =>
+          chatOk(
+            organizedJson({
+              tags: ['专注'],
+              relations: [
+                {
+                  targetId: other.id,
+                  type: 'related_to',
+                  reason: '都涉及专注方法',
+                  score: 0.85,
+                  // 两条引用都必须逐字出现在各自原文里，否则建议会被证据校验丢掉，
+                  // `INSERT INTO relations` 根本不会被调用，注入也就无从落地
+                  // （写这条用例时先踩了一次：`专注力练习` 不是另一条原文的子串）。
+                  evidence: [
+                    { itemId: target.id, quote: '番茄工作法' },
+                    { itemId: other.id, quote: '番茄钟' },
+                  ],
+                },
+              ],
+            }),
+          ),
+      ],
+    });
+
+    // 拦截 `INSERT INTO relations`：前面几条写入（元数据、item_tags）都已真实发生。
+    const original = db.prepare.bind(db);
+    let armed = true;
+    db.prepare = ((sql: string) => {
+      if (armed && typeof sql === 'string' && /INSERT INTO relations/u.test(sql)) {
+        armed = false;
+        throw new Error('CHECK constraint failed: simulated relation write failure');
+      }
+      return original(sql);
+    }) as typeof db.prepare;
+
+    const caught = await organize({
+      itemId: target.id,
+      expectedRevision: target.revision,
+      transport,
+    }).catch((error: unknown) => error);
+
+    db.prepare = original as typeof db.prepare;
+
+    // 注入真的落地了：否则下面「元数据回到空」走的是"没写成功"而不是"写了又回滚"。
+    expect(armed).toBe(false);
+    expect(caught).toBeInstanceOf(AppError);
+    expect(transport.calls).toBe(1);
+
+    const row = db
+      .prepare(
+        `SELECT title, summary, type, importance, keywords_json, structured_base_raw_version,
+                revision
+           FROM knowledge_items WHERE id = ?`,
+      )
+      .get(target.id) as {
+      title: string;
+      summary: string;
+      type: string;
+      importance: number;
+      keywords_json: string;
+      structured_base_raw_version: number | null;
+      revision: number;
+    };
+    expect(row.title).toBe('');
+    expect(row.summary).toBe('');
+    expect(row.type).toBe('idea');
+    expect(row.importance).toBe(3);
+    expect(row.keywords_json).toBe('[]');
+    expect(row.structured_base_raw_version).toBeNull();
+    expect(row.revision).toBe(target.revision);
+
+    // 标签也已经写过（`setItemTags` 在关系之前），所以这一条不是空洞断言。
+    const tagCount = db
+      .prepare('SELECT COUNT(*) AS n FROM item_tags WHERE item_id = ?')
+      .get(target.id) as { n: number };
+    expect(tagCount.n).toBe(0);
+
+    // 关系为 0，且 Run 是失败终态、没有留下 running 残留。
+    expect((db.prepare('SELECT COUNT(*) AS n FROM relations').get() as { n: number }).n).toBe(0);
+    const run = db
+      .prepare('SELECT state FROM ai_runs WHERE subject_id = ?')
+      .get(target.id) as { state: string };
+    expect(run.state).toBe('failed');
+    expect(
+      (db.prepare("SELECT COUNT(*) AS n FROM ai_runs WHERE state = 'running'").get() as { n: number })
+        .n,
+    ).toBe(0);
+  });
+
   it('T036-C05 模型期间目标被删除，迟到响应不重建记录', async () => {
     const target = seedTarget();
 

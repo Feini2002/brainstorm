@@ -376,5 +376,20 @@ describe('T019 HTTP 层越权与错误码', () => {
     expect(reread?.rawVersion).toBe(before.rawVersion);
     expect(reread?.revision).toBe(before.revision);
     expect(reread?.title).toBe(before.title);
+    expect(reread?.summary).toBe(before.summary);
+    expect(reread?.capturedText).toBe(before.capturedText);
+    expect(reread?.rawText).toBe(before.rawText);
+    expect(reread?.type).toBe(before.type);
+    expect(reread?.importance).toBe(before.importance);
+    expect(reread?.manualFields).toEqual(before.manualFields);
+    expect(reread?.sourceType).toBe(before.sourceType);
+    expect(reread?.sourceRef).toBe(before.sourceRef);
+    expect(reread?.createdAt).toBe(before.createdAt);
+    expect(reread?.updatedAt).toBe(before.updatedAt);
+    expect(reread?.isStructuredStale).toBe(before.isStructuredStale);
+
+    // 这一条让 C01 具备变异可检测性：若 `ITEM_COLUMNS` 把 raw_version 写成常量，
+    // 上面那行 `raw_version` 断言仍会红，而"重开后 ID 还在"这类断言不会。
+    expect(reread?.rawVersion).toBe(1);
   });
 });

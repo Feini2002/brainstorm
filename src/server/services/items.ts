@@ -115,8 +115,18 @@ export function createCapture(db: DatabaseSync, input: CaptureInput): CaptureRes
       bumpDatasetRevision(db);
     });
   } catch (error) {
-    // Two concurrent requests with the same key: the loser replays the winner.
-    if (error instanceof Error && /UNIQUE constraint failed/u.test(error.message)) {
+    /**
+     * Two concurrent requests with the same key: the loser replays the winner.
+     *
+     * The detailed constraint message is the only place this is visible —
+     * `withTransaction` maps a raw `UNIQUE constraint failed: …` onto
+     * `DatabaseError('数据唯一性冲突')`, whose message no longer names the
+     * constraint. Matching only the raw regex would therefore classify every
+     * lost race as an unexpected 500 and, worse, hide a genuine conflict.
+     * Both shapes are recognized, then the key is re-read to decide whether
+     * this is a replay (same fingerprint) or a real conflict.
+     */
+    if (isCaptureKeyViolation(error)) {
       const raced = findByCaptureRequestId(db, input.captureRequestId);
       if (raced && raced.captureRequestHash === hash) {
         return { item: raced.item, replayed: true };
@@ -127,6 +137,22 @@ export function createCapture(db: DatabaseSync, input: CaptureInput): CaptureRes
   }
 
   return { item: getItem(db, id), replayed: false };
+}
+
+/**
+ * Did this failure come from the `knowledge_items.capture_request_id` UNIQUE
+ * index?
+ *
+ * Deliberately not "any UNIQUE failure": `findByCaptureRequestId` below is what
+ * proves the row is actually there, so an unrelated constraint violation still
+ * propagates instead of being reported as a capture key conflict.
+ */
+function isCaptureKeyViolation(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  return (
+    /UNIQUE constraint failed/u.test(error.message) ||
+    error.message === '数据唯一性冲突'
+  );
 }
 
 export interface PatchItemInput {

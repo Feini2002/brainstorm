@@ -1,40 +1,41 @@
 # 当前实施位置
 
-当前：**G6 进行中，T077 暂停并已收口**。T070–T076 已实施并验收，在 `tasks.current.json` 中为
-`verified`。**T077 为 `implemented`**（用户要求暂停时收口记录：C01/C04/C06 有新增用例与变异证据，
-C02 有真实缺口未补，C03 归属核对后有具名差距——**不是 verified**）。**T078–T084 尚未开始**。
+当前：**G6 进行中，T077 已验收（`verified`）**。T070–T077 已实测通过并在 `tasks.current.json` 中为
+`verified`。**T078–T084 尚未开始**。
 G5（T062–T069）已完成并验收；G0–G4 已完成。真实 Provider 语义验收仍阻塞，见「已知阻塞」。
 
-**剩余全部事项的方案**：[REMAINING_PLAN.md](REMAINING_PLAN.md)（T077 收尾 → T084 的逐项文件、验证与风险；
-第 1.4 节列出两条要先定的事：备份/恢复**没有页面入口**、状态词表与 T083-R01 冲突）。
+**下一步：先做 P0 备份/恢复页面入口（REMAINING_PLAN 3.1，D1 已采纳），再进 T078。**
+P0 是 T078-R01「导出恢复」场景与 T084-R05 用户旅程的前置：设置页现在只有一句
+"本页暂不提供按钮"，而契约与 `docs/operations/backup-recovery.md:19` 都预设了入口。
 
-**接手从哪里开始**：`implementation/progress/evidence/G6.md` 的 **T077-6（未完成清单）与 T077-7（恢复点）**。
-第一件事是补 C02 同键并发采集用例（推荐路：第二个连接 + `db.prepare` 拦截做确定性交错），
-第二件是 C03 在 `INSERT INTO relations` 切点注入。**不要重新盘点缺口**，那一步已经做完并写下了。
+**剩余全部事项的方案**：[REMAINING_PLAN.md](REMAINING_PLAN.md)（P0 + T078–T084 的逐项文件、
+验证与风险；第 2 节的五条拍板点已由用户确认，其中 D1 采纳、D2 本轮已执行、D3/D4/D5 待执行）。
 
-最新验证（本机实测，2026-09-16，T077 收口时的全量一轮）：
+最新验证（本机实测，2026-09-16，T077 收尾的全量一轮）：
 
 ```
 npm run lint        exit 0   （0 problems，全仓库）
 npm run typecheck   exit 0
 npm run contracts   exit 0   （pending 0；failures 空）
-npm test            exit 0   （83 文件 1068 例；integration 单跑 40 文件 531 例）
+npm test            exit 0   （83 文件 1071 例；integration 单跑 40 文件 534 例）
 npm run build       exit 0
 npx playwright test tests/e2e/gate5.spec.ts tests/e2e/gate4.spec.ts
                     exit 0   （13 passed，上一 Gate 冒烟；全量 e2e 本轮未重跑，T076 时为 119 passed / 1 skipped）
 ```
 
 `npx playwright test` 的 1 条 skip 是 `gate2.spec.ts` 里**既有**的条件跳过
-（要求「未配置模型」这一前置），不是本轮引入。
+（要求「未配置模型」这一前置），不是本轮引入，也不是 T042 的真实语义组。
 
 用例数轨迹（只增不减）：G5 时 548 → G6 前四项 896 → T074 后 944 → T075 后 1023 →
-T076 后 1054 → **T077 收口 1068**（+14 = C06 7 + C04 6 + C01 1）。
-五个 project 相加应等于整跑（392+531+103+32+10 = 1068），
+T076 后 1054 → T077 收口 1068 → **T077 收尾 1071**（+3 = C02 2 + C03 1；C01 只补断言行）。
+五个 project 相加应等于整跑（392+534+103+32+10 = 1071），
 **总和一旦不等就说明某个 glob 收集不到文件了**（静默不跑，不报错）。
 
-G6 门禁报告：`docs/progress/G6.md`（**进行中**，覆盖 T070–T076，不是通过报告）。
-证据：`implementation/progress/evidence/G6.md`（T074/T075/T076 各节是主执行者独立复核）。
+G6 门禁报告：`docs/progress/G6.md`（**进行中**，覆盖 T070–T077，不是通过报告）。
+证据：`implementation/progress/evidence/G6.md`（T074/T075/T076 各节是主执行者独立复核；
+T077-8 是本轮收尾实测与缺陷记录）。
 覆盖映射：`docs/test-coverage-map.md`（T076 必交产物，含变异证据与未覆盖清单）。
+API 路由映射：`docs/api-test-map.md`（T077 必交产物）。
 G5 门禁报告：`docs/progress/G5.md`（T062–T069 全部 verified）。
 
 ## G6 进度（T070–T084）
@@ -48,7 +49,7 @@ G5 门禁报告：`docs/progress/G5.md`（T062–T069 全部 verified）。
 | T074 | 本地诊断与可观测性 | `src/app/api/diagnostics/route.ts`、`src/server/observability/diagnostics.ts`、`src/features/settings/DiagnosticsPanel.tsx` | `tests/integration/diagnostics.test.ts` 29 例 + `tests/unit/diagnostics.test.ts` 19 例 + `tests/e2e/diagnostics.spec.ts` 6 例 | verified |
 | T075 | 密钥、跨站与渲染安全回归 | `docs/security-checklist.md`、`vitest.config.ts`（security project） | `tests/security/` 8 文件 103 例 + `tests/e2e/security.spec.ts` 9 例 | verified（CSP 未启用，具名缺口） |
 | T076 | 领域单元测试与边界矩阵 | `tests/unit/evidence-contract.test.ts`、`text-boundaries.test.ts`、`networkIsolation.test.ts`、`unit/support/networkGuard.ts`、`docs/test-coverage-map.md` | 新增 28 例 + 四组变异对照 | verified |
-| T077 | API 与 SQLite 集成测试 | `tests/integration/user-data-guard.test.ts`、`freshness-route.test.ts`、`edit-item.test.ts`（+1）、`docs/api-test-map.md` | 新增 14 例；变异 C04 红 2 / C06-A 红 2 / C06-B 红 1（收口时重量）；**C02 未补、C03 有差距** | **implemented（暂停收口）** |
+| T077 | API 与 SQLite 集成测试 | `tests/integration/user-data-guard.test.ts`、`freshness-route.test.ts`、`edit-item.test.ts`（+1）、`capture.test.ts`（+2）、`organize-service.test.ts`（+1）、`docs/api-test-map.md` | 新增 17 例；变异 C04 红 2 / C06-A 红 2 / C06-B 红 1 / C02-A 红 2 / C02-B 红 2 / C03 红 2 / C01 红 7（均还原复绿）；**收尾查出并发输家被当 500 的真实缺陷并修复**（evidence T077-8） | verified |
 | T078–T084 | 六页 e2e / 性能 / 手册 / 审计 / UX / 发布证据 / 最终验收 | — | — | 未开始 |
 
 T077 已查明、接手者可直接用的事实（不必再探）：
