@@ -804,8 +804,15 @@
     },
     {
       "id": "T078",
-      "status": "not_started",
-      "evidence": [],
+      "status": "verified",
+      "evidence": [
+        "docs/browser-test-map.md",
+        "tests/e2e/backup-restore.spec.ts",
+        "tests/e2e/narrow-and-ime.spec.ts",
+        "tests/e2e/support/consoleWatch.ts",
+        "tests/e2e/support/fixtures.ts",
+        "implementation/progress/evidence/G6.md"
+      ],
       "blockedBy": []
     },
     {

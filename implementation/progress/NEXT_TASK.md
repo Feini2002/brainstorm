@@ -1,12 +1,10 @@
 # 当前实施位置
 
-当前：**G6 进行中，T077 已验收（`verified`）**。T070–T077 已实测通过并在 `tasks.current.json` 中为
-`verified`。**T078–T084 尚未开始**。
+当前：**G6 进行中，T077、T078 已验收（`verified`）**。T070–T078 已实测通过并在 `tasks.current.json`
+中为 `verified`。**T079–T084 尚未开始**。
 G5（T062–T069）已完成并验收；G0–G4 已完成。真实 Provider 语义验收仍阻塞，见「已知阻塞」。
 
-**下一步：T078 六页浏览器端到端验收。** 装置（G-4：全局 console/pageerror 判定、
-`chromium-narrow` project）与 **P0 备份/恢复页面入口**均已落地；本轮又补上了一个**真实死路**：
-脑图页原先没有「第一次生成」的入口（见下），已修并补回归。
+**下一步：T079 加载/查询/图形性能预算。**
 
 **本轮完成的 T078 前置**（`evidence/G6.md` T078-1）：
 
@@ -20,22 +18,23 @@ G5（T062–T069）已完成并验收；G0–G4 已完成。真实 Provider 语�
    已改为先 `scrollIntoViewIfNeeded()` + 落点在视口内的硬断言；并给 T057-C05 补上
    「缩放必须真的发生」的断言（它此前是空过的）。
 
-`chromium-narrow` **仍未收集到任何用例**（无 `@narrow` 标记），是 T078 剩下的工作，未完成。
+`chromium-narrow` **已收集到 4 例并全部通过**（T078-C05 两条窄屏 + `gate1` T026-C01 核心采集/编辑/
+详情路径 + `backup-restore` T078-C01 设置页备份控件），见 `evidence/G6.md` T078-2。
 
 **剩余全部事项的方案**：[REMAINING_PLAN.md](REMAINING_PLAN.md)（P0 + T078–T084 的逐项文件、
-验证与风险；第 2 节的五条拍板点已由用户确认，其中 D1 采纳、D2 本轮已执行、D3/D4/D5 待执行）。
+验证与风险；第 2 节的五条拍板点已由用户确认，其中 D1 已采纳、D2/D5 已执行）。
 
-最新验证（本机实测，2026-09-16，T078 前置缺陷修复后的一轮）：
+最新验证（本机实测，2026-09-16，T078 完成后的全量一轮）：
 
 ```
 npm run lint        exit 0   （0 problems，全仓库）
 npm run typecheck   exit 0
 npm run contracts   exit 0   （pending 0；failures 空）
-npm test            exit 0   （83 文件 1071 例）
+npm test            exit 0   （83 文件 1071 例；unit 392 + integration 534 + security 103 + contracts 32 + browser 10 = 1071 ✓）
 npm run build       exit 0
-npx playwright test           exit 0   （121 passed / 1 skipped；基线 119/1，+2 = 新增脑图入口 spec）
+npx playwright test           exit 0   （132 passed / 1 skipped；基线 121/1，+11 = 备份恢复 4 + 窄屏-输入法 3 + 窄屏 project 新收 4）
 npx playwright test --project=chromium-narrow
-                              exit 1   No tests found（尚无 @narrow 用例，T078 待补）
+                              exit 0   （4 passed；此前是 exit 1「No tests found」）
 ```
 
 `npx playwright test` 的 1 条 skip 是 `gate2.spec.ts` 里**既有**的条件跳过

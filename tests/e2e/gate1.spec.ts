@@ -58,7 +58,12 @@ function cardFor(page: import('@playwright/test').Page, text: string) {
 }
 
 test.describe('T026 离线知识库闭环验收', () => {
-  test('T026-C01 空库无 Key 时，四类片段可通过 UI 完成创建、编辑与搜索', async ({ page }) => {
+  /**
+   * `@narrow`: the config promises this project covers "the core capture/edit/detail
+   * path" at 1280×720. This case is exactly that path end to end through real
+   * controls, so it is the one to re-run at the smaller width.
+   */
+  test('T026-C01 @narrow 空库无 Key 时，四类片段可通过 UI 完成创建、编辑与搜索', async ({ page }) => {
     await gotoInbox(page);
 
     // T026-R01: a word, a long paragraph and multi-line text — not one "Hello".

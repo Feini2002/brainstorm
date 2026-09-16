@@ -87,26 +87,31 @@ gate5+gate4 冒烟 13 passed（全量 e2e 上次 T076 时 119 passed / 1 skipped
 - **验证**：`tests/e2e/backup-restore.spec.ts`（归 T078 计数）：导出文件可被 `importBundle` 校验；在 `restartDataDir()` 的空库上恢复后原文/标签/关系/视图 id 一致、Key 未被覆盖；非空库 409。
   组件层不写单测复述实现，靠 e2e。
 
-### 3.2 T078 六页浏览器端到端验收
+### 3.2 T078 六页浏览器端到端验收（**已完成，2026-09-16**）
 
-- **先做装置（G-4），跑全量确认不变，再加场景**（**装置已完成**，全量 121/1）：
+- **先做装置（G-4），跑全量确认不变，再加场景**（**装置已完成**，当时全量 121/1）：
   - `playwright.config.ts` 增加第二个 project `chromium-narrow`（桌面窄屏，1280×720；**不是手机**，本项目桌面专用），
-    只挑 `@narrow` 标记的用例跑，避免 120 例翻倍。**当前收集到 0 例**——还没有任何用例打 `@narrow`，
-    这是本任务剩下的工作，不得写成已覆盖。
-  - `tests/e2e/support/consoleWatch.ts` + `fixtures.ts` 新增 `consoleWatch` fixture：收集 `console.error` 与 `pageerror`，
-    **白名单只允许两条已写明的规则**（装置主动阻断外部主机、用例故意触发的非 2xx），其余在 `afterEach` 断言为空。
-    不得 `page.on('pageerror', () => {})` 吞掉。
+    只挑 `@narrow` 标记的用例跑，避免 120 例翻倍。**现已收集 4 例并全部通过**
+    （T078-C05 窄屏 2 例 + `gate1` T026-C01 核心采集/编辑/详情 + `backup-restore` T078-C01 设置页备份控件），
+    与配置注释承诺的"核心路径 + 六页外壳 + 设置页备份控件"一致。
+  - `tests/e2e/support/consoleWatch.ts` + `fixtures.ts` 新增 `consoleWatch` fixture：收集 `console.error` 与 `pageerror`。
+    **实测后豁免从两条增到三条**：全量打开后 `save-races` 的 `T025-C02` 红了——它自己 `route.abort('connectionreset')`
+    制造"响应丢失"，属预期错误，故第三条规则要求该用例另行断言"重试成功且两次请求键相同"。其余在 `afterEach` 断言为空，
+    没有 `page.on('pageerror', () => {})` 这类全局屏蔽。
   - **装置缺陷已修**（G-5 连带）：`zoomIn`/`zoomWheel` 曾直接对 `boundingBox()` 中心下手、不校验落点在视口内，
     画布被上方内容推下去后滚轮手势落在视口外、缩放**静默失效**（且 T057-C05 只比较 transform 与自身，是空过的）。
     现两个 helper 都先 `scrollIntoViewIfNeeded()` 并硬断言落点在视口内；T057-C05 补 `scale > 1`。
-- **八场景映射到既有 spec**（`docs/browser-test-map.md` 就写这张表）：首次启动 → `gate1`（空库首屏）；设置连接 → `offline-crud` + `gate2`；
-  保存整理 → `gate1`/`gate2`；搜索编辑 → `gate1`/`save-races`；图谱审核 → `gate3`/`graph-inspector`；脑图生成 → `gate4` +
-  `mindmap-generation-entry.spec.ts`（G-5 的入口回归）；流程生成 → `gate5`；
-  **导出恢复 → 新 `backup-restore.spec.ts`（依赖 P0，仍未写）**。每个场景至少一例满足 R02"变更后读取或重启确认"（`restartServer.ts` 已有）。
-- **R04**：真实模型场景只在 `BRAIN_E2E_REAL_MODEL=1` 且用户配置了 Key 时执行，默认 `skip` 并打印原因；替身场景走 `BRAIN_SCRIPTED_PROVIDER`。
-- **R06**：trace 是 `retain-on-failure`，设置页 Key 输入用 `type=password` 且 e2e 只用显然不可用的标记秘密（`sk-test-SENTINEL` 类）；
-  在 `docs/browser-test-map.md` 写明检查方法：失败后 `rg` 扫 `test-results/` 不得出现标记秘密。
-- **验证**：`npm run build && npx playwright test`（全量），用例数只增不减；上一 Gate 冒烟即全量本身。
+- **八场景映射到既有 spec**：表已写入 `docs/browser-test-map.md`；导出恢复 → 新 `backup-restore.spec.ts`（4 例）。
+  每个场景至少一例满足 R02"变更后读取或重启确认"（`backup-restore` 的 T078-C01 用 `restartServer.ts` 起了**另一个进程的空库**）。
+- **R04（真实模型场景）**：**未执行**，保持与 T042 同一口径。当前套件**没有** `BRAIN_E2E_REAL_MODEL` 开关，
+  不新增一段只跳过不产出的代码充当"已实现"；真实语义验收仍由 T042 单列 `blocked`。
+- **R06（留痕不泄密）**：已用一次性探针实测，结论与残留缺口写在 `docs/browser-test-map.md` 第 4.5 节：
+  `type=password`、`GET /api/settings/llm` 响应、导出字节三处**都不含**明文；但 Playwright 的 trace 会归档
+  **已提交的请求体**（`resources/<hash>.json` 里的 `{"apiKey":"sk-…"}`）与 `fill` 参数，因此"用例里填真 Key"
+  时 `test-results/` 会落盘明文。`test-results/` 已被 `.gitignore` 忽略且从不提交，缺的是"外发前删/脱敏"这一步
+  ——记为**残留缺口**，不声称已解决。
+- **验证（实测）**：`npm run build && npx playwright test` → **132 passed / 1 skipped**（exit 0），
+  `--project=chromium-narrow` → **4 passed**（此前 exit 1「No tests found」）。
 
 ### 3.3 T079 加载、查询与图形性能预算
 

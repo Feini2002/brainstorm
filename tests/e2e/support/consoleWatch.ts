@@ -77,6 +77,11 @@ const EXCUSE_RULES: readonly ExcuseRule[] = [
   },
   {
     reason:
+      'T025-C02 用 route.abort("connectionreset") 主动丢掉自己的第一次 POST，制造「响应丢失」这一条件；用例随后断言重试成功且两次请求键相同，所以服务端真的挂了不会被这条豁免掩盖',
+    matches: (text) => /^Failed to load resource: net::ERR_CONNECTION_RESET/u.test(text),
+  },
+  {
+    reason:
       '用法用例故意触发非 2xx（409 冲突、MODEL_NOT_CONFIGURED、500 等），用例自己断言了状态码与错误码；浏览器只是把同一件事又写了一遍',
     matches: (text) =>
       /^Failed to load resource: the server responded with a status of \d{3}/u.test(text),
