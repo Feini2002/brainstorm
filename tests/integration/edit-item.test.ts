@@ -11,7 +11,7 @@ import type { DatabaseSync } from 'node:sqlite';
 
 import { AppError } from '@/domain/errors';
 import type { ItemDTO } from '@/domain/knowledge';
-import { getDatasetRevision } from '@/server/db/database';
+import { closeDb, getDatasetRevision } from '@/server/db/database';
 import { createCapture, patchItem } from '@/server/services/items';
 import { applyOrganizeMetadata } from '@/server/services/applyOrganizeMetadata';
 import { findTagByNormalized } from '@/server/repositories/tags';
@@ -344,5 +344,37 @@ describe('T019 HTTP 层越权与错误码', () => {
     const tags = await callRoute(GET, { method: 'GET', url: 'http://127.0.0.1:3000/api/tags?q=HTTP' });
     const listed = (tags.envelope as { ok: true; data: { tags: { label: string }[] } }).data;
     expect(listed.tags.map((tag) => tag.label)).toEqual(['HTTP标签']);
+  });
+
+  it('T077-C01 经真实仓储写入后关闭连接，重开读取到的记录与版本完全一致', async () => {
+    // `database-runtime.test.ts` 已经有一条"关连接再重开"，但它走的是**手写 SQL**：
+    // 那只证明磁盘路径正确，不证明仓储写出的行能被仓储重新读成同一个 DTO。
+    // 内存替身不能证明磁盘路径正确，反过来，手写 SQL 也不能证明仓储与磁盘一致——
+    // 两条各证一半，所以这里补的是"经过真实仓储"的那一半。
+    const item = capture('关连接再重开的原文。');
+    const patched = await patch(item.id, {
+      expectedRevision: item.revision,
+      patch: { title: '磁盘上的标题', summary: '磁盘上的摘要' },
+    });
+    expect(patched.status).toBe(200);
+    const before = (patched.envelope as { ok: true; data: ItemDTO }).data;
+
+    // 关掉连接：此时数据必须已经在磁盘上，而不是只在进程里的连接对象里。
+    closeDb(harness.databasePath);
+    db = openTestDatabase(harness.databasePath);
+
+    const row = storedRow(item.id);
+    expect(row.raw_version).toBe(before.rawVersion);
+    expect(row.revision).toBe(before.revision);
+    expect(row.title).toBe('磁盘上的标题');
+    expect(row.summary).toBe('磁盘上的摘要');
+    expect(row.captured_text).toBe('关连接再重开的原文。');
+
+    // 经仓储重新读出来的 DTO 也与写入时的响应一致（版本不得虚增或回退）。
+    const { getItemOrNull } = await import('@/server/repositories/items');
+    const reread = getItemOrNull(db, item.id);
+    expect(reread?.rawVersion).toBe(before.rawVersion);
+    expect(reread?.revision).toBe(before.revision);
+    expect(reread?.title).toBe(before.title);
   });
 });

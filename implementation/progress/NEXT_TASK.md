@@ -1,26 +1,32 @@
 # 当前实施位置
 
-当前：**G6 进行中**。T070–T076 已实施并验收（整库逻辑导出、恢复校验、恢复事务、
-备份与损坏恢复手册、本地诊断与可观测性、密钥与跨站安全回归、领域单元测试与边界矩阵），
-在 `tasks.current.json` 中均为 `verified`。**T077–T084 尚未开始**。
+当前：**G6 进行中，T077 暂停并已收口**。T070–T076 已实施并验收，在 `tasks.current.json` 中为
+`verified`。**T077 为 `implemented`**（用户要求暂停时收口记录：C01/C04/C06 有新增用例与变异证据，
+C02 有真实缺口未补，C03 归属核对后有具名差距——**不是 verified**）。**T078–T084 尚未开始**。
 G5（T062–T069）已完成并验收；G0–G4 已完成。真实 Provider 语义验收仍阻塞，见「已知阻塞」。
 
-最新验证（本机实测，2026-09-16，T076 交付后的全量一轮）：
+**接手从哪里开始**：`implementation/progress/evidence/G6.md` 的 **T077-6（未完成清单）与 T077-7（恢复点）**。
+第一件事是补 C02 同键并发采集用例（推荐路：第二个连接 + `db.prepare` 拦截做确定性交错），
+第二件是 C03 在 `INSERT INTO relations` 切点注入。**不要重新盘点缺口**，那一步已经做完并写下了。
+
+最新验证（本机实测，2026-09-16，T077 收口时的全量一轮）：
 
 ```
 npm run lint        exit 0   （0 problems，全仓库）
 npm run typecheck   exit 0
-npm run contracts   exit 0   （23 已实现 / 0 待办；failures 空）
-npm test            exit 0   （81 文件 1054 例，含 browser 与 security 两个 project）
+npm run contracts   exit 0   （pending 0；failures 空）
+npm test            exit 0   （83 文件 1068 例；integration 单跑 40 文件 531 例）
 npm run build       exit 0
-npx playwright test exit 0   （119 passed / 1 skipped）
+npx playwright test tests/e2e/gate5.spec.ts tests/e2e/gate4.spec.ts
+                    exit 0   （13 passed，上一 Gate 冒烟；全量 e2e 本轮未重跑，T076 时为 119 passed / 1 skipped）
 ```
 
 `npx playwright test` 的 1 条 skip 是 `gate2.spec.ts` 里**既有**的条件跳过
 （要求「未配置模型」这一前置），不是本轮引入。
 
 用例数轨迹（只增不减）：G5 时 548 → G6 前四项 896 → T074 后 944 → T075 后 1023 →
-**T076 后 1054**。五个 project 相加正好等于整跑（392+517+103+32+10），
+T076 后 1054 → **T077 收口 1068**（+14 = C06 7 + C04 6 + C01 1）。
+五个 project 相加应等于整跑（392+531+103+32+10 = 1068），
 **总和一旦不等就说明某个 glob 收集不到文件了**（静默不跑，不报错）。
 
 G6 门禁报告：`docs/progress/G6.md`（**进行中**，覆盖 T070–T076，不是通过报告）。
@@ -39,7 +45,20 @@ G5 门禁报告：`docs/progress/G5.md`（T062–T069 全部 verified）。
 | T074 | 本地诊断与可观测性 | `src/app/api/diagnostics/route.ts`、`src/server/observability/diagnostics.ts`、`src/features/settings/DiagnosticsPanel.tsx` | `tests/integration/diagnostics.test.ts` 29 例 + `tests/unit/diagnostics.test.ts` 19 例 + `tests/e2e/diagnostics.spec.ts` 6 例 | verified |
 | T075 | 密钥、跨站与渲染安全回归 | `docs/security-checklist.md`、`vitest.config.ts`（security project） | `tests/security/` 8 文件 103 例 + `tests/e2e/security.spec.ts` 9 例 | verified（CSP 未启用，具名缺口） |
 | T076 | 领域单元测试与边界矩阵 | `tests/unit/evidence-contract.test.ts`、`text-boundaries.test.ts`、`networkIsolation.test.ts`、`unit/support/networkGuard.ts`、`docs/test-coverage-map.md` | 新增 28 例 + 四组变异对照 | verified |
-| T077–T084 | 集成套件 / 六页 e2e / 性能 / 手册 / 审计 / UX / 发布证据 / 最终验收 | — | — | 未开始 |
+| T077 | API 与 SQLite 集成测试 | `tests/integration/user-data-guard.test.ts`、`freshness-route.test.ts`、`edit-item.test.ts`（+1）、`docs/api-test-map.md` | 新增 14 例；变异 C04 红 2 / C06-A 红 2 / C06-B 红 1（收口时重量）；**C02 未补、C03 有差距** | **implemented（暂停收口）** |
+| T078–T084 | 六页 e2e / 性能 / 手册 / 审计 / UX / 发布证据 / 最终验收 | — | — | 未开始 |
+
+T077 已查明、接手者可直接用的事实（不必再探）：
+
+- **动态段 id 不做形状校验是实测结论**：`items/[id]`、`views/[id]`、`views/[id]/freshness`、
+  `views/[id]/export`、`runs/[id]` 对 `not-a-uuid` 一律 `404 NOT_FOUND`，与不存在同响应
+  （避免成为 id 存在性探测器）。`freshness-route.test.ts` 的跨路由用例已把它钉住；
+  给任一条路由单独加形状校验会红 2 例。
+- **`commitOrganize` 的写入顺序**：元数据 → `item_tags` → 关系 → `completeRun`。
+  `T036-C04` 注入在 `item_tags`，所以它证明元数据回滚、**不**证明关系回滚。
+- **`assertNotUserDataDir` 现在有自己的对照**：改 `dataDir.ts` 或 `database.ts` 前先跑
+  `user-data-guard.test.ts`，恒放行红 2、前缀宽松红 1。
+- **`tests/helpers/database.ts` 有意未建**：`tests/helpers/db.ts` 就是它，装置只能有一个家。
 
 T076 可直接复用的既有能力与下游注意点：
 
@@ -265,9 +284,10 @@ G1 期间的修复（分页游标 SQL、join 列名二义、`decodeEvidence` 字
 - **未执行**：CSP 生产配置实测（需先分别验证 Mermaid/Markmap 所需样式，前置到 G6 前）。
 - **未执行**：性能预算（属 T079）。
 
-## 下一步：G6 续做（T077–T084）
+## 下一步：G6 续做（T077 收尾 → T084）
 
-**T077** API 与 SQLite 集成测试（依赖 T070/T071/T072/T076——均已 verified）
+**T077** API 与 SQLite 集成测试——**从 evidence T077-6 第 1 条（C02）接着做**，
+再 C03、变异复跑、全量 + 冒烟、升 `verified`、提交
 → **T078** 六页浏览器端到端验收（依赖 T077）
 → **T079** 加载/查询/图形性能预算（依赖 T050/T057/T066/T078）
 → **T080** Windows 安装与故障手册（依赖 T001/T002/T004/T073/T079）

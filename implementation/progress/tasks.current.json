@@ -789,8 +789,15 @@
     },
     {
       "id": "T077",
-      "status": "not_started",
-      "evidence": [],
+      "status": "implemented",
+      "evidence": [
+        "docs/api-test-map.md",
+        "docs/progress/G6.md",
+        "implementation/progress/evidence/G6.md",
+        "tests/integration/user-data-guard.test.ts",
+        "tests/integration/freshness-route.test.ts",
+        "tests/integration/edit-item.test.ts"
+      ],
       "blockedBy": []
     },
     {
