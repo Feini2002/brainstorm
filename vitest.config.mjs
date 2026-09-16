@@ -24,6 +24,32 @@ export default defineConfig({
     globals: false,
     environment: 'node',
     passWithNoTests: false,
+    /*
+     * Pin the launch configuration instead of inheriting it (T081-C01).
+     *
+     * `src/server/security/localGuard.ts` reads `APP_ORIGIN`/`APP_HOST` at module
+     * load, so the guard's expected Host/Origin is whatever the *shell* says.
+     * Tests assert against the documented default (`http://127.0.0.1:3000`), which
+     * means a developer who followed `docs/operations/windows-setup.md` — set
+     * `APP_PORT`/`APP_ORIGIN` to move off a busy port — and then ran `npm test` in
+     * that same shell got 103 integration + 21 security failures whose cause was
+     * nowhere in their change. Reproduced deliberately before fixing.
+     *
+     * The values are the same defaults `scripts/start-local.mjs` documents, stated
+     * once here rather than in each project. Suites that need a *different* origin
+     * already pass it explicitly (`tests/performance/support/perfEnv.ts` and
+     * `tests/e2e/support/restartServer.ts` both build a child environment), so
+     * pinning here cannot mask a real configuration bug — it only removes the
+     * ambient shell as an input to the test result.
+     *
+     * `tests/unit/start-local.test.ts` covers the launch-config resolver itself and
+     * passes its own values, so this pin does not weaken that coverage.
+     */
+    env: {
+      APP_HOST: '127.0.0.1',
+      APP_PORT: '3000',
+      APP_ORIGIN: 'http://127.0.0.1:3000',
+    },
     projects: [
       {
         extends: true,
