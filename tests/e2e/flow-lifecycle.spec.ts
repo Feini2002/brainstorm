@@ -194,17 +194,15 @@ test.describe('T066-C02 卸载晚回', () => {
   test('渲染中离开 Flow 页面：晚到的响应不写已卸载的 DOM，也不产生异常', async ({
     page,
     traffic,
+    consoleWatch,
   }) => {
     await gotoInbox(page);
     const itemId = await seedItemViaApi(page, { rawText: uniqueText('T066C02来源') });
     const viewId = seedFlow(itemId, { name: uniqueText('卸载图'), nodeLabels: ['卸载前的节点'] });
 
-    const pageErrors: string[] = [];
-    const consoleErrors: string[] = [];
-    page.on('pageerror', (error) => pageErrors.push(error.message));
-    page.on('console', (message) => {
-      if (message.type() === 'error') consoleErrors.push(message.text());
-    });
+    // 这一例原来自己装监听再看两个数组；现在监听统一在 `consoleWatch` fixture 里，
+    // 它会在 teardown 断言同一件事（T078-R03），这里只读它的分类结果。
+    // 本文件其余用例不再单独装监听，也不会因为缺席而漏掉异常。
 
     // 让读取停在半路，好让「离开页面」和「响应到达」有一个确定的先后。
     await page.route(`**/api/views/${viewId}`, async (route) => {
@@ -223,8 +221,16 @@ test.describe('T066-C02 卸载晚回', () => {
 
     // ---- 必须断言：不写已卸载 DOM、不报意外警告 ----
     await expect(page, '应停在离开后的页面').toHaveURL(/\/mindmap$/u);
-    expect(consoleErrors, `不应有 React 的卸载告警或其它 console.error：${JSON.stringify(consoleErrors)}`).toEqual([]);
-    expect(pageErrors, `不应有未捕获异常：${JSON.stringify(pageErrors)}`).toEqual([]);
+    // 分类后仍为空，与 fixture 的 teardown 断言同一事实：没有豁免掉任何一条。
+    expect(
+      consoleWatch.unexpectedConsoleErrors(),
+      `不应有 React 的卸载告警或其它 console.error：${JSON.stringify(consoleWatch.unexpectedConsoleErrors())}`,
+    ).toEqual([]);
+    expect(
+      consoleWatch.unexpectedPageErrors(),
+      `不应有未捕获异常：${JSON.stringify(consoleWatch.unexpectedPageErrors())}`,
+    ).toEqual([]);
+    expect(consoleWatch.excused(), '这一例不应有任何被豁免的错误').toEqual([]);
     await expect(page.getByTestId('flow-renderer'), 'Flow 的渲染器不应还在文档里').toHaveCount(0);
     // 晚到的响应不能变成一次外部请求（这是同一个承诺的网络侧证据）。
     expect(traffic.externalRequests(), '离开页面之后也不应有外网请求').toEqual([]);

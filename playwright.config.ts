@@ -31,6 +31,16 @@ import { checkBuildFreshness, formatStaleBuildError } from './tests/e2e/support/
  *    means `.next` is served, editing `src/**` and running only
  *    `npx playwright test` would test the previous build and report the diff as a
  *    product failure. See `tests/e2e/support/buildFreshness.ts`.
+ *
+ * 5. **A second project runs a marked subset at a narrow desktop width.** T078-R05
+ *    requires the window to cover an ordinary desktop *and* a narrow one. The
+ *    project is a narrow **desktop** (1280×720), not a phone: this product is
+ *    desktop-only and the node-canvas views have never claimed a mobile layout.
+ *    It collects only cases tagged `@narrow` — the ones that assert layout-
+ *    dependent behaviour (the core capture/edit/detail path, the six-page shell,
+ *    the settings backup controls) — so the suite does not silently double and
+ *    the 60s per-case timeout is not spent re-running 120 cases at a smaller
+ *    width for no new information.
  */
 
 // Runs before Playwright spawns the web server, so every invocation of this
@@ -80,6 +90,16 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      // T078-R05's narrow window: a small desktop, not a phone. Only `@narrow`
+      // cases are collected, and the same viewport is also set in `use` below so
+      // a case that *is* tagged gets the size without repeating numbers in every
+      // spec. `isMobile` is deliberately absent: touch layout is out of scope and
+      // turning it on would change how the browser reports viewport widths.
+      name: 'chromium-narrow',
+      grep: /@narrow/u,
+      use: { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 720 } },
     },
   ] satisfies Project[],
   webServer: {
