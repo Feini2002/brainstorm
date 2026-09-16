@@ -9,6 +9,7 @@
   "scripts": {
     "doctor": "node scripts/doctor.mjs",
     "contracts": "node scripts/check-contracts.mjs",
+    "status": "node scripts/check-delivery.mjs --delivery",
     "dev": "node scripts/doctor.mjs && node scripts/start-local.mjs dev",
     "build": "next build",
     "start": "node scripts/doctor.mjs && node scripts/start-local.mjs start",
@@ -21,7 +22,7 @@
     "test:e2e": "playwright test",
     "test:perf": "node scripts/run-perf.mjs",
     "test": "vitest run",
-    "check": "npm run contracts && npm run lint && npm run typecheck && npm run test && npm run build"
+    "check": "npm run contracts && npm run status && npm run lint && npm run typecheck && npm run test && npm run build"
   },
   "dependencies": {
     "@dagrejs/dagre": "^2",

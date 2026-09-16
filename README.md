@@ -19,8 +19,13 @@
 | CSP（`Content-Security-Policy`） | **未启用**，原因与前置条件见 [docs/security-checklist.md](docs/security-checklist.md) 第三节 |
 | 日志文件轮转 | **未实现**（日志走标准输出） |
 | 多浏览器 / 真机 | **未测试**，端到端只跑 Playwright 的 Chromium |
+| 无障碍（屏幕阅读器 / 系统级缩放） | **未做人工验收**；键盘可达、文本替代与 150% 浏览器缩放有自动化断言，见 [docs/ux/accessibility.md](docs/ux/accessibility.md) |
+| 最近一次全量实测 | `npm test` 1095 例 · e2e 140 passed / 1 skipped · `npm audit` 0 条（逐 Gate 结论见 [docs/release/acceptance-report.md](docs/release/acceptance-report.md)） |
 
 已知缺口的完整清单见 [docs/release/known-issues.md](docs/release/known-issues.md)（T083 交付）。
+**注意：G6 的最后一项 T084（最终用户旅程与 MVP 完成定义）尚未开始**，因此验收报告目前
+不是通过报告；四清单（已实现 / 未实现 / 真实验证 / 未验证）将在 T084 写入
+`docs/release/final-acceptance.md`。
 
 ## 安装与运行
 
@@ -97,6 +102,7 @@ npx playwright test
 
 ```powershell
 npm run contracts   # 契约一致性（枚举、限制、错误码、路由、.gitignore）
+npm run status      # 交付状态与证据完整性 + 交付目录扫描（无密钥/无真实数据）
 npm run lint
 npm run typecheck
 npm test            # unit + integration + security + contracts + browser

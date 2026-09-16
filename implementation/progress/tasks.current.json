@@ -68,7 +68,8 @@
       "evidence": [
         "docs/progress/G0.md",
         "implementation/progress/evidence/G0.md#5-t007-本地请求令牌与来源防护可归属证据2026-09-15-复核",
-        "tests/integration/security-http.test.ts",
+        "implementation/progress/evidence/G6.md#t075-3b-用例归属变动与文件搬迁t007-回归的最终落点",
+        "tests/security/local-request-guard.test.ts",
         "tests/unit/session-client.test.ts",
         "tests/e2e/gate4.spec.ts#T061-C02"
       ],
@@ -783,7 +784,7 @@
         "tests/unit/networkIsolation.test.ts",
         "tests/unit/source-hash.test.ts",
         "tests/unit/support/networkGuard.ts",
-        "vitest.config.ts"
+        "vitest.config.mjs"
       ],
       "blockedBy": []
     },
@@ -873,12 +874,18 @@
     ],
     "blockedBy": []
   },
-    {
-      "id": "T083",
-      "status": "not_started",
-      "evidence": [],
-      "blockedBy": []
-    },
+  {
+    "id": "T083",
+    "status": "verified",
+    "evidence": [
+      "implementation/progress/evidence/G6.md#T083-1",
+      "docs/release/acceptance-report.md",
+      "docs/release/known-issues.md",
+      "scripts/check-delivery.mjs",
+      "tests/contracts/delivery.test.ts"
+    ],
+    "blockedBy": []
+  },
     {
       "id": "T084",
       "status": "not_started",

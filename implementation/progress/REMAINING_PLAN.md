@@ -8,9 +8,10 @@
 门禁基线：typecheck / lint / contracts / build exit 0；`npm test` 83 文件 1068 例 exit 0；
 gate5+gate4 冒烟 13 passed（全量 e2e 上次 T076 时 119 passed / 1 skipped）。
 
-**进度更新（2026-09-16）**：T077–T082 已完成并 `verified`；`npm test` 现在 83 文件 **1085 例**
-（unit 406 / integration 534 / security 103 / contracts 32 / browser 10）；e2e **140 passed / 1 skipped**；
-另有独立性能通道 `npm run test:perf` 12 例。当前 verified 81 / implemented 0 / blocked 1（T042）/ not_started 2（T083、T084）。
+**进度更新（2026-09-16）**：T077–T083 已完成并 `verified`；`npm test` 现在 84 文件 **1095 例**
+（unit 406 / integration 534 / security 103 / contracts 42 / browser 10）；e2e **140 passed / 1 skipped**；
+另有独立性能通道 `npm run test:perf` 12 例，以及 `npm run status` 交付守卫。
+当前 verified 82 / implemented 0 / blocked 1（T042）/ not_started 1（T084）。
 本文件下面各节的"当前数字"写的是制定方案时的基线，按节内标注执行。
 
 ## 1. 未完成清单
@@ -31,7 +32,7 @@ gate5+gate4 冒烟 13 passed（全量 e2e 上次 T076 时 119 passed / 1 skipped
 | T080 | Windows 安装、启动与故障手册 | T001, T002, T004, T073, T079 | `docs/operations/windows-setup.md`、`docs/operations/common-failures.md`、`scripts/doctor.mjs` | ✅ 已完成（`evidence/G6.md` T080-1） |
 | T081 | 生产构建、依赖审计与发布材料 | T075, T078, T079, T080 | `docs/release/build-report.md`、`docs/release/dependency-audit.md`、`package.json`、`README.md` | ✅ 已完成（`evidence/G6.md` T081-1） |
 | T082 | 中文文案、状态与无障碍终审 | T078, T081 | `docs/ux/copybook.md`、`docs/ux/accessibility.md`、`src/features/shared/StatusLabel.tsx` | ✅ 已完成（`evidence/G6.md` T082-1；e2e 132 → 140，查出并修掉抽屉模态缺陷） |
-| T083 | 任务证据、缺陷清单与交付状态 | T076–T082 | `docs/progress/`、`docs/release/acceptance-report.md`、`docs/release/known-issues.md` |
+| T083 | 任务证据、缺陷清单与交付状态 | T076–T082 | `docs/progress/`、`docs/release/acceptance-report.md`、`docs/release/known-issues.md` | ✅ 已完成（`evidence/G6.md` T083-1；新增 `npm run status` 守卫，首次运行即查出 3 处真实问题） |
 | T084 | 最终用户旅程与 MVP 完成定义 | T083 | `tests/e2e/final-journey.spec.ts`、`docs/release/final-acceptance.md`、`README.md` |
 
 ### 1.3 阻塞
@@ -159,11 +160,11 @@ gate5+gate4 冒烟 13 passed（全量 e2e 上次 T076 时 119 passed / 1 skipped
 
 ### 3.7 T083 任务证据、缺陷清单与交付状态
 
-- **R01**：脚本从 `tasks.current.json` 生成 84 行表（状态、evidence 路径存在性实检），词表按 G-2；`verified` 无证据文件即报错。
+- **R01**：`scripts/check-delivery.mjs` 从 `tasks.current.json` 生成逐状态计数（状态、evidence 路径存在性实检），词表按 G-2；`verified` 无证据文件即报错。**已用 `npm run status` 机器校验取代人工回看**——它首次运行就查出 2 条已标 verified 的任务证据指针断掉、2 条锚点指不到地方。
 - **R02**：`docs/release/acceptance-report.md` 逐 Gate 引用任务与用例 ID 和证据节；截图只作辅助不作数据库验收。
 - **R03/R04**：`docs/release/known-issues.md`：CSP 未启用、日志文件轮转未实现、T042 未执行、`0.0.0.0` 守卫宽限、组合字符只断言计数、
-  多浏览器与真机未测、坏盘人工作业未演练——每条写复现条件、影响、临时处理、是否阻塞发布。
-- **R05/R06**：交付目录扫描（无 `.data`/Key/`node_modules`）；发布结论按四条硬性不变量（原文不丢、无秘密泄露、无静默覆盖、可恢复）逐条给证据指针。
+  多浏览器与真机未测、坏盘人工作业未演练——每条写复现条件、影响、临时处理、是否阻塞发布。**阻塞发布项实测为 0 条**。
+- **R05/R06**：交付目录扫描（无 `.data`/Key/`node_modules`）；发布结论按四条硬性不变量（原文不丢、无秘密泄露、无静默覆盖、可恢复）逐条给证据指针，写在 `acceptance-report.md` 第 10 节。
 
 ### 3.8 T084 最终用户旅程与 MVP 完成定义
 
