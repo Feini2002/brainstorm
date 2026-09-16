@@ -19,6 +19,7 @@
     "test:contracts": "vitest run --project contracts",
     "test:security": "vitest run --project security",
     "test:e2e": "playwright test",
+    "test:perf": "node scripts/run-perf.mjs",
     "test": "vitest run",
     "check": "npm run contracts && npm run lint && npm run typecheck && npm run test && npm run build"
   },

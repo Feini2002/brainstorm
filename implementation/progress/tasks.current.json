@@ -817,8 +817,19 @@
     },
     {
       "id": "T079",
-      "status": "not_started",
-      "evidence": [],
+      "status": "verified",
+      "evidence": [
+        "docs/performance-report.md",
+        "docs/progress/G6.md",
+        "implementation/progress/evidence/G6.md",
+        "scripts/seed-benchmark.mjs",
+        "scripts/run-perf.mjs",
+        "tests/performance/loading-and-query.perf.ts",
+        "tests/performance/polling-and-memory.perf.ts",
+        "tests/performance/projections-and-trend.perf.ts",
+        "tests/performance/query-efficiency.perf.ts",
+        "tests/performance/report-metadata.perf.ts"
+      ],
       "blockedBy": []
     },
     {

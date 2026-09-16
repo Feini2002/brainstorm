@@ -1,12 +1,25 @@
 # 当前实施位置
 
-当前：**G6 进行中，T077、T078 已验收（`verified`）**。T070–T078 已实测通过并在 `tasks.current.json`
-中为 `verified`。**T079–T084 尚未开始**。
+当前：**G6 进行中，T077、T078、T079 已验收（`verified`）**。T070–T079 已实测通过并在 `tasks.current.json`
+中为 `verified`。**T080–T084 尚未开始**。
 G5（T062–T069）已完成并验收；G0–G4 已完成。真实 Provider 语义验收仍阻塞，见「已知阻塞」。
 
-**下一步：T079 加载/查询/图形性能预算。**
+**下一步：T080 Windows 安装、启动与故障手册。**
 
-**本轮完成的 T078 前置**（`evidence/G6.md` T078-1）：
+**本轮完成的 T079**（`evidence/G6.md` T079-1，报告见 `docs/performance-report.md`）：
+
+1. **性能测量装置**：`scripts/seed-benchmark.mjs`（合成种子，拒绝用户 `.data`）、
+   `scripts/run-perf.mjs`（`test:perf` 启动器）、`tests/performance/` 独立配置（端口 3210、
+   独立数据目录、不并入 `npm test`）、12 例性能用例。
+2. **六个用例全部已执行**：首屏 123 ms 且 1159 KiB 投影页专属脚本不在关键路径；千条搜索
+   14.4 ms；200 节点子图读取 30.7 ms / 首帧 72.6 ms；空闲 3 页轮询 0 次；开关图页 5 次堆 +0.5 MiB。
+3. **R04 审计**：进程内 `setAuthorizer` 计数，列表/搜索单元数在 100 / 1000 / 10000 条上恒为 7 / 12，
+   且**每页 20 条与 100 条相同**（这一条才真正排除 N+1）；子图 40 / 200 节点恒为 9。
+4. **查出并修掉 1 个真实缺陷**：`seed-benchmark.mjs` 给关系图视图写空快照，产品到不了这个状态。
+5. **C01 差点空过**：本构建是 Turbopack，chunk 名是内容哈希、不含库名，按名字匹配永远为空。
+   已改为**比较脚本集合**（投影页专属脚本非空且与收件箱不相交），不依赖打包器命名。
+
+**上一轮完成的 T078 前置**（`evidence/G6.md` T078-1）：
 
 1. **脑图第一次生成的入口（真实缺陷）**：选择条承诺「生成思维导图」、脑图页空态也写着
    「从选择条进入这里生成」，但页面只有读的一半与 T059 的「按当前来源重新生成」——全新库
@@ -24,26 +37,33 @@ G5（T062–T069）已完成并验收；G0–G4 已完成。真实 Provider 语�
 **剩余全部事项的方案**：[REMAINING_PLAN.md](REMAINING_PLAN.md)（P0 + T078–T084 的逐项文件、
 验证与风险；第 2 节的五条拍板点已由用户确认，其中 D1 已采纳、D2/D5 已执行）。
 
-最新验证（本机实测，2026-09-16，T078 完成后的全量一轮）：
+最新验证（本机实测，2026-09-16，T079 完成后的全量一轮）：
 
 ```
-npm run lint        exit 0   （0 problems，全仓库）
 npm run typecheck   exit 0
+npm run lint        exit 0   （0 problems，全仓库）
 npm run contracts   exit 0   （pending 0；failures 空）
 npm test            exit 0   （83 文件 1071 例；unit 392 + integration 534 + security 103 + contracts 32 + browser 10 = 1071 ✓）
 npm run build       exit 0
-npx playwright test           exit 0   （132 passed / 1 skipped；基线 121/1，+11 = 备份恢复 4 + 窄屏-输入法 3 + 窄屏 project 新收 4）
-npx playwright test --project=chromium-narrow
-                              exit 0   （4 passed；此前是 exit 1「No tests found」）
+npx playwright test           exit 0   （132 passed / 1 skipped）
+npm run test:perf             exit 0   （12 passed；独立端口 3210、独立数据目录，不并入 npm test）
 ```
+
 
 `npx playwright test` 的 1 条 skip 是 `gate2.spec.ts` 里**既有**的条件跳过
 （要求「未配置模型」这一前置），不是本轮引入，也不是 T042 的真实语义组。
 
 用例数轨迹（只增不减）：G5 时 548 → G6 前四项 896 → T074 后 944 → T075 后 1023 →
-T076 后 1054 → T077 收口 1068 → **T077 收尾 1071**（+3 = C02 2 + C03 1；C01 只补断言行）。
+T076 后 1054 → T077 收口 1068 → T077 收尾 1071 → **T079 无新增 vitest 例**（1071，性能用例走独立 `test:perf`）。
 五个 project 相加应等于整跑（392+534+103+32+10 = 1071），
 **总和一旦不等就说明某个 glob 收集不到文件了**（静默不跑，不报错）。
+
+e2e 轨迹：121 → T078 时 132（+11）→ **T079 仍 132**，1 条 skip 是 `gate2.spec.ts` 的既有条件跳过。
+`npm run test:perf` 是**另一条独立通道**：12 例、端口 3210、数据目录 `.tmp-bench-data/`，
+不并入 `npm test`/`npm run check`（一万条种子要几十秒，且数字只在一台安静的机器上有意义）。
+
+性能报告：`docs/performance-report.md`（T079 必交产物；C06 用例机械检查它的元信息、
+预算/实测分列与未执行清单）。
 
 G6 门禁报告：`docs/progress/G6.md`（**进行中**，覆盖 T070–T077，不是通过报告）。
 证据：`implementation/progress/evidence/G6.md`（T074/T075/T076 各节是主执行者独立复核；
@@ -64,7 +84,9 @@ G5 门禁报告：`docs/progress/G5.md`（T062–T069 全部 verified）。
 | T075 | 密钥、跨站与渲染安全回归 | `docs/security-checklist.md`、`vitest.config.ts`（security project） | `tests/security/` 8 文件 103 例 + `tests/e2e/security.spec.ts` 9 例 | verified（CSP 未启用，具名缺口） |
 | T076 | 领域单元测试与边界矩阵 | `tests/unit/evidence-contract.test.ts`、`text-boundaries.test.ts`、`networkIsolation.test.ts`、`unit/support/networkGuard.ts`、`docs/test-coverage-map.md` | 新增 28 例 + 四组变异对照 | verified |
 | T077 | API 与 SQLite 集成测试 | `tests/integration/user-data-guard.test.ts`、`freshness-route.test.ts`、`edit-item.test.ts`（+1）、`capture.test.ts`（+2）、`organize-service.test.ts`（+1）、`docs/api-test-map.md` | 新增 17 例；变异 C04 红 2 / C06-A 红 2 / C06-B 红 1 / C02-A 红 2 / C02-B 红 2 / C03 红 2 / C01 红 7（均还原复绿）；**收尾查出并发输家被当 500 的真实缺陷并修复**（evidence T077-8） | verified |
-| T078–T084 | 六页 e2e / 性能 / 手册 / 审计 / UX / 发布证据 / 最终验收 | `GenerateMindmapAction.tsx`、`tests/e2e/mindmap-generation-entry.spec.ts`（前置缺陷） | 前置缺陷与装置缺陷见 `evidence/G6.md` T078-1 | 进行中 |
+| T078 | 六页浏览器端到端验收 | `tests/e2e/support/consoleWatch.ts`、`fixtures.ts`、`narrow-and-ime.spec.ts`、`backup-restore.spec.ts`、`docs/browser-test-map.md`、`GenerateMindmapAction.tsx` | 新增 11 例（e2e 121 → 132）；变异 C05 红 1；**查出并修掉脑图无「第一次生成」入口**（evidence T078-1/2） | verified |
+| T079 | 加载、查询与图形性能预算 | `scripts/seed-benchmark.mjs`、`scripts/run-perf.mjs`、`tests/performance/`、`docs/performance-report.md` | 12 例（`npm run test:perf`）；R04 用进程内 `setAuthorizer` 计数 + 对照校准；变异（按行读）红 2；**查出并修掉种子空快照缺陷**（evidence T079-1） | verified |
+| T080–T084 | Windows 手册 / 发布审计 / 文案无障碍 / 交付证据 / 最终验收 | — | — | not_started |
 
 T077 已查明、接手者可直接用的事实（不必再探）：
 
@@ -302,13 +324,9 @@ G1 期间的修复（分页游标 SQL、join 列名二义、`decodeEvidence` 字
 - **未执行**：CSP 生产配置实测（需先分别验证 Mermaid/Markmap 所需样式，前置到 G6 前）。
 - **未执行**：性能预算（属 T079）。
 
-## 下一步：G6 续做（T077 收尾 → T084）
+## 下一步：G6 续做（T080 → T084）
 
-**T077** API 与 SQLite 集成测试——**从 evidence T077-6 第 1 条（C02）接着做**，
-再 C03、变异复跑、全量 + 冒烟、升 `verified`、提交
-→ **T078** 六页浏览器端到端验收（依赖 T077）
-→ **T079** 加载/查询/图形性能预算（依赖 T050/T057/T066/T078）
-→ **T080** Windows 安装与故障手册（依赖 T001/T002/T004/T073/T079）
+**T080** Windows 安装、启动与故障手册（依赖 T001/T002/T004/T073/T079）
 → **T081** 生产构建、依赖审计与发布材料（依赖 T075/T078/T079/T080）
 → **T082** 中文文案与无障碍终审（依赖 T078/T081）
 → **T083** 任务证据与缺陷清单（依赖 T076–T082）
@@ -319,8 +337,22 @@ T077–T084 主要是**收敛既有成果**（集成套件、六页 e2e、性能
 入口是 `docs/test-coverage-map.md`。**T083/T084 是 G6 的出口条件本身**——
 T084 的「MVP 完成定义」就是「全部做完」的判定标准，不能提前宣布。
 
-T077 起**依次串行**。串行不是保守：T078 与 T079 都要跑 Playwright / 生产构建，
-并行会抢同一个端口与 `.next`。
+T078 起**依次串行**。串行不是保守：T078/T079/T084 都要跑 Playwright / 生产构建，
+并行会抢同一个端口与 `.next`。性能通道已用 3210 端口与 `.tmp-bench-data/` 与 e2e 隔开，
+但**仍然串行跑**，因为两者都在改 `.next` 并争同一台机器的 CPU，并发会让每个数字描述的是争用而不是应用。
+
+G6 续做新增的可复用能力：
+
+- **性能装置**：`scripts/seed-benchmark.mjs`（`--items/--graph/--graph-edges/--mindmap/--flow/--flow-edges/--reset`，
+  拒绝用户 `.data`）、`scripts/run-perf.mjs`、`tests/performance/support/perfEnv.ts`
+  （`startBenchServer` 冷启动测量、`sample()` 中位数+p95+min/max、`environmentFacts()`）。
+  **T080/T081 引用性能数字时应指向 `docs/performance-report.md`，不要另测一套。**
+- **进程内 SQL 计数范式**：`tests/performance/query-efficiency.perf.ts` 的 `countStatements()`
+  + `controlPerRowReads()` 对照。后续若要审计别的读路径，复用这对函数，别按名字猜语句数。
+- **e2e 全局 console/pageerror 监听**已成为 `auto` fixture（`tests/e2e/support/fixtures.ts`）：
+  新写的 spec 自动被它覆盖，`afterEach` 断言为空；确属预期的错误要加 `EXCUSE_RULE`
+  并**在该用例里另行断言预期行为**（例如 `T025-C02` 的 connection reset）。
+- **`restartServer.ts`** 可在另一个进程 + 空库上起服务（T078-C01/T084 用）。
 
 G6 可直接复用的既有能力：
 
