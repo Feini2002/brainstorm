@@ -13,9 +13,14 @@
  *     makes a saved projection look lost.
  *  2. **The view is real but optional.** With no saved mindmap the page explains
  *     what would create one, instead of drawing a fake tree.
- *  3. **Nothing here writes.** Reading a projection never touches knowledge, and
- *     the page issues no model request on navigation (docs/02 §5「查看历史不会
- *     自动产生新模型请求」).
+ *  3. **Nothing here writes without a click.** Reading a projection never touches
+ *     knowledge, and the page issues no model request on navigation (docs/02 §5
+ *     「查看历史不会自动产生新模型请求」).
+ *  4. **Both halves of the page are present.** Generation (`GenerateMindmapAction`,
+ *     T055) acts on the current selection; regeneration (`RegenerateAction`,
+ *     T059) acts on an open view. Without the first, the selection tray's
+ *     「生成思维导图」 link had nowhere to lead (docs/02 §5 names one shared
+ *     `GenerateAction` for both projection pages).
  *
  * Four layout decisions worth stating:
  *
@@ -41,6 +46,7 @@ import type { MindmapContent, ViewDTO, ViewSummaryDTO } from '@/domain/knowledge
 import { PageHeader } from '@/components/AppShell';
 import { Button, EmptyState, Field, LoadingIndicator, Select } from '@/components/ui/primitives';
 import { ExportMindmap } from '@/features/mindmap/ExportMindmap';
+import { GenerateMindmapAction } from '@/features/mindmap/GenerateMindmapAction';
 import { MindmapOutline } from '@/features/mindmap/MindmapOutline';
 import { MindmapRenderer } from '@/features/mindmap/MindmapRenderer';
 import { RegenerateAction, type RegenerateOutcome } from '@/features/mindmap/RegenerateAction';
@@ -66,6 +72,7 @@ const EXPAND_CHOICES = [
 
 export default function MindmapPage() {
   const workspace = useWorkspace();
+  const selectedIds = workspace.selection.itemIds;
   const [viewState, setViewState] = useState<ViewState>({ status: 'loading' });
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [fitToken, setFitToken] = useState(0);
@@ -222,6 +229,76 @@ export default function MindmapPage() {
     [adoptView],
   );
 
+  const [generating, setGenerating] = useState(false);
+  const [generateError, setGenerateError] = useState<string | null>(null);
+  const [generateNotices, setGenerateNotices] = useState<string[]>([]);
+
+  /**
+   * First generation: build a *new* view from the current selection.
+   *
+   * Nothing is overwritten — the server inserts a View and this page adopts it,
+   * refreshing the list so any earlier map stays selectable next to the new one
+   * (T059-R02 applies to the first map for the same reason). A refusal or failure
+   * leaves every existing view exactly as it was.
+   *
+   * The ids come straight from the selection store: no note text is sent, and the
+   * server re-reads the material itself, which is what keeps the saved view's
+   * provenance trustworthy (T054-R01).
+   */
+  const generate = useCallback(
+    async (itemIds: string[]): Promise<boolean> => {
+      setGenerateError(null);
+      setGenerateNotices([]);
+      setGenerating(true);
+      try {
+        const result = await apiRequest<{
+          viewId?: string;
+          state: string;
+          warnings: string[];
+        }>('/api/views/mindmap/generate', {
+          method: 'POST',
+          body: {
+            // Minted per explicit click: a double click is one request, a retry
+            // after a failure is a new one, and the server deduplicates on it.
+            requestKey: crypto.randomUUID(),
+            selection: { mode: 'explicit', itemIds },
+          },
+        });
+
+        const list = await apiRequest<{ views: ViewSummaryDTO[] }>('/api/views', {
+          query: { kind: 'mindmap', limit: 50 },
+        });
+
+        setGenerateNotices([
+          result.viewId ? '已经生成脑图。' : '本次没有生成脑图。',
+          ...result.warnings,
+        ]);
+
+        if (result.viewId) {
+          const loaded = await apiRequest<ViewDTO>(`/api/views/${result.viewId}`);
+          adoptView(loaded, list.views);
+          setFreshnessVersion((value) => value + 1);
+        } else {
+          // A conflict or failure produced no view: keep showing whatever is open
+          // and refresh the list, because the attempt may still have added a run.
+          setViewState((current) =>
+            current.status === 'ready'
+              ? { status: 'ready', view: current.view, list: list.views }
+              : current,
+          );
+        }
+
+        return true;
+      } catch (caught) {
+        setGenerateError(caught instanceof ApiClientError ? caught.message : '生成脑图失败');
+        return false;
+      } finally {
+        setGenerating(false);
+      }
+    },
+    [adoptView],
+  );
+
   const loading = !viewReady;
 
   return (
@@ -293,6 +370,22 @@ export default function MindmapPage() {
           ) : null}
         </section>
 
+        {/*
+          The generate half (T055's missing entry point). It sits next to the read
+          half rather than after it, because the two answer different questions:
+          this one acts on the ids the user just ticked, while the saved list and
+          `RegenerateAction` act on a view that already exists. A page that only
+          offered the second could not create the first map at all.
+        */}
+        <GenerateMindmapAction
+          selectedIds={selectedIds}
+          removedIds={workspace.selection.removedIds}
+          busy={generating}
+          serverError={generateError}
+          notices={generateNotices}
+          onGenerate={generate}
+        />
+
         {openError ? (
           <p role="alert" className="text-sm text-[var(--danger)]" data-testid="mindmap-open-error">
             {openError}
@@ -325,7 +418,7 @@ export default function MindmapPage() {
         {viewReady && !content ? (
           <EmptyState
             title="还没有可显示的脑图"
-            description="脑图由选中的材料生成：在资料库或收件箱勾选要整理的内容，再从选择条进入这里生成。已保存的脑图会一直留在上面这个列表里，随时可以重新打开和导出。"
+            description="脑图由选中的材料生成：在资料库或收件箱勾选要整理的内容，再从选择条进入这里，用上面的「生成脑图」创建第一张。已保存的脑图会一直留在上面这个列表里，随时可以重新打开和导出。"
             action={
               <p className="text-xs text-[var(--ink-muted)]">
                 没有模型连接时，已经保存的脑图仍然可以打开、查看来源和导出。

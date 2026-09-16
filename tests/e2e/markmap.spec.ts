@@ -133,9 +133,25 @@ async function zoomIn(
   { dx = 0, dy = 0, steps = 6 } = {},
 ): Promise<void> {
   const canvas = page.getByTestId('mindmap-svg');
+  // A wheel gesture lands at a *viewport* coordinate, so the canvas must be on
+  // screen first — the same thing a user does before zooming. A tall canvas can
+  // have its centroid below the fold (there is a header, a scope row and the
+  // generate section above it), and Playwright would then deliver the wheel events
+  // to whatever is at that point: the gesture would do nothing and a working
+  // renderer would look frozen.
+  await canvas.scrollIntoViewIfNeeded();
   const box = await canvas.boundingBox();
   expect(box, '脑图画布应有可缩放区域').toBeTruthy();
-  await page.mouse.move(box!.x + box!.width / 2 + dx, box!.y + box!.height / 2 + dy);
+  const centerX = box!.x + box!.width / 2 + dx;
+  const centerY = box!.y + box!.height / 2 + dy;
+  const viewport = page.viewportSize();
+  if (viewport) {
+    expect(
+      centerY > 0 && centerY < viewport.height && centerX > 0 && centerX < viewport.width,
+      `缩放手势的落点必须在视口内（点 ${centerX},${centerY}，视口 ${viewport.width}x${viewport.height}）`,
+    ).toBe(true);
+  }
+  await page.mouse.move(centerX, centerY);
   // d3-zoom scales on wheel with `ctrlKey` held (or on a pinch gesture, which
   // Playwright cannot synthesise), so the modifier is what makes this a zoom
   // rather than a pan.
@@ -324,6 +340,14 @@ test.describe('T057 Markmap 挂载、净化与本地资源', () => {
     await waitForMount(page);
     await zoomIn(page);
     const beforeResize = await zoomTransform(page);
+
+    // The gesture must have actually zoomed, otherwise this case compares a no-op
+    // transform with itself and passes without exercising anything. That is not
+    // hypothetical: while the generate section was added above the canvas the
+    // centroid fell below the fold, the wheel events landed outside the viewport,
+    // and every assertion below still held.
+    const scaleBeforeResize = Number(/scale\(([\d.]+)\)/u.exec(beforeResize)?.[1] ?? Number.NaN);
+    expect(scaleBeforeResize, '缩放后应有真实 scale').toBeGreaterThan(1);
 
     const canvas = page.getByTestId('mindmap-canvas');
     const widthBefore = (await canvas.boundingBox())!.width;

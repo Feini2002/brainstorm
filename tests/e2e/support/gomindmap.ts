@@ -395,9 +395,27 @@ export async function scriptedGeneration(
  */
 export async function zoomWheel(page: Page, steps = 6): Promise<void> {
   const canvas = page.getByTestId('mindmap-svg');
+  // A wheel gesture is delivered at a *viewport* coordinate, so the canvas has to
+  // be on screen first — which is what a real user does before zooming. Without
+  // this the centroid of a tall canvas can sit below the fold (the mindmap page
+  // has a header, a scope row and the generate section above it), and the events
+  // would be delivered to whatever is actually at that point: the gesture would
+  // silently do nothing and a working renderer would look frozen.
+  await canvas.scrollIntoViewIfNeeded();
   const box = await canvas.boundingBox();
   expect(box, '脑图画布应有可缩放区域').toBeTruthy();
-  await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
+  const centerX = box!.x + box!.width / 2;
+  const centerY = box!.y + box!.height / 2;
+  // Fail loudly rather than gesture into the void. `scrollIntoViewIfNeeded` makes
+  // this hold for any canvas the browser can show at all.
+  const viewport = page.viewportSize();
+  if (viewport) {
+    expect(
+      centerY > 0 && centerY < viewport.height && centerX > 0 && centerX < viewport.width,
+      `缩放手势的落点必须在视口内（点 ${centerX},${centerY}，视口 ${viewport.width}x${viewport.height}）`,
+    ).toBe(true);
+  }
+  await page.mouse.move(centerX, centerY);
   await page.keyboard.down('Control');
   for (let index = 0; index < steps; index += 1) {
     await page.mouse.wheel(0, -120);

@@ -4,23 +4,38 @@
 `verified`。**T078–T084 尚未开始**。
 G5（T062–T069）已完成并验收；G0–G4 已完成。真实 Provider 语义验收仍阻塞，见「已知阻塞」。
 
-**下一步：先做 P0 备份/恢复页面入口（REMAINING_PLAN 3.1，D1 已采纳），再进 T078。**
-P0 是 T078-R01「导出恢复」场景与 T084-R05 用户旅程的前置：设置页现在只有一句
-"本页暂不提供按钮"，而契约与 `docs/operations/backup-recovery.md:19` 都预设了入口。
+**下一步：T078 六页浏览器端到端验收。** 装置（G-4：全局 console/pageerror 判定、
+`chromium-narrow` project）与 **P0 备份/恢复页面入口**均已落地；本轮又补上了一个**真实死路**：
+脑图页原先没有「第一次生成」的入口（见下），已修并补回归。
+
+**本轮完成的 T078 前置**（`evidence/G6.md` T078-1）：
+
+1. **脑图第一次生成的入口（真实缺陷）**：选择条承诺「生成思维导图」、脑图页空态也写着
+   「从选择条进入这里生成」，但页面只有读的一半与 T059 的「按当前来源重新生成」——全新库
+   造不出第一张脑图。契约依据是 `docs/02_architecture/03_ui_information_design.md:36`
+   「两页共享 GenerateAction」。已新增 `GenerateMindmapAction`（只接既有
+   `/api/views/mindmap/generate`，不新增服务层）并补 2 例回归；变异（删掉该渲染块）2 failed，还原复绿。
+2. **装置缺陷（同根因）**：连带的 T057-C04 失败暴露出 `zoomIn`/`zoomWheel` 直接对画布中心下手、
+   从不断言该点在视口内；画布一被内容推下去，滚轮手势就落在视口外而**静默失效**。
+   已改为先 `scrollIntoViewIfNeeded()` + 落点在视口内的硬断言；并给 T057-C05 补上
+   「缩放必须真的发生」的断言（它此前是空过的）。
+
+`chromium-narrow` **仍未收集到任何用例**（无 `@narrow` 标记），是 T078 剩下的工作，未完成。
 
 **剩余全部事项的方案**：[REMAINING_PLAN.md](REMAINING_PLAN.md)（P0 + T078–T084 的逐项文件、
 验证与风险；第 2 节的五条拍板点已由用户确认，其中 D1 采纳、D2 本轮已执行、D3/D4/D5 待执行）。
 
-最新验证（本机实测，2026-09-16，T077 收尾的全量一轮）：
+最新验证（本机实测，2026-09-16，T078 前置缺陷修复后的一轮）：
 
 ```
 npm run lint        exit 0   （0 problems，全仓库）
 npm run typecheck   exit 0
 npm run contracts   exit 0   （pending 0；failures 空）
-npm test            exit 0   （83 文件 1071 例；integration 单跑 40 文件 534 例）
+npm test            exit 0   （83 文件 1071 例）
 npm run build       exit 0
-npx playwright test tests/e2e/gate5.spec.ts tests/e2e/gate4.spec.ts
-                    exit 0   （13 passed，上一 Gate 冒烟；全量 e2e 本轮未重跑，T076 时为 119 passed / 1 skipped）
+npx playwright test           exit 0   （121 passed / 1 skipped；基线 119/1，+2 = 新增脑图入口 spec）
+npx playwright test --project=chromium-narrow
+                              exit 1   No tests found（尚无 @narrow 用例，T078 待补）
 ```
 
 `npx playwright test` 的 1 条 skip 是 `gate2.spec.ts` 里**既有**的条件跳过
@@ -50,7 +65,7 @@ G5 门禁报告：`docs/progress/G5.md`（T062–T069 全部 verified）。
 | T075 | 密钥、跨站与渲染安全回归 | `docs/security-checklist.md`、`vitest.config.ts`（security project） | `tests/security/` 8 文件 103 例 + `tests/e2e/security.spec.ts` 9 例 | verified（CSP 未启用，具名缺口） |
 | T076 | 领域单元测试与边界矩阵 | `tests/unit/evidence-contract.test.ts`、`text-boundaries.test.ts`、`networkIsolation.test.ts`、`unit/support/networkGuard.ts`、`docs/test-coverage-map.md` | 新增 28 例 + 四组变异对照 | verified |
 | T077 | API 与 SQLite 集成测试 | `tests/integration/user-data-guard.test.ts`、`freshness-route.test.ts`、`edit-item.test.ts`（+1）、`capture.test.ts`（+2）、`organize-service.test.ts`（+1）、`docs/api-test-map.md` | 新增 17 例；变异 C04 红 2 / C06-A 红 2 / C06-B 红 1 / C02-A 红 2 / C02-B 红 2 / C03 红 2 / C01 红 7（均还原复绿）；**收尾查出并发输家被当 500 的真实缺陷并修复**（evidence T077-8） | verified |
-| T078–T084 | 六页 e2e / 性能 / 手册 / 审计 / UX / 发布证据 / 最终验收 | — | — | 未开始 |
+| T078–T084 | 六页 e2e / 性能 / 手册 / 审计 / UX / 发布证据 / 最终验收 | `GenerateMindmapAction.tsx`、`tests/e2e/mindmap-generation-entry.spec.ts`（前置缺陷） | 前置缺陷与装置缺陷见 `evidence/G6.md` T078-1 | 进行中 |
 
 T077 已查明、接手者可直接用的事实（不必再探）：
 

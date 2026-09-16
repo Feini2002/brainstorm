@@ -12,7 +12,10 @@ gate5+gate4 冒烟 13 passed（全量 e2e 上次 T076 时 119 passed / 1 skipped
 
 ### 1.1 进行中
 
-无。T077 已收尾为 `verified`（2026-09-16）。
+**T078** 六页浏览器端到端验收。装置（G-4）与 P0 备份入口已落地；本轮修掉 G-5（脑图没有
+「第一次生成」入口）并补 2 例回归。**仍缺**：`chromium-narrow` 无 `@narrow` 用例、
+`backup-restore.spec.ts` 未写、八场景与 `docs/browser-test-map.md` 未整理。
+细节见 `implementation/progress/evidence/G6.md` T078-1 与本文件 3.2。
 
 ### 1.2 未开始（T078–T084，全部 `targetFiles` 目前**均不存在**，只有 `scripts/doctor.mjs`、`README.md`、`docs/operations/backup-recovery.md` 已有）
 
@@ -39,7 +42,8 @@ gate5+gate4 冒烟 13 passed（全量 e2e 上次 T076 时 119 passed / 1 skipped
 | **G-1 备份/恢复没有页面入口** | `src/app/(workspace)/settings/page.tsx:60` 原文："导出、导入与备份属于交付阶段的任务，本页暂不提供按钮"。T070–T084 没有任何任务的 `targetFiles` 认领这个 UI。但 T078-R01 八场景含"导出恢复"，T084-R05 要求"导出整库，停止应用，在独立空库恢复"作为**用户旅程**；契约 `05_settings_and_security.md` §6 写"设置页允许删除 Key 后继续离线记录和**导出**"，`10_backup_bundle.md` §1 标题是"明确恢复格式，而**不只**提供下载按钮"（预设有按钮）。`docs/operations/backup-recovery.md:19` 已经在告诉用户"用应用内的逻辑导出（设置页或 `GET /api/export`）"——**设置页那半句现在是假的** | T078/T084 的导出恢复场景要么只能用 `page.request` 直打 API（那不是用户旅程），要么被卡住 | 按 AGENTS.md"清单外共享模块：先指出缺陷与受影响任务，再做最小扩展并补回归"，在 T078 之前加一个**前置 P0**：设置页备份区（导出下载 + 选文件→校验→确认空库→恢复），只接既有 `/api/export`、`/api/import/validate`、`/api/import`，不新增服务层。**这是补契约已要求的入口，不是范围扩张**；但因为它改了任务外文件，第 2 节列为需要用户确认的决定 |
 | **G-2 状态词表** | T083-R01：任务状态限定 `not_started / in_progress / blocked / verified`。仓库从 G0 起用 `implemented`（`tasks.initial.json` 的 note 定义了它），当前 T042、T077 就是这个值 | T083 做逐任务证据表时会撞词表 | T077 收尾升 `verified` 时顺手把 T042 改成 `blocked`（真实原因写在 G2.md，`blockedBy` 字段是任务 ID 列表，不放自由文本）；此后不再产生 `implemented`。`tasks.initial.json` 不动 |
 | **G-3 README 过期** | `README.md` "实施现状"段仍写"已验收 G0 与 G1，G2 起仍在实施中" | T081/T084 把 README 列入 `targetFiles`，会在那时重写；此前它对读者是误导 | 归 T081 处理，不单独提交 |
-| **G-4 e2e 装置缺两项 T078 硬性要求** | `playwright.config.ts` 只有一个 `Desktop Chrome` project（R05 要求常规桌面 + 窄屏）；`pageerror` 监听只在 `flow-lifecycle.spec.ts` 一处（R03 要求全局监听并**区分**预期错误提示与未处理异常，且不允许全局屏蔽） | 属 T078 本体，不是矛盾；列在这里是因为要改 `playwright.config.ts` 与 `tests/e2e/support/harness.ts` 这两个所有 spec 共用的文件，改坏会让 120 例一起红 | T078 第一步先做装置、跑全量确认 119/1 不变，再加场景 |
+| **G-4 e2e 装置缺两项 T078 硬性要求** | `playwright.config.ts` 只有一个 `Desktop Chrome` project（R05 要求常规桌面 + 窄屏）；`pageerror` 监听只在 `flow-lifecycle.spec.ts` 一处（R03 要求全局监听并**区分**预期错误提示与未处理异常，且不允许全局屏蔽） | 属 T078 本体，不是矛盾；列在这里是因为要改 `playwright.config.ts` 与 `tests/e2e/support/harness.ts` 这两个所有 spec 共用的文件，改坏会让 120 例一起红 | T078 第一步先做装置、跑全量确认 119/1 不变，再加场景（**已做**：`consoleWatch` fixture + `chromium-narrow` project，全量仍 119/1）。**遗留**：`chromium-narrow` 至今收集不到用例，因为还没有任何用例打 `@narrow` 标记——这是 T078 尚未完成的部分 |
+| **G-5 脑图没有「第一次生成」入口** | 选择条承诺「生成思维导图」，`/mindmap` 空态也写着「从选择条进入这里生成」，但该页只有读的一半 + T059 的 `RegenerateAction`（`view === null` 时不渲染）。`docs/02_architecture/03_ui_information_design.md:36` 已写明两页**共享** `GenerateAction`，Flow 有、Mindmap 没有 | 全新库**造不出第一张脑图**：T078-R01 的「脑图生成」场景无法以用户旅程完成，T078-R02/C03 又要求按钮有真实行为 | **已修**（`evidence/G6.md` T078-1）：新增 `GenerateMindmapAction`，只接既有 `/api/views/mindmap/generate`，不新增服务层；补 2 例 e2e + 变异对照（删渲染块 → 2 failed）。**连带查出** `zoomIn`/`zoomWheel` 直接对画布中心下手、不校验落点在视口内，画布一被内容推下去缩放就静默失效；已改为先滚入视口并硬断言 |
 
 ## 2. 需要用户拍板的决定（不拍板就按"建议"执行，并在提交信息里注明）
 
@@ -70,7 +74,9 @@ gate5+gate4 冒烟 13 passed（全量 e2e 上次 T076 时 119 passed / 1 skipped
   `NEXT_TASK.md` 指针、`tasks.current.json` T077 → `verified`、T042 → `blocked`（D2，已执行）。
 - **验证**：`npm test` 1071 例 exit 0；五个 project 之和 = 整跑；gate5+gate4 冒烟 13 passed。
 
-### 3.1 P0 备份/恢复页面入口（D1 采纳时执行；独立提交）
+### 3.1 P0 备份/恢复页面入口（**已完成**，D1 采纳时执行；独立提交）
+
+- **提交**：`9b5bb24`。**遗留**：归 T078 的 `backup-restore.spec.ts` 尚未写。
 
 - **允许文件**：`src/app/(workspace)/settings/page.tsx`（替换那段"暂不提供按钮"）、新增 `src/features/settings/BackupPanel.tsx`、
   `docs/operations/backup-recovery.md:19`（让"设置页"那半句变真）。**不改**服务层与路由。
@@ -83,15 +89,20 @@ gate5+gate4 冒烟 13 passed（全量 e2e 上次 T076 时 119 passed / 1 skipped
 
 ### 3.2 T078 六页浏览器端到端验收
 
-- **先做装置（G-4），跑全量确认不变，再加场景**：
-  - `playwright.config.ts` 增加第二个 project `chromium-narrow`（桌面窄屏，如 1024×720；**不是手机**，本项目桌面专用），
-    只挑 `@narrow` 标记的用例跑，避免 120 例翻倍。
-  - `tests/e2e/support/harness.ts` 新增 `watchPageErrors(page)` fixture：收集 `console.error` 与 `pageerror`，
-    **白名单只允许契约错误码文案**（如 `MODEL_NOT_CONFIGURED` 的预期提示），其余在 `afterEach` 断言为空。不得 `page.on('pageerror', () => {})` 吞掉。
-  - 现有 20 个 spec 逐个接入该 fixture；先跑全量，任何新红都是**真实的未处理异常**，按缺陷处理而不是加白名单。
+- **先做装置（G-4），跑全量确认不变，再加场景**（**装置已完成**，全量 121/1）：
+  - `playwright.config.ts` 增加第二个 project `chromium-narrow`（桌面窄屏，1280×720；**不是手机**，本项目桌面专用），
+    只挑 `@narrow` 标记的用例跑，避免 120 例翻倍。**当前收集到 0 例**——还没有任何用例打 `@narrow`，
+    这是本任务剩下的工作，不得写成已覆盖。
+  - `tests/e2e/support/consoleWatch.ts` + `fixtures.ts` 新增 `consoleWatch` fixture：收集 `console.error` 与 `pageerror`，
+    **白名单只允许两条已写明的规则**（装置主动阻断外部主机、用例故意触发的非 2xx），其余在 `afterEach` 断言为空。
+    不得 `page.on('pageerror', () => {})` 吞掉。
+  - **装置缺陷已修**（G-5 连带）：`zoomIn`/`zoomWheel` 曾直接对 `boundingBox()` 中心下手、不校验落点在视口内，
+    画布被上方内容推下去后滚轮手势落在视口外、缩放**静默失效**（且 T057-C05 只比较 transform 与自身，是空过的）。
+    现两个 helper 都先 `scrollIntoViewIfNeeded()` 并硬断言落点在视口内；T057-C05 补 `scale > 1`。
 - **八场景映射到既有 spec**（`docs/browser-test-map.md` 就写这张表）：首次启动 → `gate1`（空库首屏）；设置连接 → `offline-crud` + `gate2`；
-  保存整理 → `gate1`/`gate2`；搜索编辑 → `gate1`/`save-races`；图谱审核 → `gate3`/`graph-inspector`；脑图生成 → `gate4`；流程生成 → `gate5`；
-  **导出恢复 → 新 `backup-restore.spec.ts`（依赖 P0）**。每个场景至少一例满足 R02"变更后读取或重启确认"（`restartServer.ts` 已有）。
+  保存整理 → `gate1`/`gate2`；搜索编辑 → `gate1`/`save-races`；图谱审核 → `gate3`/`graph-inspector`；脑图生成 → `gate4` +
+  `mindmap-generation-entry.spec.ts`（G-5 的入口回归）；流程生成 → `gate5`；
+  **导出恢复 → 新 `backup-restore.spec.ts`（依赖 P0，仍未写）**。每个场景至少一例满足 R02"变更后读取或重启确认"（`restartServer.ts` 已有）。
 - **R04**：真实模型场景只在 `BRAIN_E2E_REAL_MODEL=1` 且用户配置了 Key 时执行，默认 `skip` 并打印原因；替身场景走 `BRAIN_SCRIPTED_PROVIDER`。
 - **R06**：trace 是 `retain-on-failure`，设置页 Key 输入用 `type=password` 且 e2e 只用显然不可用的标记秘密（`sk-test-SENTINEL` 类）；
   在 `docs/browser-test-map.md` 写明检查方法：失败后 `rg` 扫 `test-results/` 不得出现标记秘密。
