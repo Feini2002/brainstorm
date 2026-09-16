@@ -31,6 +31,14 @@ export default defineConfig({
           name: 'unit',
           include: ['tests/unit/**/*.test.ts'],
           environment: 'node',
+          /*
+           * T076-C06: the unit project runs with a fail-closed network guard —
+           * `fetch` and `net.Socket.connect` throw for non-loopback hosts, so a
+           * deterministic case cannot quietly start depending on a real model or
+           * a paid endpoint. Only `unit` gets this: `integration`, `security`,
+           * `contracts` and `e2e` need real HTTP and have their own isolation.
+           */
+          setupFiles: ['tests/unit/support/networkGuard.ts'],
         },
       },
       {

@@ -8,7 +8,7 @@
  * / selection / intent / 每个 Item 的 rawVersion 与 revision / 每个 Relation 的
  * revision —— 少任何一项，两件不同的工作就会算出同一个键，Run 复用的就是错的。
  */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { LIMITS } from '@/domain/limits';
 import type { SourceSnapshot } from '@/domain/knowledge';
@@ -233,6 +233,63 @@ describe('T054 来源快照与哈希', () => {
     });
     expect(atLimit.ok).toBe(true);
     expect(atLimit.overByItems).toBeUndefined();
+  });
+
+  it('T076-C04 指纹不受墙上时钟影响：环境时钟差一整天也得到同一指纹', () => {
+    // 上面那条「同一瞬间调用两次」的守卫是**偶发**的：一个毫秒级时间戳只有在两次
+    // 调用恰好跨过毫秒边界时才会让哈希不同。实测（把 `Date.now()` 掺进指纹的变异下
+    // 各跑 12 次）：旧那条放行 5 次、本条放行 0 次。偶发的守卫比不做守卫更危险——
+    // 代码坏了它有一半机会说「没事」。
+    //
+    // 这里用假时钟把环境时间整体推后一天：既确定（不依赖真实等待）、又把时钟差拉到
+    // 远大于任何毫秒/秒级戳，所以「指纹里混了时间」必然暴露。
+    const input = { ...HASH_BASE, snapshot: snapshotOf([{ id: 'a', rawVersion: 1, revision: 1 }]) };
+
+    const first = sourceInputHash(input);
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date(Date.now() + 24 * 60 * 60 * 1000));
+      const second = sourceInputHash(input);
+      expect(second).toBe(first);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('T076-C04 只改来源 revision 就改变指纹，且与「有没有其它无关字段」无关', () => {
+    const base = snapshotOf([{ id: 'a', rawVersion: 1, revision: 1 }]);
+    const bumpedRevision = snapshotOf([{ id: 'a', rawVersion: 1, revision: 2 }]);
+    const bumpedRawVersion = snapshotOf([{ id: 'a', rawVersion: 2, revision: 1 }]);
+
+    const a = sourceInputHash({ ...HASH_BASE, snapshot: base });
+    const b = sourceInputHash({ ...HASH_BASE, snapshot: bumpedRevision });
+    const c = sourceInputHash({ ...HASH_BASE, snapshot: bumpedRawVersion });
+
+    // 敏感：改任何一项都会改变指纹（否则过期检测会漏掉这一类改动）。
+    expect(b).not.toBe(a);
+    expect(c).not.toBe(a);
+
+    // 但「旧图过期」不该改写历史：原输入仍然算出原来的指纹。
+    expect(sourceInputHash({ ...HASH_BASE, snapshot: base })).toBe(a);
+  });
+
+  it('T076-C04 关系 revision 与条目 revision 进入的是同一个指纹', () => {
+    const withoutRelations = snapshotOf([{ id: 'a', rawVersion: 1, revision: 1 }]);
+    const withRelations = snapshotOf(
+      [{ id: 'a', rawVersion: 1, revision: 1 }],
+      [{ id: 'r1', revision: 1 }],
+    );
+    const withBumpedRelation = snapshotOf(
+      [{ id: 'a', rawVersion: 1, revision: 1 }],
+      [{ id: 'r1', revision: 2 }],
+    );
+
+    const bare = sourceInputHash({ ...HASH_BASE, snapshot: withoutRelations });
+    const linked = sourceInputHash({ ...HASH_BASE, snapshot: withRelations });
+    const relinked = sourceInputHash({ ...HASH_BASE, snapshot: withBumpedRelation });
+
+    expect(linked).not.toBe(bare);
+    expect(relinked).not.toBe(linked);
   });
 
   it('T054-C06 上下文超预算同样拒绝，而不是隐式截断', () => {

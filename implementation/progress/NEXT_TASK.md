@@ -1,28 +1,31 @@
 # 当前实施位置
 
-当前：**G6 进行中**。T070–T075 已实施并验收（整库逻辑导出、恢复校验、恢复事务、
-备份与损坏恢复手册、本地诊断与可观测性、密钥与跨站安全回归），在 `tasks.current.json`
-中均为 `verified`。**T076–T084 尚未开始**。
+当前：**G6 进行中**。T070–T076 已实施并验收（整库逻辑导出、恢复校验、恢复事务、
+备份与损坏恢复手册、本地诊断与可观测性、密钥与跨站安全回归、领域单元测试与边界矩阵），
+在 `tasks.current.json` 中均为 `verified`。**T077–T084 尚未开始**。
 G5（T062–T069）已完成并验收；G0–G4 已完成。真实 Provider 语义验收仍阻塞，见「已知阻塞」。
 
-最新验证（本机实测，2026-09-16，T075 交付后的全量一轮）：
+最新验证（本机实测，2026-09-16，T076 交付后的全量一轮）：
 
 ```
 npm run lint        exit 0   （0 problems，全仓库）
 npm run typecheck   exit 0
-npm run contracts   exit 0   （23 已实现 / 0 待办；3 条本地扩展路由；failures 空）
-npm test            exit 0   （78 文件 1023 例，含 browser 与 security 两个新 project）
+npm run contracts   exit 0   （23 已实现 / 0 待办；failures 空）
+npm test            exit 0   （81 文件 1054 例，含 browser 与 security 两个 project）
 npm run build       exit 0
-npx playwright test exit 0   （119 passed / 1 skipped，3.9m）
+npx playwright test exit 0   （119 passed / 1 skipped）
 ```
 
 `npx playwright test` 的 1 条 skip 是 `gate2.spec.ts` 里**既有**的条件跳过
 （要求「未配置模型」这一前置），不是本轮引入。
 
-用例数轨迹（只增不减）：G5 时 548 → G6 前四项 896 → T074 后 944 → **T075 后 1023**。
+用例数轨迹（只增不减）：G5 时 548 → G6 前四项 896 → T074 后 944 → T075 后 1023 →
+**T076 后 1054**。五个 project 相加正好等于整跑（392+517+103+32+10），
+**总和一旦不等就说明某个 glob 收集不到文件了**（静默不跑，不报错）。
 
-G6 门禁报告：`docs/progress/G6.md`（**进行中**，覆盖 T070–T075，不是通过报告）。
-证据：`implementation/progress/evidence/G6.md`（T074-9 与 T075-* 节是主执行者独立复核）。
+G6 门禁报告：`docs/progress/G6.md`（**进行中**，覆盖 T070–T076，不是通过报告）。
+证据：`implementation/progress/evidence/G6.md`（T074/T075/T076 各节是主执行者独立复核）。
+覆盖映射：`docs/test-coverage-map.md`（T076 必交产物，含变异证据与未覆盖清单）。
 G5 门禁报告：`docs/progress/G5.md`（T062–T069 全部 verified）。
 
 ## G6 进度（T070–T084）
@@ -35,26 +38,25 @@ G5 门禁报告：`docs/progress/G5.md`（T062–T069 全部 verified）。
 | T073 | WAL备份、数据搬迁与损坏恢复说明 | `scripts/inspect-data.mjs`、`docs/operations/backup-recovery.md` | `tests/integration/recovery.test.ts` 20 例 | verified |
 | T074 | 本地诊断与可观测性 | `src/app/api/diagnostics/route.ts`、`src/server/observability/diagnostics.ts`、`src/features/settings/DiagnosticsPanel.tsx` | `tests/integration/diagnostics.test.ts` 29 例 + `tests/unit/diagnostics.test.ts` 19 例 + `tests/e2e/diagnostics.spec.ts` 6 例 | verified |
 | T075 | 密钥、跨站与渲染安全回归 | `docs/security-checklist.md`、`vitest.config.ts`（security project） | `tests/security/` 8 文件 103 例 + `tests/e2e/security.spec.ts` 9 例 | verified（CSP 未启用，具名缺口） |
-| T076–T084 | 三层测试套件 / 性能 / 手册 / 审计 / UX / 发布证据 / 最终验收 | — | — | 未开始 |
+| T076 | 领域单元测试与边界矩阵 | `tests/unit/evidence-contract.test.ts`、`text-boundaries.test.ts`、`networkIsolation.test.ts`、`unit/support/networkGuard.ts`、`docs/test-coverage-map.md` | 新增 28 例 + 四组变异对照 | verified |
+| T077–T084 | 集成套件 / 六页 e2e / 性能 / 手册 / 审计 / UX / 发布证据 / 最终验收 | — | — | 未开始 |
 
-T075 可直接复用的既有能力与下游注意点：
+T076 可直接复用的既有能力与下游注意点：
 
-- **安全断言只有一个家：`tests/security/`**（独立 `security` vitest project）。
-  T007 的 `security-http.test.ts` 与 T030 的 `secret-redaction-wiring.test.ts` 已**移动**
-  到这里（git 记 RM），不是复制——同一条规则有两份实现必然漂移。
-  新增安全回归请放这个目录，并确认 `vitest.config.ts` 的 project glob 收集它：
-  **移到没人收集的目录会静默不跑**，所以看结果时要连全量例数一起看（增才是对的）。
-- **CSP 未启用是有依据的现状**，不是疏漏：Mermaid 依赖自己注入的内联 `<style>` 配色，
-  盲开严格 CSP 会直接破坏图形视图。`docs/security-checklist.md` 如实写着「未启用」，
-  并由 `tests/security/threat-model-honesty.test.ts` 钉住（文档与代码都不能声称已启用）。
-  要启用得先设计样式策略，且必须同步改文档与那条断言。
-- **`redirect: 'error'` 是 C04 的实际防线**（`src/server/llm/transport.ts:97`）：
-  变异成 `'follow'` 会让 5 条变红。`providerErrors.ts` 的 `errorChainText` 遍历 `cause` 链，
-  因为 Node 把拒绝重定向报成 `TypeError('fetch failed')`——只看 `error.message` 会把
-  重定向误诊成网络问题并错误宣称「可能已计费」。
-- **明确不覆盖的三类威胁**（文档第四节，测试断言其存在）：OS 已被入侵、恶意同源脚本、
-  用户主动把 Key 交给不可信服务。**Key 是本机明文存储、无硬件级保证**——不要在任何
-  发布材料里拔高这一点。
+- **T077 要复用而不是另起一套**。`tests/integration/` 已有 38 文件 517 例，
+  覆盖真 SQLite 的事务、外键、CHECK 约束、迁移与真实 HTTP 路由。写新集成测试前先查
+  `docs/test-coverage-map.md` 第 3 节 —— 那里逐条列了每个结构反例与边界**已经**由哪个文件守住，
+  重复只会让一条规则有两份实现、其中一份必然漂移。
+- **`unit` project 现在挂着网络守卫**（`setupFiles: tests/unit/support/networkGuard.ts`）：
+  非回环 `fetch` 与 `net.Socket.connect` 直接抛错，回环放行。**不要**把这套装置复制到
+  `integration`/`security`——那些 project 需要真实 HTTP。也不要指望它拦子进程。
+- **改 project 的 `include` glob 或加新 project 后，核对五者之和是否仍等于整跑**
+  （392+517+103+32+10 = 1054）。移到没人收集的目录会**静默不跑**，不报错。
+- **偶发守卫要当缺陷修，不是加 retry**。T076 实测出一个真实例子：原「哈希不含随机字段」
+  在 `Date.now()` 污染下放行 5/12，换成假时钟后 0/12。若下游看到"有时绿有时红"，
+  先问"它到底断言了什么"。
+- **`src/domain/evidence.ts` 与 `src/domain/text.ts` 现在有覆盖**（此前 `evidence.ts`
+  四个公共函数零引用）。改这两个文件前先跑 `docs/test-coverage-map.md` 第 5 节列出的变异对照。
 
 T074 可直接复用的既有能力与下游注意点：
 
@@ -263,10 +265,9 @@ G1 期间的修复（分页游标 SQL、join 列名二义、`decodeEvidence` 字
 - **未执行**：CSP 生产配置实测（需先分别验证 Mermaid/Markmap 所需样式，前置到 G6 前）。
 - **未执行**：性能预算（属 T079）。
 
-## 下一步：G6 续做（T076–T084）
+## 下一步：G6 续做（T077–T084）
 
-**T076** 领域单元测试与边界矩阵（依赖 T037/T056/T064/T075——均已 verified）
-→ **T077** API 与 SQLite 集成测试（依赖 T070/T071/T072/T076）
+**T077** API 与 SQLite 集成测试（依赖 T070/T071/T072/T076——均已 verified）
 → **T078** 六页浏览器端到端验收（依赖 T077）
 → **T079** 加载/查询/图形性能预算（依赖 T050/T057/T066/T078）
 → **T080** Windows 安装与故障手册（依赖 T001/T002/T004/T073/T079）
@@ -275,12 +276,13 @@ G1 期间的修复（分页游标 SQL、join 列名二义、`decodeEvidence` 字
 → **T083** 任务证据与缺陷清单（依赖 T076–T082）
 → **T084** 最终用户旅程与 MVP 完成定义（依赖 T083）。
 
-T076–T084 主要是**收敛既有成果**（三层测试套件、性能预算、发布材料、终审），不再是新建功能，
-所以应直接复用各 Gate 已有证据而不是另起一套。**T083/T084 是 G6 的出口条件本身**——
+T077–T084 主要是**收敛既有成果**（集成套件、六页 e2e、性能预算、发布材料、终审），
+不再是新建功能，所以应直接复用各 Gate 已有证据而不是另起一套——
+入口是 `docs/test-coverage-map.md`。**T083/T084 是 G6 的出口条件本身**——
 T084 的「MVP 完成定义」就是「全部做完」的判定标准，不能提前宣布。
 
-T075 已完成（`tests/security/` 8 文件 103 例），T076–T084 依次串行。
-串行不是保守：T078 与 T079 都要跑 Playwright / 生产构建，并行会抢同一个端口与 `.next`。
+T077 起**依次串行**。串行不是保守：T078 与 T079 都要跑 Playwright / 生产构建，
+并行会抢同一个端口与 `.next`。
 
 G6 可直接复用的既有能力：
 

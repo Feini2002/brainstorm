@@ -773,8 +773,18 @@
     },
     {
       "id": "T076",
-      "status": "not_started",
-      "evidence": [],
+      "status": "verified",
+      "evidence": [
+        "docs/test-coverage-map.md",
+        "docs/progress/G6.md",
+        "implementation/progress/evidence/G6.md",
+        "tests/unit/evidence-contract.test.ts",
+        "tests/unit/text-boundaries.test.ts",
+        "tests/unit/networkIsolation.test.ts",
+        "tests/unit/source-hash.test.ts",
+        "tests/unit/support/networkGuard.ts",
+        "vitest.config.ts"
+      ],
       "blockedBy": []
     },
     {
