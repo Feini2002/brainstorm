@@ -888,8 +888,12 @@
   },
     {
       "id": "T084",
-      "status": "not_started",
-      "evidence": [],
+      "status": "verified",
+      "evidence": [
+        "implementation/progress/evidence/G6.md#T084-1",
+        "docs/release/final-acceptance.md",
+        "tests/e2e/final-journey.spec.ts"
+      ],
       "blockedBy": []
     }
   ]

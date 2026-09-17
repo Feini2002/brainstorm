@@ -9,23 +9,25 @@
 
 ## 当前交付状态（先读这一段）
 
-**这是本机 Windows 上验证过的版本，不是通用发行版。** 具体地：
+**MVP 完成定义成立（2026-09-17，T084 收口）；这是本机 Windows 上验证过的版本，不是通用发行版。**
+84 个任务 83 个 `verified`、1 个 `blocked`（T042，需要你自己的模型 Key）。范围与边界的权威说明是
+[docs/release/final-acceptance.md](docs/release/final-acceptance.md)——它有四张清单：**已实现 / 未实现 /
+已验证 / 未验证**，MVP 完成不等于未来所有功能都具备。
 
 | 项 | 状态 |
 | --- | --- |
 | Windows 10.0.22631 + Node 24.18.0 + npm 11.16.0 | **已实测**（安装、构建、启动、真实读写、端到端测试） |
+| 最终用户旅程（空目录启动 → 设置页配 Key → 整理 / 脑图 / 流程图同源 → 人工修改与拒绝被尊重 → 导出、删库、恢复等价） | **已执行，通过**：`tests/e2e/final-journey.spec.ts` 6 例，含 3 次真实进程启停；模型回答是脚本回放（只替代出网那一步） |
 | macOS / Linux | **未验证**。命令与脚本只用了 Node 内置模块，理论上可移植，但没有在这些平台上执行过 |
-| 真实模型端到端验收 | **未执行**。需要用户自己在设置页配置 Key（T042 保持 blocked），无 Key 时整理/生成会返回 `MODEL_NOT_CONFIGURED` |
-| CSP（`Content-Security-Policy`） | **未启用**，原因与前置条件见 [docs/security-checklist.md](docs/security-checklist.md) 第三节 |
-| 日志文件轮转 | **未实现**（日志走标准输出） |
+| 真实模型端到端验收 | **阻塞**（T042）。需要你自己在设置页配置 Key，无 Key 时整理/生成会返回 `MODEL_NOT_CONFIGURED`；配置后可运行 `npx playwright test tests/e2e/gate2.spec.ts` 解除 |
+| CSP（`Content-Security-Policy`） | **有意未启用**，原因与前置条件见 [docs/security-checklist.md](docs/security-checklist.md) 第三节 |
+| 日志文件轮转 | **未实现**（日志走标准输出，内存有界） |
 | 多浏览器 / 真机 | **未测试**，端到端只跑 Playwright 的 Chromium |
 | 无障碍（屏幕阅读器 / 系统级缩放） | **未做人工验收**；键盘可达、文本替代与 150% 浏览器缩放有自动化断言，见 [docs/ux/accessibility.md](docs/ux/accessibility.md) |
-| 最近一次全量实测 | `npm test` 1095 例 · e2e 140 passed / 1 skipped · `npm audit` 0 条（逐 Gate 结论见 [docs/release/acceptance-report.md](docs/release/acceptance-report.md)） |
+| 云同步、多用户 / 登录、向量检索、Agent 框架、移动端 | **范围外，未实现**，也不会以实验开关形态存在 |
+| 最近一次全量实测 | `npm test` 1095 例 · e2e 146 passed / 1 skipped · `npm audit` 0 条（逐 Gate 结论见 [docs/release/acceptance-report.md](docs/release/acceptance-report.md)，最终结论见 [docs/release/final-acceptance.md](docs/release/final-acceptance.md)） |
 
-已知缺口的完整清单见 [docs/release/known-issues.md](docs/release/known-issues.md)（T083 交付）。
-**注意：G6 的最后一项 T084（最终用户旅程与 MVP 完成定义）尚未开始**，因此验收报告目前
-不是通过报告；四清单（已实现 / 未实现 / 真实验证 / 未验证）将在 T084 写入
-`docs/release/final-acceptance.md`。
+已知缺口的复现条件、影响、临时处理与是否阻塞发布见 [docs/release/known-issues.md](docs/release/known-issues.md)。
 
 ## 安装与运行
 
@@ -147,7 +149,7 @@ npm run check       # 上面大部分串起来
 | [docs/06_operations](docs/06_operations) | 安装、依赖下载、备份、排错、交付 |
 | [docs/07_gates](docs/07_gates) | 七阶段顺序和验收门槛 |
 | [docs/operations](docs/operations) | 运行手册：Windows 安装启动、常见故障、备份恢复 |
-| [docs/release](docs/release) | 交付材料：构建报告、依赖审计、已知问题、验收报告 |
+| [docs/release](docs/release) | 交付材料：构建报告、依赖审计、已知问题、验收报告、**最终验收（四张清单）** |
 | [reference](reference) | 限制常量、Schema、SQL、样例、提示词、预检脚本 |
 | [implementation/progress](implementation/progress) | 实施进度、任务状态与证据目录 |
 

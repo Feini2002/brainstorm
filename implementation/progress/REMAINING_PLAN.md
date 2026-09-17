@@ -14,6 +14,9 @@ gate5+gate4 冒烟 13 passed（全量 e2e 上次 T076 时 119 passed / 1 skipped
 当前 verified 82 / implemented 0 / blocked 1（T042）/ not_started 1（T084）。
 本文件下面各节的"当前数字"写的是制定方案时的基线，按节内标注执行。
 
+**收口（2026-09-17）**：T084 已完成并 `verified`，**本方案全部执行完毕**：verified 83 / blocked 1（T042）/
+not_started 0。最终结论与四张清单见 `docs/release/final-acceptance.md`；本文件转为历史记录，不再更新。
+
 ## 1. 未完成清单
 
 ### 1.1 进行中

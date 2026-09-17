@@ -1,10 +1,35 @@
 # 当前实施位置
 
-当前：**G6 进行中，T077–T083 已验收（`verified`）**。T070–T083 已实测通过并在 `tasks.current.json`
-中为 `verified`。**只剩 T084 未开始**。
-G5（T062–T069）已完成并验收；G0–G4 已完成。真实 Provider 语义验收仍阻塞，见「已知阻塞」。
+当前：**全部 Gate 完成。84 个任务 83 个 `verified`、1 个 `blocked`（T042）。MVP 完成定义成立。**
+G6 的最后一项 T084 已于 2026-09-17 验收（`evidence/G6.md` T084-1）；G0–G5 早已完成。
+真实 Provider 语义验收（T042）仍阻塞，且只能由用户自己解除，见「已知阻塞」。
 
-**下一步：T084 最终用户旅程与 MVP 完成定义。它是 G6 的最后一项——完成前 G6 的退出条件不成立。**
+**下一步：没有排队任务。** 范围与边界的权威说明是 `docs/release/final-acceptance.md`
+（四张清单：已实现 / 未实现 / 已验证 / 未验证）。若用户在设置页配置了真实 Key，
+`npx playwright test tests/e2e/gate2.spec.ts` 可解除 T042；任何范围外能力（云同步、多用户、
+向量检索、Agent 框架）都需要**新的批准**，不是本进度表的下一项。
+
+**上一轮完成的 T084**（`evidence/G6.md` T084-1；最终说明 `docs/release/final-acceptance.md`）：
+
+1. **`tests/e2e/final-journey.spec.ts` 6 例，串行成一段旅程**：自己的进程（3101）与自己的空目录
+   （`.data-restart` 开头整个删掉），**3 次真实进程启停**。C01 空目录启动 → 输入框存 3 条 → 重启读回；
+   C02 设置页表单保存 Key（响应与整页 DOM 不回显）→ 脚本 `{"ok":true}` 测试通过；
+   C03 抽屉整理甲（1 条 AI 关系、引文逐字）、整理丙零关系（原文不动）、乙不整理 → 选择条 → 脑图与
+   流程图生成 → 来源都是同一组 id、无依据 causal 降级为推测、条目仍 3 关系仍 1；
+   C04 手改摘要 + 拒绝关系 → 第二次整理不覆盖、墓碑不复活 → 改乙原文 → 旧脑图过期 → 重新生成另存、
+   旧图不变仍可读；C05 导出 → 停进程删目录重启 → 设置页恢复 → 逐字段对比 API 快照等价、Key 需重配；
+   C06 台账 / 最终说明 / README 一致，主导航恰好六页、范围外路由 404。
+2. **两段此前只走过失败分支的接线第一次被 e2e 走到成功**：抽屉「用模型整理这一条」→ 落库；
+   设置页表单填 Key → 保存 → 测试连接通过。此前所有 e2e 都是在「无模型配置」下断言失败文案。
+3. **模型回答全是脚本回放**（7 次：整理 ×3、脑图 ×2、流程图 ×1、连接测试 ×1），只替代出网那一步，
+   路由/守卫/schema/事务/入库全真。**不能读成真实模型已通过**——T042 仍 blocked。
+4. **首轮查出 4 处用例侧假设错误，全部改断言不改产品**：库在首次数据访问时才建（`/api/health` 不碰库）；
+   视图 DTO 没有顶层 `itemIds`（在 `selection` 与 `sourceSnapshot`）；抽屉只读态不显示摘要（在卡片与
+   编辑表单）；视图过期以 `revision` 为准而不只是 `rawVersion`。四条都记入 `final-acceptance.md` §2.1。
+5. **同范围一处测试修正**：`tests/contracts/delivery.test.ts` T083-R01 钉死了 `['blocked','not_started','verified']`
+   这组**进度快照**，T084 收口后 `not_started` 消失会红；改为「取值 ⊆ 词表且不含 `implemented`」。
+6. **README 交付状态改写**：首句改为「MVP 完成定义成立」，新增旅程一行与「范围外」一行，
+   全量数字更新为 e2e 146 passed / 1 skipped。
 
 **上一轮完成的 T083**（`evidence/G6.md` T083-1；交付材料见 `docs/release/acceptance-report.md`
 与 `docs/release/known-issues.md`）：
@@ -186,7 +211,7 @@ G5 门禁报告：`docs/progress/G5.md`（T062–T069 全部 verified）。
 | T081 | 生产构建、依赖审计与发布材料 | `docs/release/build-report.md`、`docs/release/dependency-audit.md`、`README.md`（重写安装运行）、`package.json`（vitest 4.1.11 / esbuild）、`.gitattributes`、`vitest.config.mjs` | 干净目录（`git archive` 653 文件）全链 exit 0；真实 API 11 项断言；`npm audit` 与 `--omit=dev` 均 0 条；**查出并修掉 3 个真实缺陷**（换行符不确定 / `APP_*` 污染测试 / esbuild 隐式依赖） | verified |
 | T082 | 中文文案、状态与无障碍终审 | `src/features/shared/StatusLabel.tsx`、`docs/ux/copybook.md`、`docs/ux/accessibility.md`、`KnowledgeDrawer.tsx`（焦点）、`LoadingIndicator`（label 必填） | `tests/e2e/a11y-and-copy.spec.ts` 8 例（C01–C06）；变异 2 处（撤销移入焦点 / 撤销 Tab 回卷）均红在正确断点；**查出并修掉抽屉声称 aria-modal 却不移入焦点、也无焦点陷阱**（evidence T082-1） | verified |
 | T083 | 任务证据、缺陷清单与交付状态 | `scripts/check-delivery.mjs`、`tests/contracts/delivery.test.ts`、`docs/release/acceptance-report.md`、`docs/release/known-issues.md`、`package.json`（`status`） | 10 例（C01–C06）；变异 3 处（m3 首轮未红，补接线断言后转红）；**首次运行查出 3 处真实问题**（2 条证据指针断掉、2 条锚点指不到地方）；`npm test` 1085 → 1095（evidence T083-1） | verified |
-| T084 | 最终用户旅程与 MVP 完成定义 | — | — | not_started |
+| T084 | 最终用户旅程与 MVP 完成定义 | `tests/e2e/final-journey.spec.ts`、`docs/release/final-acceptance.md`、`README.md`（交付状态）、`tests/contracts/delivery.test.ts`（放宽进度快照断言） | 6 例（C01–C06）串行成一段旅程，3 次真实进程启停，7 次脚本回放的模型调用全部从界面按钮发出；**首次把抽屉整理与设置页存 Key 走到成功**；首轮查出 4 处用例侧假设错误（均改断言不改产品）；e2e 140 → 146（evidence T084-1） | verified |
 
 T077 已查明、接手者可直接用的事实（不必再探）：
 

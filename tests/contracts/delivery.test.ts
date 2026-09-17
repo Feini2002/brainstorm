@@ -63,7 +63,9 @@ describe('T083 交付守卫', () => {
     ) as { tasks: { id: string; status: string }[] };
     const seen = [...new Set(current.tasks.map((task) => task.status))].sort();
     // `implemented` 是 G0 起用过的第五个词，G-2 拍板后不再产生；这里钉住它不再回来。
-    expect(seen).toEqual(['blocked', 'not_started', 'verified']);
+    // 只断言「实际取值 ⊆ 词表」：具体出现哪几种随进度变化（T084 收口后 `not_started`
+    // 自然消失），钉死一组固定取值会让台账每前进一步都要改测试。
+    expect(seen).not.toContain('implemented');
     for (const status of seen) expect(ALLOWED_STATUSES).toContain(status);
   });
 

@@ -1,7 +1,8 @@
 # 验收报告（T083-C02：逐 Gate 引用任务与用例 ID）
 
 本文件是**实测记录**，不是规格的预期句。每一条给出实际执行状态、证据指针与用例 ID。
-**本文件不是通过报告**：见第 8 节——G6 的最后一个任务 T084 尚未开始，且 T042 仍为 `blocked`。
+**本文件是逐 Gate 的过程报告；最终结论与四张清单在 [final-acceptance.md](final-acceptance.md)（T084，2026-09-17）。**
+T084 收口后 G6 退出条件成立；T042 仍为 `blocked`（第 8 节），只能由用户配置真实 Key 后解除。
 
 - 状态来源：`implementation/progress/tasks.current.json`，由 `npm run status` 机器校验
   （84 个任务与契约逐一对应、每条 evidence 路径必须真实存在、锚点必须可定位）。
@@ -10,15 +11,17 @@
 
 ## 1. 当前状态快照
 
-`npm run status` 的实际输出（本机，2026-09-16）：
+`npm run status` 的实际输出（本机，2026-09-17，T084 收口后）：
 
 ```
-状态分布  verified 81 / blocked 1（T042）/ not_started 2（T083、T084）/ in_progress 0
+状态分布  verified 83 / blocked 1（T042）/ not_started 0 / in_progress 0
 任务数    84（与 reference/contracts/tasks.json 的 84 条一一对应）
-证据条目  298（其中带锚点 13，锚点全部可定位）
+证据条目  306（其中带锚点 15，锚点全部可定位）
 verified 但没有结果记录的任务  0
-交付扫描  661 个跟踪文件、扫描 660（node_modules 与 .next 未跟踪，由锁文件恢复）
+交付扫描  665 个跟踪文件、扫描 664（node_modules 与 .next 未跟踪，由锁文件恢复）
 ```
+
+（T083 收尾时的快照是 verified 81 / not_started 2（T083、T084），见 `evidence/G6.md` T083-1。）
 
 逐 Gate 汇总（`tasks.current.json` × `reference/contracts/tasks.json` 的 gate 字段）：
 
@@ -30,7 +33,7 @@ verified 但没有结果记录的任务  0
 | G3 关系图 | T043–T052 | 10 | 0 | 0 | **已执行，通过** |
 | G4 脑图 | T053–T061 | 9 | 0 | 0 | **已执行，通过** |
 | G5 流程图 | T062–T069 | 8 | 0 | 0 | **已执行，通过**（T069 语义一半阻塞） |
-| G6 恢复、安全与交付 | T070–T084 | 13 | 0 | 2 | **未完成**：T084 未开始 |
+| G6 恢复、安全与交付 | T070–T084 | 15 | 0 | 0 | **已执行，通过**（T084 收口，`final-acceptance.md`） |
 
 ## 2. G0 基础环境与安全存储（T001–T012）
 
@@ -128,15 +131,14 @@ G5 的一处**作废结论**必须保留在交付材料里：收口轮最早记�
 | T082 中文文案、状态与无障碍终审 | C01–C06 已执行，通过 | `tests/e2e/a11y-and-copy.spec.ts` 8 例；`docs/ux/copybook.md`、`docs/ux/accessibility.md` |
 | **T083** 任务证据、缺陷清单与交付状态 | C01–C06 已执行，通过 | `scripts/check-delivery.mjs` + `tests/contracts/delivery.test.ts` 10 例；本文件与 `docs/release/known-issues.md` |
 
-### 7.2 尚未开始的 1 项
+### 7.2 收口的 1 项（2026-09-17）
 
-| 任务 | 结论 | 说明 |
+| 任务 | 六用例结论 | 证据指针 |
 | --- | --- | --- |
-| **T084** 最终用户旅程与 MVP 完成定义 | **未执行** | 依赖 T083。`docs/release/final-acceptance.md` 与 `tests/e2e/final-journey.spec.ts` 尚不存在 |
+| **T084** 最终用户旅程与 MVP 完成定义 | C01–C06 已执行，通过 | `tests/e2e/final-journey.spec.ts` 6 例（自己的进程与空目录，3 次真实启停，7 次脚本回放的模型调用全从界面按钮发出）；`docs/release/final-acceptance.md`（四张清单）；`evidence/G6.md` T084-1 |
 
-**因此 G6 的退出条件当前不成立**，`docs/release/acceptance-report.md`（本文件）不能读成
-「G6 已通过」。T084 完成后，最终验收的四清单（已实现 / 未实现 / 真实验证 / 未验证）写入
-`docs/release/final-acceptance.md`。
+**G6 的退出条件由此成立。** 最终验收的四清单（已实现 / 未实现 / 已验证 / 未验证）在
+`docs/release/final-acceptance.md`；本文件保留逐 Gate 的过程结论，两者的数字以 `npm run status` 为准。
 
 ## 8. 未执行与阻塞（不得消失）
 
@@ -236,7 +238,8 @@ npx playwright test tests/e2e/a11y-and-copy.spec.ts   # T082 的 8 例
 
 ## 12. 本报告自身的边界
 
-1. **不是通过报告**。G6 的 T084 未开始（第 7.2 节），T042 仍 `blocked`（第 8.1 节）。
+1. **是过程报告，不是最终结论**。最终结论与范围边界在 `final-acceptance.md`；T042 仍 `blocked`（第 8.1 节），
+   本文件与最终验收都不把脚本回放写成真实模型已通过。
 2. **截图不作数据库验收**。本文件引用的全部结论来自命令退出码、测试 ID 与数据库观察；
    仓库里的两张截图（`evidence/assets/`）只用于说明交互，不是任何一条结论的依据。
 3. **替身不写成真实外部服务已通过**。凡使用脚本替身的地方都写明是替身。
