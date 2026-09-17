@@ -1,6 +1,6 @@
 import { expect, gotoInbox, test } from './support/fixtures';
 import { E2E_ORIGIN } from './support/env';
-import { authHeaders, captureViaUi, seedItemViaApi, uniqueText } from './support/harness';
+import { authHeaders, captureViaUi, seedItemViaApi, uniqueText, revealMindmapOutline } from './support/harness';
 import { capturePair, openScopedGraph, saveGraphView } from './support/graph';
 import { ensureLlmConfigured, restoreLlmSettings, writeScript } from './support/gomindmap';
 import { seedAiRelation, seedView, withSeedDb } from './support/seedData';
@@ -527,6 +527,7 @@ test.describe('T082 键盘、文本替代与字号', () => {
 
     await page.goto('/mindmap');
     await page.getByTestId('mindmap-view-select').selectOption(viewId);
+    await revealMindmapOutline(page);
 
     // 大纲是文本，并且每个节点都写着它引用了多少来源。
     const outline = page.getByTestId('mindmap-outline');

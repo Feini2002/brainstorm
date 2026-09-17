@@ -116,7 +116,7 @@ function ensureSchema(db: DatabaseSync): void {
   // Version 0 runs the initial migration; a higher-than-known version is
   // reported by the runner and refuses to continue.
   runMigrations(db);
-  if (version === 0 && readUserVersion(db) !== 1) {
+  if (version === 0 && readUserVersion(db) < 1) {
     throw new DatabaseError('初始迁移未完成');
   }
 }

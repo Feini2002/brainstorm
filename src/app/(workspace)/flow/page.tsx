@@ -358,15 +358,15 @@ export default function FlowPage() {
       setServerError(null);
       setNotices([]);
 
-      if (material.unconfirmed) {
-        setServerError('还没有核对材料，请先点“核对材料”确认要发送的记录');
-        return false;
-      }
-
       if (workspace.selection.removedIds.length > 0) {
         setServerError(
           `有 ${workspace.selection.removedIds.length} 条已选材料已经被删除并从选择中移除，请先确认新的材料集合再生成`,
         );
+        return false;
+      }
+
+      if (body.selection.itemIds.length === 0) {
+        setServerError('还没有选中材料，本次没有发起生成');
         return false;
       }
 
@@ -376,8 +376,8 @@ export default function FlowPage() {
         setServerError('无法向本地服务确认材料，本次没有发起生成');
         return false;
       }
-      if (fresh.requestedKey !== sentKey) {
-        setServerError('材料在确认之后发生了变化，请查看下面的最新材料并重新确认，再点一次生成');
+      if (fresh.missingIds.length > 0 || fresh.requestedKey !== sentKey) {
+        setServerError('材料在生成前已经变化，本次没有发起生成。请查看当前材料后再点一次。');
         return false;
       }
       if (summary.overBudget) {
@@ -426,7 +426,6 @@ export default function FlowPage() {
       adoptView,
       confirmMaterial,
       loadList,
-      material.unconfirmed,
       refreshList,
       summary.limit,
       summary.overBudget,
@@ -473,11 +472,11 @@ export default function FlowPage() {
             disabled={selectedIds.length === 0 || confirming}
             onClick={() => void confirmMaterial(selectedIds)}
           >
-            {confirming ? '正在核对…' : '核对材料'}
+            {confirming ? '正在读取…' : '刷新材料预览'}
           </Button>
           {material.unconfirmed && selectedIds.length > 0 ? (
-            <span className="text-xs text-[var(--warn-ink)]" data-testid="flow-confirm-required">
-              生成前需要先向本地服务核对一次，确认没有已删除的记录。
+            <span className="text-xs text-[var(--ink-muted)]" data-testid="flow-material-loading">
+              正在读取将要发送的材料，生成时会再核对一次。
             </span>
           ) : null}
           {materialNotice ? (

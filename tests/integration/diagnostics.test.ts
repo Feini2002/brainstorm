@@ -430,7 +430,7 @@ describe('T074 其它规则', () => {
     expect(report.node).toBe(process.version);
     expect(report.version).toMatch(/\d+\.\d+\.\d+/u);
     expect(report.database.schemaVersion).toBe(report.database.supportedSchemaVersion);
-    expect(report.database.schemaVersion).toBe(1);
+    expect(report.database.schemaVersion).toBe(2);
     for (const key of ['items', 'relations', 'views', 'tags', 'runs']) {
       expect(report.counts[key], `counts.${key} 应是一个真实数字`).toBeTypeOf('number');
     }
@@ -583,7 +583,7 @@ describe('T074 其它规则', () => {
 
     const report = buildDiagnosticsReport(db, { dataDir: readOnly });
     expect(report.dataDir.writable).toBe(false);
-    expect(report.database.schemaVersion).toBe(1);
+    expect(report.database.schemaVersion).toBe(2);
     rmSync(path.join(readOnly, '.write-probe'), { recursive: true, force: true });
   });
 });

@@ -39,7 +39,7 @@
 
 生成API中的流程路径为/api/views/mermaid/generate，而领域kind叫flow；设置更新使用PUT；复杂图查询使用POST /api/graph但不修改数据。Run.deadlineAt表示180秒租约，不是45秒单次请求或120秒操作总期限。API Key默认本机明文，只在secrets表，GET不回显。格式修复默认关闭，用户启用后最多一次。Item状态的精确推导以DTO版本文档为准。
 
-普通View创建接口只接受graph布局，mindmap/flow必须由受限生成服务创建；模型结果永远不能更新capturedText或rawText。关系causal在Flow里需要已确认、未过期的causes依据；不符合时必须hypothesis而非猜测。空库恢复还检查tags/itemTags，无声合并不属于MVP。
+普通View创建接口只接受graph布局，mindmap/flow必须由受限生成服务创建；模型结果永远不能更新capturedText或rawText。Flow 里的 causal 按已确认 causes 关系或引用原文的材料表述区分依据，方向必须一致；既无匹配关系也无材料时才是 hypothesis。空库恢复还检查tags/itemTags，无声合并不属于MVP。
 
 ## 变更同步
 

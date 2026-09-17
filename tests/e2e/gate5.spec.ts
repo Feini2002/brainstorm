@@ -148,6 +148,7 @@ interface FlowViewRead {
       label: string;
       itemIds: string[];
       relationIds: string[];
+      basis?: 'relation' | 'material' | 'inference';
     }[];
   };
   sourceSnapshot: {
@@ -193,7 +194,7 @@ test.describe('T069 流程可视化与逻辑保真验收', () => {
     await restoreLlmSettings();
   });
 
-  test('T069-C01 因果审查：无依据的因果被降级并写明，有依据的因果保留', async ({ page }) => {
+  test('T069-C01 因果审查：相关不能认证关系，材料表述与已确认关系分开', async ({ page }) => {
     await gotoInbox(page);
     const headers = await authHeaders(page);
 
@@ -207,9 +208,7 @@ test.describe('T069 流程可视化与逻辑保真验收', () => {
 
     // ---- 主场景：材料只有相关，模型声称因果 -------------------------------
     //
-    // The relation is a *`related_to`* suggestion, not a `causes` one: 「相关不等于
-    // 因果」 has to be decided by the evidence gate rather than by the absence of any
-    // relation at all.
+    // related_to 不能把边认证成已确认关系，但引用原文时仍按材料表述保留 causal。
     const relatedId = withSeedDb(
       (db) =>
         seedAiRelation(db, {
@@ -232,18 +231,17 @@ test.describe('T069 流程可视化与逻辑保真验收', () => {
     const stored = await readFlowView(page, headers, withoutEvidence.viewId!);
     const expectation = validExpectation('causalClaimedWithoutEvidence', slots);
 
-    // 「必须断言：不能无依据标 causal，推测显式标出」——断言的是**落库的类型**，
-    // 不是页面上的颜色或提示语。
+    // 相关不能认证为已确认因果；引用原文时标材料表述，而不是改成推测。
     expect(stored.content.edges).toHaveLength(1);
     expect(stored.content.edges.map((edge) => edge.kind)).toEqual(expectation.edgeKinds);
-    expect(stored.content.edges[0]!.kind).toBe('hypothesis');
+    expect(stored.content.edges[0]!.kind).toBe('causal');
+    expect(stored.content.edges[0]!.basis).toBe('material');
+    expect(stored.content.edges[0]!.relationIds).toEqual([]);
 
-    // 用户被告知为什么；run 是权威记录。
     const run = await readFlowRun(page, headers, withoutEvidence.runId);
     expect(run.state).toBe('succeeded');
-    expect(withoutEvidence.warnings.join(''), '必须写明降级原因').toContain('因果');
-    expect(withoutEvidence.warnings.join('')).toContain('推测');
-    expect(expectation.warns).toBe(true);
+    expect(withoutEvidence.warnings.join('')).not.toContain('改成');
+    expect(expectation.warns).toBe(false);
 
     // 「必须排除：可视化会增强错误结论的说服力」——投影不写回知识库：生成了推测边
     // 之后，relations 表里不应多出任何一条自动关系。
@@ -266,14 +264,13 @@ test.describe('T069 流程可视化与逻辑保真验收', () => {
     for (const label of validLabels('causalClaimedWithoutEvidence', slots)) {
       expect(drawn, `画面上应出现材料里的节点文字「${label}」`).toContain(label);
     }
-    // 虚线边 + 「推测：」前缀，两者都要有：只有其中一个都会让猜测看起来像事实。
-    expect(drawn, '推测边必须写明「推测：」').toContain('推测：');
+    expect(drawn, '材料表述边必须写明依据').toContain('材料表述');
+    expect(drawn).not.toContain('推测：');
     expect(await page.getByTestId('flow-svg').locator('path[marker-end]').count()).toBeGreaterThan(0);
-    await expect(page.getByTestId('flow-legend')).toContainText('推测');
+    await expect(page.getByTestId('flow-legend')).toContainText('材料表述');
 
-    // 来源面板把推测单独列出，并明确「没有引用的关系」。
-    await expect(page.getByTestId('flow-hypothesis-row')).toHaveCount(1);
-    await expect(page.getByTestId('flow-hypothesis-row')).toContainText('推测：');
+    await expect(page.getByTestId('flow-hypothesis-row')).toHaveCount(0);
+    await expect(page.getByTestId('flow-hypothesis-none')).toBeVisible();
     await expect(page.getByTestId('flow-relation-none')).toBeVisible();
 
     // ---- 对照组：有已确认 causes 依据时，同一条 causal 声明必须保住 --------
@@ -304,12 +301,13 @@ test.describe('T069 流程可视化与逻辑保真验收', () => {
     // 引用的关系进入了快照，所以「依据是什么」可追溯。
     expect(justified.sourceSnapshot.relations.map((entry) => entry.id)).toContain(causeId);
 
-    // 屏幕上 causal 写「因果：」，不写「推测：」。
+    // 屏幕上已确认关系写「已确认关系：」，不写「推测：」。
     await openSavedFlow(page, justified.id);
     await waitForDrawnSvg(page);
     const causalText = (await drawnTexts(page)).join(' | ');
-    expect(causalText).toContain('因果：');
+    expect(causalText).toContain('已确认关系');
     expect(causalText, '有依据的因果边不应被标成推测').not.toContain('推测：');
+    expect(causalText).not.toContain('材料表述');
     await expect(page.getByTestId('flow-hypothesis-none')).toBeVisible();
     await expect(page.getByTestId('flow-relation-row')).toHaveCount(1);
     await expect(page.getByTestId('flow-relation-row')).toHaveAttribute('data-relation-id', causeId);
@@ -809,7 +807,7 @@ test.describe('T069 流程可视化与逻辑保真验收', () => {
     // 没跑」消失在总结里。
     const report = {
       executed: [
-        'T069-C01 证据门槛与降级（无依据 → hypothesis，有依据 → causal）',
+        'T069-C01 证据门槛（相关不能认证关系；材料表述与已确认关系分开）',
         'T069-C02 生成→编译→渲染→净化的注入全链（页面层）',
         'T069-C03 异步切换：最后选择生效且来源不串位',
         'T069-C04 重启后本地渲染与渲染失败时的文本降级',

@@ -66,6 +66,10 @@ export interface GraphRows {
   relations: RelationDTO[];
   /** Ids of items carrying `filter.tagId`, or null when no tag filter is set. */
   tagMemberIds: Set<string> | null;
+  /** Items actually read for this query (capped window when no explicit ids). */
+  readWindowCount: number;
+  /** Full library matches for the current filter, independent of the read window. */
+  libraryMatchedCount: number;
 }
 
 /** Item ids mapped to a tag, read from `item_tags` rather than from labels. */
@@ -97,8 +101,8 @@ export function readGraphRows(db: DatabaseSync, input: GetGraphDataInput): Graph
    * view that was intact. The schema already bounds the id list, so the read is
    * bounded too — this is not an unbounded query.
    */
-  const items = input.itemIds
-    ? listItemsByIds(db, input.itemIds)
+  const listed = input.itemIds
+    ? null
     : listItems(db, {
         filters: {
           ...(input.filter.type ? { type: input.filter.type } : {}),
@@ -107,14 +111,21 @@ export function readGraphRows(db: DatabaseSync, input: GetGraphDataInput): Graph
         sort: 'newest',
         limit: READ_FLOOR,
         cursor: null,
-      }).items;
+      });
+  const items = input.itemIds ? listItemsByIds(db, input.itemIds) : listed!.items;
 
   const relations = listRelations(db, {
     includeStale: true,
     includeRejected: true,
   });
 
-  return { items, relations, tagMemberIds: members };
+  return {
+    items,
+    relations,
+    tagMemberIds: members,
+    readWindowCount: items.length,
+    libraryMatchedCount: input.itemIds ? items.length : listed!.totalMatched,
+  };
 }
 
 /**
@@ -180,6 +191,12 @@ export function getGraphData(
       freshness: relationFreshness(edge, versions),
     })),
     freshness,
+    scope: {
+      ...data.scope,
+      matchedNodeCount: rows.libraryMatchedCount,
+      readWindowCount: rows.readWindowCount,
+      libraryMatchedCount: rows.libraryMatchedCount,
+    },
   };
 }
 

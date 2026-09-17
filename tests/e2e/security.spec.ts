@@ -32,6 +32,7 @@ import {
   findItemIdViaApi,
   openRoute,
   uniqueText,
+  revealDiagnostics,
 } from './support/harness';
 import { headersAt, restoreLlmSettings } from './support/gomindmap';
 
@@ -283,7 +284,7 @@ test.describe('T075-C02 浏览器持久存储不含 Key 也不含令牌', () => 
       }
       // 回到设置页，让诊断面板（含模型 host 与 apiKeyConfigured）也渲染一次。
       await openRoute(page, '/settings');
-      await expect(page.getByTestId('diagnostics-panel')).toBeVisible();
+      await revealDiagnostics(page);
 
       const storage = await browserStorageDump(page);
 

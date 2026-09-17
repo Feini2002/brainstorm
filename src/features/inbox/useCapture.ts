@@ -17,10 +17,13 @@
  *
  * Every submit uses a fresh `captureRequestId`, so a retry after a lost response
  * is a replay rather than a second note. An unresolved submission keeps its key
- * so the user can safely retry the same request (T025-R02).
+ * so the user can safely retry the same request (T025-R02). The frozen request
+ * includes source and mode: retrying after the user edits the source field must
+ * not silently change what is sent.
  *
  * Save and organize are two separate outcomes. "已保存" comes from the create
  * response alone and is never rewritten by a later organize failure (T025-R04).
+ * Organize runs only when the user asked for `save-and-organize`.
  */
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 
@@ -30,8 +33,21 @@ import { codePointLength } from '@/domain/text';
 import { ApiClientError, apiRequest } from '@/features/shared/apiClient';
 import { ACTIONS, failureKeepingSaved } from '@/features/shared/StatusLabel';
 import { canSubmitDraft, hasUnsavedDraft } from './captureShortcuts';
+import {
+  clearPendingCapture,
+  freezeCaptureRequest,
+  getPendingCapture,
+  organizeConflictMessage,
+  patchPendingCapture,
+  setPendingCapture,
+  shouldCallOrganize,
+  type CaptureMode,
+  type CaptureSourceType,
+  type FrozenCaptureRequest,
+  type OrganizeUiOutcome,
+} from './captureSession';
 
-export type CaptureSourceType = ItemDTO['sourceType'];
+export type { CaptureMode, CaptureSourceType, OrganizeUiOutcome };
 
 export interface CaptureResult {
   item: ItemDTO;
@@ -44,6 +60,7 @@ export type CapturePhase = 'idle' | 'saving' | 'saved' | 'unknown' | 'failed';
 /** Outcome of the optional organize step that follows a successful save. */
 export interface OrganizeOutcome {
   ok: boolean;
+  state?: OrganizeUiOutcome['state'];
   message: string;
 }
 
@@ -58,10 +75,15 @@ export interface UseCaptureOptions {
   /** Called after a confirmed create so the caller can prepend the new card. */
   onCreated?: (result: CaptureResult) => void;
   /**
-   * Optional second step, run only after the raw text is stored. Wired up in G2;
-   * without it only "已保存" is reported.
+   * Optional second step, run only after the raw text is stored and only when
+   * the frozen mode is `save-and-organize`. The page owns the HTTP call so it
+   * can keep the run id; this hook owns whether the call happens at all.
    */
-  organize?: (item: ItemDTO) => Promise<void>;
+  organize?: (item: ItemDTO, context: { requestKey: string }) => Promise<OrganizeUiOutcome>;
+}
+
+export interface SubmitCaptureOptions {
+  mode: CaptureMode;
 }
 
 export interface UseCaptureApi {
@@ -92,8 +114,8 @@ export interface UseCaptureApi {
   inputHint: string | null;
   /** Record a hint that must survive navigation, e.g. "model not configured". */
   setInputHint: (value: string | null) => void;
-  submit: () => Promise<void>;
-  /** Re-send the last submission with the same key (idempotent replay). */
+  submit: (options?: SubmitCaptureOptions) => Promise<void>;
+  /** Re-send the last submission with the same frozen request. */
   retry: () => Promise<void>;
   dismissError: () => void;
   /** Forget the previous outcome after the user has read it. */
@@ -148,6 +170,7 @@ function patchDraft(patch: Partial<DraftSnapshot>): void {
 /** Test/teardown hook: dropping the in-memory draft is the only way to clear it. */
 export function clearCaptureDraft(): void {
   patchDraft(EMPTY_DRAFT);
+  clearPendingCapture();
 }
 
 /* -------------------------------------------------------------------------- */
@@ -198,6 +221,14 @@ export function newCaptureRequestId(): string {
   return `capture-${Date.now().toString(36)}-${keyCounter}`;
 }
 
+function toOrganizeOutcome(result: OrganizeUiOutcome): OrganizeOutcome {
+  return {
+    ok: result.state === 'succeeded',
+    state: result.state,
+    message: result.state === 'conflict' ? organizeConflictMessage() : result.message,
+  };
+}
+
 export function useCapture(options: UseCaptureOptions = {}): UseCaptureApi {
   const draftState = useSyncExternalStore(subscribeDraft, getDraft, getServerDraft);
   const { text: draft, sourceType, sourceRef, inputHint } = draftState;
@@ -221,12 +252,14 @@ export function useCapture(options: UseCaptureOptions = {}): UseCaptureApi {
   useEffect(() => {
     draftRevisionRef.current = draftRevision;
   }, [draftRevision]);
-  // Read by `submit`, which runs from an event handler and must see the current
-  // phase without being re-created on every phase change.
   const phaseRef = useRef(phase);
   useEffect(() => {
     phaseRef.current = phase;
   }, [phase]);
+  const optionsRef = useRef(options);
+  useEffect(() => {
+    optionsRef.current = options;
+  }, [options]);
 
   /**
    * Update the draft text.
@@ -256,11 +289,17 @@ export function useCapture(options: UseCaptureOptions = {}): UseCaptureApi {
     patchDraft({ inputHint: value });
   }, []);
 
-  /** The submission awaiting a definitive outcome, if any. */
-  const pendingRef = useRef<{ key: string; text: string; revision: number } | null>(null);
   const mountedRef = useRef(true);
   useEffect(() => {
     mountedRef.current = true;
+    const pending = getPendingCapture();
+    if (pending && !pending.savedItem) {
+      setPhase('saving');
+    } else if (pending?.savedItem) {
+      setOutcome({ item: pending.savedItem, replayed: pending.replayed === true, stored: true });
+      setPhase('saved');
+      setLastSubmittedText(pending.rawText);
+    }
     return () => {
       mountedRef.current = false;
     };
@@ -275,8 +314,6 @@ export function useCapture(options: UseCaptureOptions = {}): UseCaptureApi {
     saving: phase === 'saving',
   });
 
-  // Registering this while there is unsaved text covers reload/close, the two
-  // ways a draft can be lost that the in-memory store cannot prevent.
   useEffect(() => {
     if (!hasUnsavedDraft(draft, lastSubmittedText)) return;
     const onBeforeUnload = (event: BeforeUnloadEvent) => {
@@ -286,74 +323,100 @@ export function useCapture(options: UseCaptureOptions = {}): UseCaptureApi {
     return () => window.removeEventListener('beforeunload', onBeforeUnload);
   }, [draft, lastSubmittedText]);
 
+  const applyIfMounted = useCallback((action: () => void) => {
+    if (mountedRef.current) action();
+  }, []);
+
+  const runOrganize = useCallback(
+    async (item: ItemDTO, frozen: FrozenCaptureRequest) => {
+      const organize = optionsRef.current.organize;
+      if (!shouldCallOrganize(frozen.mode) || !organize || !frozen.organizeRequestKey) return;
+      try {
+        const result = await organize(item, { requestKey: frozen.organizeRequestKey });
+        applyIfMounted(() => setOrganizeOutcome(toOrganizeOutcome(result)));
+        if (result.state === 'succeeded') {
+          if (getPendingCapture()?.captureRequestId === frozen.captureRequestId) {
+            clearPendingCapture();
+          }
+          patchDraft({ inputHint: null });
+        } else {
+          patchDraft({
+            inputHint:
+              result.state === 'conflict'
+                ? result.message
+                : `${ACTIONS.organize}没完成，原文已经${ACTIONS.save}好。你仍可以继续记录、改标签、建立关系；稍后在资料库里重新${ACTIONS.organize}这一条即可。`,
+          });
+        }
+      } catch (caught) {
+        const message =
+          caught instanceof ApiClientError
+            ? failureKeepingSaved(ACTIONS.organize, caught.message)
+            : failureKeepingSaved(ACTIONS.organize, '未知原因');
+        applyIfMounted(() =>
+          setOrganizeOutcome({
+            ok: false,
+            state: 'failed',
+            message,
+          }),
+        );
+        patchDraft({
+          inputHint: `${ACTIONS.organize}没完成，原文已经${ACTIONS.save}好。你仍可以继续记录、改标签、建立关系；稍后在资料库里重新${ACTIONS.organize}这一条即可。`,
+        });
+      }
+    },
+    [applyIfMounted],
+  );
+
   const send = useCallback(
-    async (key: string, text: string, revision: number, snapshot: DraftSnapshot) => {
-      setPhase('saving');
-      setError(null);
-      setNotice(null);
-      setOrganizeOutcome(null);
-      const sourceRefValue = snapshot.sourceRef.trim();
+    async (frozen: FrozenCaptureRequest) => {
+      applyIfMounted(() => {
+        setPhase('saving');
+        setError(null);
+        setNotice(null);
+        setOrganizeOutcome(null);
+      });
+      const existing = getPendingCapture();
+      if (existing?.savedItem && existing.captureRequestId === frozen.captureRequestId) {
+        await runOrganize(existing.savedItem, frozen);
+        return;
+      }
       try {
         const result = await apiRequest<CaptureResult>('/api/items', {
           method: 'POST',
           body: {
-            captureRequestId: key,
-            rawText: text,
-            sourceType: snapshot.sourceType,
-            sourceRef: sourceRefValue.length > 0 ? sourceRefValue : null,
+            captureRequestId: frozen.captureRequestId,
+            rawText: frozen.rawText,
+            sourceType: frozen.sourceType,
+            sourceRef: frozen.sourceRef,
           },
         });
-        if (!mountedRef.current) return;
-        pendingRef.current = null;
-        // Clear only the exact snapshot that was submitted. Anything typed since
-        // carries a higher draft revision and is kept (T025-R05 / T013-C03).
+        patchPendingCapture({ savedItem: result.item, replayed: result.replayed });
         const applied = applyAcceptedWrite(
           { text: draftSnapshot.text, revision: draftRevisionRef.current },
-          { text, revision },
+          { text: frozen.rawText, revision: frozen.draftRevision },
         );
         if (applied.cleared) patchDraft({ text: '', sourceRef: '' });
-        setOutcome({ item: result.item, replayed: result.replayed, stored: true });
-        setLastSubmittedText(text);
-        setPhase('saved');
-        setNotice(
-          result.replayed ? `这条内容已经${ACTIONS.save}过，未重复创建` : `已${ACTIONS.save}`,
-        );
-        options.onCreated?.(result);
-
-        // Second step, kept visibly separate: whatever happens here, the record
-        // is already stored and the UI keeps saying so.
-        if (options.organize) {
-          try {
-            await options.organize(result.item);
-            if (!mountedRef.current) return;
-            setOrganizeOutcome({ ok: true, message: `${ACTIONS.organize}完成` });
-            patchDraft({ inputHint: null });
-          } catch (caught) {
-            if (!mountedRef.current) return;
-            setOrganizeOutcome({
-              ok: false,
-              message:
-                caught instanceof ApiClientError
-                  ? failureKeepingSaved(ACTIONS.organize, caught.message)
-                  : failureKeepingSaved(ACTIONS.organize, '未知原因'),
-            });
-            // T024-R04 / T025-R04: the AI step failed, the note did not. Put that
-            // beside the input so it survives navigation, and say what still works.
-            patchDraft({
-              inputHint: `${ACTIONS.organize}没完成，原文已经${ACTIONS.save}好。你仍可以继续记录、改标签、建立关系；稍后在资料库里重新${ACTIONS.organize}这一条即可。`,
-            });
-          }
+        applyIfMounted(() => {
+          setOutcome({ item: result.item, replayed: result.replayed, stored: true });
+          setLastSubmittedText(frozen.rawText);
+          setPhase('saved');
+          setNotice(
+            result.replayed ? `这条内容已经${ACTIONS.save}过，未重复创建` : `已${ACTIONS.save}`,
+          );
+        });
+        optionsRef.current.onCreated?.(result);
+        if (shouldCallOrganize(frozen.mode)) {
+          await runOrganize(result.item, frozen);
+        } else if (getPendingCapture()?.captureRequestId === frozen.captureRequestId) {
+          clearPendingCapture();
         }
       } catch (caught) {
-        if (!mountedRef.current) return;
         if (caught instanceof ApiClientError) {
-          setError(caught);
-          // A conflict means this key is spent; the next attempt needs a new one.
-          if (caught.code === 'CAPTURE_KEY_CONFLICT') pendingRef.current = null;
-          // The server may have committed; the user retries the same key.
-          setPhase(caught.retryable ? 'unknown' : 'failed');
-          // Persisted with the draft so the explanation cannot be lost by
-          // navigating away mid-problem (T024-R04).
+          if (caught.code === 'CAPTURE_KEY_CONFLICT') clearPendingCapture();
+          applyIfMounted(() => {
+            setError(caught);
+            setPhase(caught.retryable ? 'unknown' : 'failed');
+          });
           patchDraft({
             inputHint: caught.retryable
               ? `这次的${ACTIONS.save}结果还不确定。重试会复用同一次请求，不会重复创建；你也可以先复制文本再离开。`
@@ -361,17 +424,19 @@ export function useCapture(options: UseCaptureOptions = {}): UseCaptureApi {
           });
           return;
         }
-        setError(
-          new ApiClientError({
-            code: 'INTERNAL',
-            message: `${ACTIONS.save}时出现未预期错误`,
-            retryable: false,
-          }),
-        );
-        setPhase('failed');
+        applyIfMounted(() => {
+          setError(
+            new ApiClientError({
+              code: 'INTERNAL',
+              message: `${ACTIONS.save}时出现未预期错误`,
+              retryable: false,
+            }),
+          );
+          setPhase('failed');
+        });
       }
     },
-    [options],
+    [applyIfMounted, runOrganize],
   );
 
   /**
@@ -382,25 +447,35 @@ export function useCapture(options: UseCaptureOptions = {}): UseCaptureApi {
    * producing two records from one thought. Rejecting here keeps the button and
    * the shortcut on one rule.
    */
-  const submit = useCallback(async () => {
-    const snapshot = snapshotRef.current;
-    const text = snapshot.text;
-    if (text.trim().length === 0 || codePointLength(text) > LIMITS.rawTextCodePoints) return;
-    if (phaseRef.current === 'saving') return;
-    const key = newCaptureRequestId();
-    const revision = draftRevisionRef.current;
-    pendingRef.current = { key, text, revision };
-    await send(key, text, revision, snapshot);
-  }, [send]);
+  const submit = useCallback(
+    async (options?: SubmitCaptureOptions) => {
+      const mode = options?.mode ?? 'save';
+      const snapshot = snapshotRef.current;
+      const text = snapshot.text;
+      if (text.trim().length === 0 || codePointLength(text) > LIMITS.rawTextCodePoints) return;
+      if (phaseRef.current === 'saving') return;
+      const frozen = freezeCaptureRequest({
+        captureRequestId: newCaptureRequestId(),
+        mode,
+        rawText: text,
+        sourceType: snapshot.sourceType,
+        sourceRef: snapshot.sourceRef,
+        draftRevision: draftRevisionRef.current,
+        ...(mode === 'save-and-organize' ? { organizeRequestKey: newCaptureRequestId() } : {}),
+      });
+      setPendingCapture(frozen);
+      await send(frozen);
+    },
+    [send],
+  );
 
   const retry = useCallback(async () => {
-    const pending = pendingRef.current;
+    const pending = getPendingCapture();
     if (!pending) {
-      await submit();
+      await submit({ mode: 'save' });
       return;
     }
-    // The same key and the same text: a replay, not a new record.
-    await send(pending.key, pending.text, pending.revision, snapshotRef.current);
+    await send(pending);
   }, [send, submit]);
 
   const dismissError = useCallback(() => setError(null), []);
@@ -411,6 +486,7 @@ export function useCapture(options: UseCaptureOptions = {}): UseCaptureApi {
     setOrganizeOutcome(null);
     setLastSubmittedText(null);
     setPhase('idle');
+    clearPendingCapture();
     patchDraft({ inputHint: null });
   }, []);
 

@@ -25,7 +25,7 @@ describe('数据库运行时', () => {
     const db = getDb({ databasePath: harness.databasePath });
 
     expect(existsSync(harness.databasePath)).toBe(true);
-    expect(readUserVersion(db)).toBe(1);
+    expect(readUserVersion(db)).toBe(2);
 
     const tables = db
       .prepare("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")

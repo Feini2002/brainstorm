@@ -113,6 +113,14 @@ export function draftFromSettings(settings: PublicLlmSettings | null): LlmConfig
   };
 }
 
+export function mergeDraftUpdate(
+  existing: LlmConfigDraft | null,
+  settings: PublicLlmSettings | null,
+  update: (draft: LlmConfigDraft) => LlmConfigDraft,
+): LlmConfigDraft {
+  return update(existing ?? draftFromSettings(settings));
+}
+
 export function isFirstConfiguration(settings: PublicLlmSettings | null): boolean {
   return settings === null || settings.revision === 0;
 }

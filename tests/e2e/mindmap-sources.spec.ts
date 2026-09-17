@@ -1,5 +1,5 @@
 import { expect, gotoInbox, test } from './support/fixtures';
-import { authHeaders, seedItemViaApi, uniqueText } from './support/harness';
+import { authHeaders, seedItemViaApi, uniqueText, revealMindmapOutline } from './support/harness';
 import { E2E_ORIGIN } from './support/env';
 import { readItem } from './support/graph';
 import { seedView, withSeedDb } from './support/seedData';
@@ -85,9 +85,9 @@ async function openMindmap(page: import('@playwright/test').Page, viewId: string
   await page.goto('/mindmap');
   await expect(page.getByRole('navigation', { name: '主导航' })).toBeVisible();
   await page.getByTestId('mindmap-view-select').selectOption(viewId);
-  // The outline is rendered for every case here, so waiting on it is the honest
-  // signal that the view was applied — independent of whether the canvas mounted.
-  await expect(page.getByTestId('mindmap-outline')).toBeVisible();
+  // The outline is folded by default; opening it is the honest signal the view
+  // was applied, independent of whether the canvas mounted.
+  await revealMindmapOutline(page);
 }
 
 /** Capture one record and resolve its id, returning the text used. */

@@ -21,7 +21,7 @@ import { Button, Field, InlineError, Select, TextArea } from '@/components/ui/pr
 import { SavePhaseStatus } from '@/features/shared/MutationStatus';
 import { ACTIONS, waitingFor } from '@/features/shared/StatusLabel';
 import { shouldSubmitFromKeyboard } from './captureShortcuts';
-import { useCapture, type CaptureResult } from './useCapture';
+import { useCapture, type CaptureResult, type OrganizeUiOutcome } from './useCapture';
 
 const SOURCE_TYPE_ORDER = ['other', 'chatgpt', 'claude', 'web', 'book', 'myself'] as const;
 
@@ -36,7 +36,10 @@ export interface CaptureBoxProps {
    * rather than implemented here: the page owns the run id so it can show the
    * diagnostics for the run it just started (T041).
    */
-  organize?: (item: { id: string; revision: number }) => Promise<void>;
+  organize?: (
+    item: { id: string; revision: number },
+    context: { requestKey: string },
+  ) => Promise<OrganizeUiOutcome>;
 }
 
 export function CaptureBox({
@@ -55,9 +58,7 @@ export function CaptureBox({
      * they were already shown, and the offline path stops being the quiet one
      * (T013-R06 / T024-R01). The hint below is the whole response in that case.
      */
-    ...(organize && modelConfigured
-      ? { organize: (item: { id: string; revision: number }) => organize(item) }
-      : {}),
+    ...(organize && modelConfigured ? { organize } : {}),
   });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -65,12 +66,10 @@ export function CaptureBox({
 
   const onSubmitShortcut = useCallback(
     (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      // Ctrl/Cmd+Enter submits; Enter alone inserts a newline; an in-progress IME
-      // composition never submits (T013-R03). The rule lives in captureShortcuts
-      // so it can be asserted without a renderer.
+      // Ctrl/Cmd+Enter is always "只保存". Having a Key does not authorize AI.
       if (!shouldSubmitFromKeyboard(event.nativeEvent)) return;
       event.preventDefault();
-      void capture.submit();
+      void capture.submit({ mode: 'save' });
     },
     [capture],
   );
@@ -91,11 +90,11 @@ export function CaptureBox({
       capture.setInputHint(
         `${ACTIONS.organize}需要先在设置里配置模型；这条原文仍会照常保存，离线功能不受影响。`,
       );
-      void capture.submit();
+      void capture.submit({ mode: 'save-and-organize' });
       return;
     }
     capture.setInputHint(null);
-    void capture.submit();
+    void capture.submit({ mode: 'save-and-organize' });
   }, [capture, modelConfigured]);
 
   return (
@@ -133,7 +132,7 @@ export function CaptureBox({
             variant="primary"
             data-testid="capture-save"
             disabled={!capture.canSubmit}
-            onClick={() => void capture.submit()}
+            onClick={() => void capture.submit({ mode: 'save' })}
           >
             {saving ? waitingFor(ACTIONS.save) : '只保存'}
           </Button>

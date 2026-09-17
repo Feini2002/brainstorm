@@ -1,5 +1,5 @@
 import { expect, gotoInbox, test } from './support/fixtures';
-import { authHeaders, captureViaUi, findItemIdViaApi, uniqueText } from './support/harness';
+import { authHeaders, captureViaUi, findItemIdViaApi, uniqueText, revealMindmapOutline } from './support/harness';
 import { E2E_ORIGIN } from './support/env';
 import {
   ensureLlmConfigured,
@@ -199,7 +199,7 @@ test.describe('脑图第一次生成的入口', () => {
     );
 
     // 页面采用的是刚生成的这张，而不是停在空态。
-    await expect(page.getByTestId('mindmap-outline')).toBeVisible();
+    await revealMindmapOutline(page);
 
     // 本用例没有碰过非回环主机，由 `traffic` fixture 在 teardown 兜底断言。
     expect(traffic.externalRequests()).toEqual([]);

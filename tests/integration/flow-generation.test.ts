@@ -5,11 +5,11 @@
  * 诚实的流程图**。所以每个用例都走真实服务入口 `generateFlow`（包括真实适配器 +
  * 注入 transport），并在生成的 View 落库之后回查 `views` 与 `relations` 两张表。
  *
- *   - C01 相关不等于因果：`related_to` 支持的 causal 边被降级为明确推测；
+ *   - C01 相关不等于因果：`related_to` 不能按关系认证 causal，但引用原文时标成材料表述；
  *   - C02 假设明确：hypothesis 保留并写明「推测」；
  *   - C03 悬空端点：校验拒绝，Mermaid 不负责补节点；
  *   - C04 来源越界：引用未选择的 Item 被拒；
- *   - C05 关系越界：虚构 Relation ID 被拒绝，无法构成假证据链；
+ *   - C05 关系越界：虚构 Relation ID 不能构成关系证据链，只能退回材料表述；
  *   - C06 不写领域：投影里的推测连接不会自动写回 relations 表。
  *
  * 同时也断言不可违反项：原文持久保存、Key 不进 messages、失败与重试不产生
@@ -194,7 +194,7 @@ function relationCount(): number {
 }
 
 describe('T063 流程节点、边类型与证据契约', () => {
-  it('T063-C01 因果不足：只有 related_to 时 causal 被降为明确推测，并给出提示', async () => {
+  it('T063-C01 相关不等于已确认因果：related_to 不能认证关系，只能标材料表述', async () => {
     const a = seedItem('甲：先收集需求', '甲');
     const b = seedItem('乙：再写方案', '乙');
     // 材料里只有「相关」，没有已确认的 causes。
@@ -229,14 +229,14 @@ describe('T063 流程节点、边类型与证据契约', () => {
     const content = result.view!.kind === 'flow' ? result.view!.content : null;
     expect(content).not.toBeNull();
 
-    // 相关不等于因果：边的类型已经被服务端改成 hypothesis。
+    // 相关不能拿来认证因果：关系 id 被丢掉，边按材料表述保留。
     expect(content!.edges).toHaveLength(1);
-    expect(content!.edges[0]!.kind).toBe('hypothesis');
-    // 图上必须看得出来这是推测，而不是靠颜色暗示。
+    expect(content!.edges[0]!.kind).toBe('causal');
+    expect(content!.edges[0]!.basis).toBe('material');
+    expect(content!.edges[0]!.relationIds).toEqual([]);
+    expect(content!.edges[0]!.relationIds).not.toContain(relatedId);
     expect(content!.edges[0]!.label.length).toBeGreaterThan(0);
-    // 用户被告知为什么：有一处降级。
-    expect(result.warnings.join('')).toContain('因果');
-    expect(result.warnings.join('')).toContain('推测');
+    expect(result.warnings.join('')).not.toContain('改成');
   });
 
   it('T063-C01 已确认的 causes 关系支持 causal，方向按关系方向保留', async () => {
@@ -271,6 +271,8 @@ describe('T063 流程节点、边类型与证据契约', () => {
     const result = await generate({ itemIds: [a, b], transport });
     const content = result.view!.kind === 'flow' ? result.view!.content : null;
     expect(content!.edges[0]!.kind).toBe('causal');
+    expect(content!.edges[0]!.basis).toBe('relation');
+    expect(content!.edges[0]!.relationIds).toEqual([causesId]);
     expect(result.warnings.join('')).not.toContain('改成');
   });
 
@@ -405,11 +407,12 @@ describe('T063 流程节点、边类型与证据契约', () => {
     const result = await generate({ itemIds: [a, b], transport });
     const content = result.view!.kind === 'flow' ? result.view!.content : null;
 
-    // 虚构的关系 id 被丢弃（不会进快照，也不会进内容），因此 causal 没有依据。
-    expect(content!.edges[0]!.kind).toBe('hypothesis');
+    // 虚构的关系 id 被丢弃，不能构成假证据链；引用的原文仍可标成材料表述。
+    expect(content!.edges[0]!.kind).toBe('causal');
+    expect(content!.edges[0]!.basis).toBe('material');
     expect(content!.edges[0]!.relationIds).toEqual([]);
     expect(result.view!.sourceSnapshot.relations).toHaveLength(0);
-    expect(result.warnings.join('')).toContain('推测');
+    expect(result.warnings.join('')).not.toContain('改成');
   });
 
   it('T063-C06 不写领域：生成含推测连接后 relations 表没有新增自动写入的边', async () => {
@@ -449,7 +452,7 @@ describe('T063 流程节点、边类型与证据契约', () => {
     expect(relationCount()).toBe(before);
   });
 
-  it('T063-R05 被拒绝的 AI 关系不能支持 causal：降级仍然发生', async () => {
+  it('T063-R05 被拒绝的 AI 关系不能按关系认证 causal', async () => {
     const a = seedItem('甲');
     const b = seedItem('乙');
     // 只有 AI 建议才有一个"审核"状态可以变成 rejected，所以这条边按模型产出的
@@ -504,7 +507,9 @@ describe('T063 流程节点、边类型与证据契约', () => {
 
     const result = await generate({ itemIds: [a, b], transport });
     const content = result.view!.kind === 'flow' ? result.view!.content : null;
-    expect(content!.edges[0]!.kind).toBe('hypothesis');
+    expect(content!.edges[0]!.kind).toBe('causal');
+    expect(content!.edges[0]!.basis).toBe('material');
+    expect(content!.edges[0]!.relationIds).not.toContain(relationId);
   });
 
   it('T063-R03 超过 40 个节点时服务端明确失败，不交给浏览器硬渲染', async () => {
@@ -651,7 +656,7 @@ describe('T063 流程节点、边类型与证据契约', () => {
     expect(sent).toContain('看这些材料之间的先后和依赖');
   });
 
-  it('T063-R05 没有关系时提示只允许 sequence/association/hypothesis，模型仍输出 causal 会降级', async () => {
+  it('T063-R05 没有预建关系时，引用原文的 causal 按材料表述保留', async () => {
     const a = seedItem('甲');
     const b = seedItem('乙');
     const transport = new ScriptedTransport({
@@ -678,9 +683,11 @@ describe('T063 流程节点、边类型与证据契约', () => {
     });
 
     const result = await generate({ itemIds: [a, b], transport });
-    expect(transport.allMessageText()).toContain('不存在可用的 causal 依据');
+    expect(transport.allMessageText()).toContain('材料表述');
     const content = result.view!.kind === 'flow' ? result.view!.content : null;
-    expect(content!.edges[0]!.kind).toBe('hypothesis');
+    expect(content!.edges[0]!.kind).toBe('causal');
+    expect(content!.edges[0]!.basis).toBe('material');
+    expect(result.warnings.join('')).not.toContain('改成');
   });
 
   it('T063-R06 没有选择任何来源时拒绝生成，不产生 Run 也不发起请求', async () => {

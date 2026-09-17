@@ -117,6 +117,10 @@ describe('T064 Flow 到 Mermaid 编译器', () => {
     expect(decoded).toContain('securityLevel');
     // 而原本用来闭合标签的引号已被换成全角引号，它没有机会成为语法边界。
     expect(compiled.source).toContain('\uff02');
+    // `%%{init}` 不能再当指令围栏，但 init 字样仍可读。
+    expect(escapeFlowLabel('%%{init: {"securityLevel":"loose"}}%%')).toContain('init');
+    expect(escapeFlowLabel('%%{init: {"securityLevel":"loose"}}%%')).toContain(ZWSP);
+    expect(escapeFlowLabel('%%{init: {"securityLevel":"loose"}}%%')).not.toContain('%%{');
     // 逐行看：每行恰好两个半角引号 —— 一对定界符，标签内部没有多余的引号。
     for (const line of compiled.source.split('\n').slice(1)) {
       expect([...line].filter((character) => character === '"')).toHaveLength(2);
@@ -216,6 +220,21 @@ describe('T064 Flow 到 Mermaid 编译器', () => {
     // 其他类型总是加上自己的词，因为箭头本身不会说明关系。
     expect(labelForKind('association', '相关：常一起出现')).toBe('相关：常一起出现');
     expect(labelForKind('causal', '甲导致乙')).toBe('因果：甲导致乙');
+    expect(labelForKind('causal', '甲导致乙', 'material')).toBe('材料表述：甲导致乙');
+    expect(labelForKind('causal', '甲导致乙', 'relation')).toBe('已确认关系：甲导致乙');
+  });
+
+  it('材料表述与已确认关系出现在图例里', () => {
+    const compiled = compile(
+      flow(
+        [node('a', '甲'), node('b', '乙')],
+        [
+          { ...edge('a', 'b', 'causal', '加热导致沸腾'), basis: 'material' },
+        ],
+      ),
+    );
+    expect(compiled.legend.map((entry) => entry.prefix)).toContain('材料表述：');
+    expect(compiled.source).toContain('材料表述');
   });
 
   it('T064-C05 重复边被规范化：同一 source/target/kind/label 只画一次', () => {

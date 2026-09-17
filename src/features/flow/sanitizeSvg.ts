@@ -345,7 +345,6 @@ const REFERENCE_ATTRS = new Set(['href', 'xlink:href', 'src', 'style', 'fill', '
 export function sanitizeSvgString(svg: string): string {
   ensureHooks();
   return DOMPurify.sanitize(svg, {
-    USE_PROFILES: { svg: true, svgFilters: true },
     ALLOWED_TAGS: [...SVG_ALLOWED_TAGS],
     ALLOWED_ATTR: [...SVG_ALLOWED_ATTR],
     FORBID_TAGS: [...SVG_FORBIDDEN_TAGS],

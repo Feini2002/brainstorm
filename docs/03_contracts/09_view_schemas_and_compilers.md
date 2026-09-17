@@ -21,9 +21,9 @@ title≤100、label≤100码点，控制字符除正常空格换行外拒绝或�
 
 ## 3. Flow AST
 
-Flow content = {title,direction,nodes:[{id,label,itemIds}],edges:[{source,target,kind,label,itemIds,relationIds}]}。节点最多40，边最多80，最多40个选中来源。节点id唯一，边端点存在，self-edge默认禁止；同一source/target/kind/label重复边去重。允许环，因为流程可能描述循环，但视觉上应能布局，不把流程当必须无环的脑图。
+Flow content = {title,direction,nodes:[{id,label,itemIds}],edges:[{source,target,kind,label,itemIds,relationIds,basis?}] }。节点最多40，边最多80，最多40个选中来源。节点id唯一，边端点存在，self-edge默认禁止；同一source/target/kind/label重复边去重。允许环，因为流程可能描述循环，但视觉上应能布局，不把流程当必须无环的脑图。`basis` 由服务端写入，区分 relation / material / inference；模型不得自行声称依据。旧图可以没有该字段，打开时按历史生成显示，不自动付费重算。
 
-编译时把模型内部id映射为程序生成的N0、N1等安全ID，不能把原id原样拼成Mermaid标识。label作为数据转义，禁止提供任意Mermaid指令。direction只允许LR/TB。hypothesis使用明确的“推测：”文字与虚线边，不单靠颜色；causal按额外证据门槛检查。
+编译时把模型内部id映射为程序生成的N0、N1等安全ID，不能把原id原样拼成Mermaid标识。label作为数据转义，禁止提供任意Mermaid指令。direction只允许LR/TB。hypothesis使用明确的“推测：”文字与虚线边，不单靠颜色；causal 按已确认关系或材料表述区分，图例写明依据。
 
 Mermaid源码只由程序模板构造，起始为flowchart LR或TB。不允许click、init、classDef、style、linkStyle、subgraph自定义语法、外链、HTML标签或脚本。要显示某个包含这些单词的普通中文句子时，它仍是被转义的标签，不用粗暴黑名单把正常词全部删掉；核心是语法结构只由编译器控制。
 

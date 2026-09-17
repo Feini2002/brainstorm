@@ -6,7 +6,7 @@
   },
   "valid": {
     "causalClaimedWithoutEvidence": {
-      "$comment": "T069-C01 主场景：材料只有两条互相相关的观点，模型却画了一条 causal。领域校验没有可引用的 causes 关系，必须降级为明确标注的推测。sample 里故意不写 relationIds —— 这正是「无依据因果」的形状。",
+      "$comment": "T069-C01 主场景：材料只有两条互相相关的观点，模型却画了一条 causal。related_to 不能按关系认证，但引用的原文仍按材料表述保留 causal。sample 里故意不写 relationIds。",
       "title": "两个观点的先后",
       "direction": "LR",
       "nodes": [
@@ -24,10 +24,10 @@
         }
       ],
       "expect": {
-        "edgeKinds": ["hypothesis"],
-        "downgraded": 1,
-        "warns": true,
-        "hypothesisLabels": ["定义问题导致实现更快"],
+        "edgeKinds": ["causal"],
+        "downgraded": 0,
+        "warns": false,
+        "basis": "material",
         "itemIds": ["$A", "$B"]
       }
     },

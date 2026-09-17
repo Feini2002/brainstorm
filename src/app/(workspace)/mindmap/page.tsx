@@ -40,7 +40,7 @@
  *    identity — which is also what makes the one-fit-per-mount rule do the right
  *    thing when the user changes it.
  */
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { MindmapContent, ViewDTO, ViewSummaryDTO } from '@/domain/knowledge';
 import { PageHeader } from '@/components/AppShell';
@@ -61,7 +61,8 @@ import type { ViewFreshness } from '@/domain/view';
 
 type ViewState =
   | { status: 'loading' }
-  | { status: 'ready'; view: ViewDTO | null; list: ViewSummaryDTO[] };
+  | { status: 'ready'; view: ViewDTO | null; list: ViewSummaryDTO[] }
+  | { status: 'error'; message: string; view: ViewDTO | null; list: ViewSummaryDTO[] };
 
 /** Expand level choices, in the order a reader is likely to want them. */
 const EXPAND_CHOICES = [
@@ -81,13 +82,22 @@ export default function MindmapPage() {
   const [openError, setOpenError] = useState<string | null>(null);
   /** Set while the delete-view confirmation is open (T082-R05, T082-C05). */
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [renderError, setRenderError] = useState<string | null>(null);
+  const outlinePanelRef = useRef<HTMLDetailsElement>(null);
 
-  const view = viewState.status === 'ready' ? viewState.view : null;
+  useEffect(() => {
+    if (renderError && outlinePanelRef.current && !outlinePanelRef.current.open) {
+      outlinePanelRef.current.open = true;
+    }
+  }, [renderError]);
+
+  const view = viewState.status === 'loading' ? null : viewState.view;
   const viewList = useMemo(
-    () => (viewState.status === 'ready' ? viewState.list : []),
+    () => (viewState.status === 'loading' ? [] : viewState.list),
     [viewState],
   );
   const viewReady = viewState.status === 'ready';
+  const loadError = viewState.status === 'error' ? viewState.message : null;
   const viewId = view?.id ?? null;
 
   const content: MindmapContent | null = view?.kind === 'mindmap' ? view.content : null;
@@ -106,6 +116,8 @@ export default function MindmapPage() {
     setFitToken((value) => value + 1);
   }, []);
 
+  const selectSeq = useRef(0);
+
   /** Load the newest saved mindmap once, on mount. */
   useEffect(() => {
     let cancelled = false;
@@ -121,9 +133,14 @@ export default function MindmapPage() {
         }
         const loaded = await apiRequest<ViewDTO>(`/api/views/${first.id}`);
         if (!cancelled) adoptView(loaded, list.views);
-      } catch {
-        // No saved mindmap is a normal state, not an error the user must fix.
-        if (!cancelled) adoptView(null, []);
+      } catch (caught) {
+        if (cancelled) return;
+        setViewState((current) => ({
+          status: 'error',
+          message: caught instanceof ApiClientError ? caught.message : '读取脑图失败，请重试',
+          view: current.status === 'loading' ? null : current.view,
+          list: current.status === 'loading' ? [] : current.list,
+        }));
       }
     })();
     return () => {
@@ -138,11 +155,14 @@ export default function MindmapPage() {
         adoptView(null, viewList);
         return;
       }
+      const seq = (selectSeq.current += 1);
       void (async () => {
         try {
           const loaded = await apiRequest<ViewDTO>(`/api/views/${nextId}`);
+          if (seq !== selectSeq.current) return;
           adoptView(loaded, viewList);
         } catch (caught) {
+          if (seq !== selectSeq.current) return;
           setOpenError(
             caught instanceof ApiClientError ? caught.message : '打开这张脑图失败',
           );
@@ -331,7 +351,7 @@ export default function MindmapPage() {
     setConfirmingDelete(false);
   }, [adoptView, view]);
 
-  const loading = !viewReady;
+  const loading = viewState.status === 'loading';
 
   return (
     <>
@@ -430,6 +450,12 @@ export default function MindmapPage() {
           onGenerate={generate}
         />
 
+        {loadError ? (
+          <p role="alert" className="text-sm text-[var(--danger)]" data-testid="mindmap-load-error">
+            {loadError}
+          </p>
+        ) : null}
+
         {openError ? (
           <p role="alert" className="text-sm text-[var(--danger)]" data-testid="mindmap-open-error">
             {openError}
@@ -473,42 +499,45 @@ export default function MindmapPage() {
 
         {content && view ? (
           <>
-            {/*
-              The canvas and the outline sit side by side on a wide screen and
-              stack on a narrow one. The outline is *always* rendered, including
-              when the canvas reports an error, because T057-C06 requires the
-              sources to stay reachable when the picture cannot be drawn.
-            */}
-            <div className="flex flex-col gap-4 lg:flex-row">
-              <div className="flex min-w-0 flex-1 flex-col gap-2">
-                <MindmapRenderer
-                  content={content}
-                  initialExpandLevel={expandLevel}
-                  selectedNodeId={selectedNodeId}
-                  onNodeSelect={setSelectedNodeId}
-                  fitToken={fitToken}
-                />
-              </div>
-
-              <MindmapOutline
+            <div className="flex min-w-0 flex-col gap-2">
+              <MindmapRenderer
                 content={content}
+                initialExpandLevel={expandLevel}
                 selectedNodeId={selectedNodeId}
-                onSelectNode={setSelectedNodeId}
+                onNodeSelect={setSelectedNodeId}
+                fitToken={fitToken}
+                onRenderError={setRenderError}
               />
             </div>
 
-            {activeNode ? (
-              <SourceList
-                itemIds={activeNode.itemIds}
-                snapshot={view.sourceSnapshot}
-                nodeLabel={activeNode.label}
-                onOpenItem={workspace.openItem}
-              />
-            ) : (
-              <p className="text-sm text-[var(--ink-muted)]" data-testid="mindmap-source-hint">
-                在大纲或脑图里点一个节点，这里会列出它的来源原文。
-              </p>
-            )}
+            <details
+              ref={outlinePanelRef}
+              className="rounded-lg border border-[var(--line)] bg-[var(--surface)] p-3"
+              data-testid="mindmap-outline-panel"
+            >
+              <summary className="cursor-pointer text-sm font-semibold text-[var(--ink)]">
+                {renderError ? '大纲与来源（图无法渲染，可在这里查看）' : '大纲与来源'}
+              </summary>
+              <div className="mt-3 flex flex-col gap-3">
+                <MindmapOutline
+                  content={content}
+                  selectedNodeId={selectedNodeId}
+                  onSelectNode={setSelectedNodeId}
+                />
+                {activeNode ? (
+                  <SourceList
+                    itemIds={activeNode.itemIds}
+                    snapshot={view.sourceSnapshot}
+                    nodeLabel={activeNode.label}
+                    onOpenItem={workspace.openItem}
+                  />
+                ) : (
+                  <p className="text-sm text-[var(--ink-muted)]" data-testid="mindmap-source-hint">
+                    在大纲或脑图里点一个节点，这里会列出它的来源原文。
+                  </p>
+                )}
+              </div>
+            </details>
           </>
         ) : null}
       </div>

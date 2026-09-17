@@ -7,9 +7,10 @@
  * it says, in the constraint section, which kinds of connection the material may
  * support and what to do when it supports none:
  *
- *   - `causal` requires a confirmed `causes` relation between the two nodes'
- *     sources, and the server enforces that afterwards (`domain/flow.ts`). The
- *     prompt states the gate so a model is not being set up to fail it;
+ *   - `causal` can rest on a matching accepted `causes` relation *or* on
+ *     cited material that itself states the cause. The server still refuses
+ *     reverse-direction relation citations. A guess without either basis is a
+ *     `hypothesis`.
  *   - a guess the model adds to be helpful is a `hypothesis` and must say 推测 or
  *     建议 — the visible half of a rule whose machine half is the dashed edge;
  *   - an empty `edges` array is explicitly a correct answer. Material that records
@@ -23,7 +24,7 @@ import 'server-only';
 
 import { LIMITS } from '@/domain/limits';
 import { FLOW_PROMPT_VERSION } from '@/domain/view';
-import { composeMessages, type MaterialBlock } from './shared';
+import { composeMessages, excerptMaterial, type MaterialBlock } from './shared';
 
 export { PROMPT_VERSIONS } from './shared';
 
@@ -130,7 +131,7 @@ export function buildFlowMessages(input: FlowPromptInput): FlowPrompt {
     '   - sequence：材料明确写了先后步骤；',
     '   - dependency：材料里有已确认的 depends_on 依赖关系（写进 relationIds）；',
     '   - association：两件事有联系，但谈不上因果，也没有先后（用「相关」这类词说明）；',
-    '   - causal：只有当下面提供的关系里存在已确认（reviewStatus 为 accepted）、依据未变化、类型为 causes 的关系，且它的两端正好是这两个节点引用的来源时才能使用，方向与该关系一致。**没有这种依据时绝对不要输出 causal。**',
+    '   - causal：材料原文明确写出因果，或下面已确认、方向匹配的 causes 关系。方向必须与关系一致，不能把 A→B 当成 B→A。没有关系时也可以根据材料表述使用 causal，并在边的 itemIds 里引用那些原文。',
     '   - hypothesis：你自己为了帮助思考而补的排列或推断。这是允许的，但 label 必须明确写出「推测」或「建议」，不能用确定的因果语气。',
     '5. 每条边的 label 都必须写清楚这是什么关系，不能留空，不能只写箭头。',
     '6. 用户只表达了相关时，不要把结果升级成因果。宁可少画几条边，也不要为了填满画面编造因果。',
@@ -163,7 +164,7 @@ export function buildFlowMessages(input: FlowPromptInput): FlowPrompt {
         `摘要: ${source.summary.trim().length > 0 ? source.summary : '（无）'}`,
         `标签: ${source.tags.length > 0 ? source.tags.join('、') : '（无）'}`,
         '原文片段:',
-        excerpt(source.rawText, FLOW_LIMITS.excerptCodePoints),
+        excerptMaterial(source.rawText, FLOW_LIMITS.excerptCodePoints),
       ].join('\n'),
     });
   }
@@ -176,10 +177,10 @@ export function buildFlowMessages(input: FlowPromptInput): FlowPrompt {
     label: 'RELATIONS',
     text:
       input.relations.length === 0
-        ? '本次选中的资料之间没有任何已记录的关系。因此不存在可用的 causal 依据，需要连接时只能用 sequence、association 或 hypothesis。'
+        ? '本次选中的资料之间没有任何已记录的关系。仍可根据原文里的步骤或因果画 sequence/causal，并标成材料表述；没有材料依据时用 hypothesis。'
         : [
             `本次共提供 ${input.relations.length} 条关系，只能引用这些 id。`,
-            '只有 reviewStatus 为 accepted、isStale 为 false 且 type 为 causes 的关系才能支持 causal 边。',
+            '已确认且方向匹配的 causes 关系可以支持 causal 边；depends_on 必须两端对应，不能拿无关依赖给当前边当证据。',
             '',
             ...input.relations.map((relation) =>
               [
@@ -189,7 +190,7 @@ export function buildFlowMessages(input: FlowPromptInput): FlowPrompt {
                 `target: ${relation.targetId}`,
                 `reviewStatus: ${relation.reviewStatus}`,
                 `isStale: ${relation.isStale ? 'true' : 'false'}`,
-                `理由: ${excerpt(relation.reason, FLOW_LIMITS.reasonCodePoints)}`,
+                `理由: ${excerptMaterial(relation.reason, FLOW_LIMITS.reasonCodePoints)}`,
               ].join('\n'),
             ),
           ].join('\n'),
@@ -207,12 +208,6 @@ export function buildFlowMessages(input: FlowPromptInput): FlowPrompt {
   };
 }
 
-/** Longest prefix that fits, never a mid-word cut where a boundary is available. */
-function excerpt(rawText: string, max: number): string {
-  const points = Array.from(rawText);
-  if (points.length <= max) return rawText;
-  return `${points.slice(0, max).join('')}…`;
-}
 
 /** Code-point total of everything that will be sent, for the budget check. */
 export function estimateFlowCodePoints(

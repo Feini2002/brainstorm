@@ -50,13 +50,22 @@ export function GraphSummary({
         <span className="text-[var(--ink-muted)]" data-testid="graph-summary-matches">
           筛选共匹配 {scope.matchedNodeCount} 个节点、{scope.matchedEdgeCount} 条关系
         </span>
+        {libraryTotal !== null ? (
+          <span className="text-[var(--ink-muted)]" data-testid="graph-summary-library">
+            知识库合计 {libraryTotal} 条笔记
+          </span>
+        ) : null}
         {scope.suggestedEdgeCount > 0 ? (
           <span className="text-[var(--ink-muted)]" data-testid="graph-summary-suggested">
             其中待确认 {scope.suggestedEdgeCount} 条
           </span>
         ) : null}
-        {libraryTotal !== null ? (
-          <span className="text-[var(--ink-muted)]">知识库合计 {libraryTotal} 条</span>
+        {scope.readWindowCount !== undefined &&
+        scope.libraryMatchedCount !== undefined &&
+        scope.readWindowCount !== scope.libraryMatchedCount ? (
+          <span className="text-[var(--ink-muted)]" data-testid="graph-summary-window">
+            本次读取窗口 {scope.readWindowCount} 条，不是库中全部 {scope.libraryMatchedCount} 条匹配
+          </span>
         ) : null}
       </div>
 

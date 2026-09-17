@@ -13,13 +13,20 @@ import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
+import { checkNodeVersion } from './doctor.mjs';
+
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 const DEFAULT_HOST = '127.0.0.1';
 const DEFAULT_PORT = 3000;
+const LOOPBACK = new Set(['127.0.0.1', '::1', 'localhost']);
 
 export function resolveLaunchConfig(env = process.env) {
-  const host = (env.APP_HOST ?? DEFAULT_HOST).trim();
+  const requestedHost = (env.APP_HOST ?? DEFAULT_HOST).trim() || DEFAULT_HOST;
+  if (!LOOPBACK.has(requestedHost.toLowerCase())) {
+    throw new Error(`本版本只监听本机地址，不支持 APP_HOST=${requestedHost}`);
+  }
+  const host = requestedHost.toLowerCase() === 'localhost' ? '127.0.0.1' : requestedHost;
   const port = Number.parseInt(env.APP_PORT ?? String(DEFAULT_PORT), 10);
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
     throw new Error(`APP_PORT 不是合法端口：${env.APP_PORT}`);
@@ -44,6 +51,12 @@ function portIsFree(host, port) {
 }
 
 async function main() {
+  const node = checkNodeVersion(process.versions.node);
+  if (!node.ok) {
+    console.error(`STARTUP_FAILED: ${node.reason}`);
+    process.exitCode = 2;
+    return;
+  }
   const mode = process.argv[2] === 'start' ? 'start' : 'dev';
   let config;
   try {

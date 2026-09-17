@@ -1,5 +1,5 @@
 import { expect, gotoInbox, test } from './support/fixtures';
-import { authHeaders, captureViaUi, uniqueText, WORKSPACE_ROUTES } from './support/harness';
+import { authHeaders, captureViaUi, uniqueText, WORKSPACE_ROUTES, revealDiagnostics } from './support/harness';
 import { E2E_HOST, E2E_ORIGIN, E2E_PORT } from './support/env';
 
 /**
@@ -21,6 +21,7 @@ import { E2E_HOST, E2E_ORIGIN, E2E_PORT } from './support/env';
 test.describe('T074-C03 图空白', () => {
   test('T074-C03 容器高度为零但 API 成功时，客户端诊断报渲染尺寸问题', async ({ page }) => {
     await page.goto('/settings');
+    await revealDiagnostics(page);
     const panel = page.getByTestId('diagnostics-panel');
     await expect(panel).toBeVisible();
     // 前置：接口确实成功了，并且数据已经渲染出来。若这里是错误态，下面的
@@ -56,6 +57,7 @@ test.describe('T074-C03 图空白', () => {
 
   test('T074-C03 被标记为绘制面的容器塌陷时也会被报出来，并被写进复制摘要', async ({ page }) => {
     await page.goto('/settings');
+    await revealDiagnostics(page);
     const panel = page.getByTestId('diagnostics-panel');
     await expect(panel).toBeVisible();
 
@@ -83,6 +85,7 @@ test.describe('T074-C03 图空白', () => {
 
   test('T074-C03 正常尺寸下不报渲染问题，接口也能正常读到报告', async ({ page, traffic }) => {
     await page.goto('/settings');
+    await revealDiagnostics(page);
     await expect(page.getByTestId('diagnostics-panel')).toBeVisible();
     await expect(page.getByTestId('diagnostics-version')).toContainText('feini-brain');
 
@@ -95,6 +98,22 @@ test.describe('T074-C03 图空白', () => {
       .apiRequests()
       .filter((request) => request.url.includes('/api/diagnostics'));
     expect(diagnosticsCalls.length, '设置页应真的读了 /api/diagnostics').toBeGreaterThan(0);
+  });
+
+  test('诊断未展开时不请求诊断报告', async ({ page, traffic }) => {
+    await page.goto('/settings');
+    await expect(page.getByRole('heading', { name: '设置' })).toBeVisible();
+    await expect(page.getByTestId('diagnostics-panel')).toHaveCount(0);
+    const before = traffic
+      .apiRequests()
+      .filter((request) => request.url.includes('/api/diagnostics'));
+    expect(before, '未打开诊断时不应请求 /api/diagnostics').toEqual([]);
+    await revealDiagnostics(page);
+    await expect(page.getByTestId('diagnostics-panel')).toBeVisible();
+    const after = traffic
+      .apiRequests()
+      .filter((request) => request.url.includes('/api/diagnostics'));
+    expect(after.length).toBeGreaterThan(0);
   });
 });
 
@@ -114,6 +133,7 @@ test.describe('T074-C06 无遥测', () => {
 
     // 特别看一遍设置页：诊断面板就在那里，遥测最可能藏在这里。
     await page.goto('/settings');
+    await revealDiagnostics(page);
     await expect(page.getByTestId('diagnostics-panel')).toBeVisible();
     await expect(page.getByTestId('diagnostics-version')).toContainText('feini-brain');
 

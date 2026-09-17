@@ -9,10 +9,9 @@
 
 ## 当前交付状态（先读这一段）
 
-**MVP 完成定义成立（2026-09-17，T084 收口）；这是本机 Windows 上验证过的版本，不是通用发行版。**
-84 个任务 83 个 `verified`、1 个 `blocked`（T042，需要你自己的模型 Key）。范围与边界的权威说明是
-[docs/release/final-acceptance.md](docs/release/final-acceptance.md)——它有四张清单：**已实现 / 未实现 /
-已验证 / 未验证**，MVP 完成不等于未来所有功能都具备。
+**MVP 已可本机使用；这是 Windows 上验证过的版本，不是通用发行版。** 历史 84 项任务台账与 Gate 报告仍作为施工快照保留，日常维护不再把它们当作必经门。范围与边界见
+[docs/release/final-acceptance.md](docs/release/final-acceptance.md)。本轮审查修复说明见
+[implementation/progress/round-review-20260917.md](implementation/progress/round-review-20260917.md)。
 
 | 项 | 状态 |
 | --- | --- |
@@ -56,26 +55,28 @@ npm ci
 
 ### 3. 启动
 
-首次使用先跑预检（只读，不改任何东西）：
+日常直接启动即可，不必先跑完整诊断：
+
+```powershell
+# 开发模式：改代码自动重载
+npm run dev
+
+# 生产模式：先构建，再启动
+npm run build
+npm start
+```
+
+两者都由 `scripts/start-local.mjs` 拉起，默认绑定 `127.0.0.1:3000`。**它刻意不监听 `0.0.0.0`**：这是一份本机单用户数据，暴露到局域网会让「只有同源页面读得到会话令牌」这条保护失效。启动时只做 Node 版本和端口检查，不会跑完整 doctor，也不会写历史验收记录。
+
+然后在浏览器打开 <http://127.0.0.1:3000/>。
+
+排障时再主动诊断：
 
 ```powershell
 npm run doctor
 ```
 
-它会报告 Node/npm 版本、工程路径形状、数据目录位置、目标端口是否被占用（被占用时给出占用进程 PID）、`PATH` 里解析到的 Node 是否就是当前解释器、以及代理/证书/TLS 相关的环境变量是否存在。**它不会启动服务、不会写文件、不会改环境变量。** 详细的逐项解读见 [docs/operations/windows-setup.md](docs/operations/windows-setup.md)。
-
-日常使用有两种模式：
-
-```powershell
-# 开发模式：改代码自动重载，适合自己折腾
-npm run dev
-
-# 生产模式：先构建，再以生产构建启动，日常使用推荐这个
-npm run build
-npm start
-```
-
-两者都由 `scripts/start-local.mjs` 拉起，默认绑定 `127.0.0.1:3000`。**它刻意不监听 `0.0.0.0`**：这是一份本机单用户数据，暴露到局域网会让「只有同源页面读得到会话令牌」这条保护失效。
+它会报告 Node/npm 版本、工程路径形状、数据目录位置、目标端口是否被占用、PATH 里的 Node 是否就是当前解释器。默认不写施工进度文件。详细解读见 [docs/operations/windows-setup.md](docs/operations/windows-setup.md)。
 
 然后在浏览器打开 <http://127.0.0.1:3000/>。
 
@@ -103,14 +104,14 @@ npx playwright test
 完整检查链：
 
 ```powershell
-npm run contracts   # 契约一致性（枚举、限制、错误码、路由、.gitignore）
-npm run status      # 交付状态与证据完整性 + 交付目录扫描（无密钥/无真实数据）
 npm run lint
 npm run typecheck
 npm test            # unit + integration + security + contracts + browser
 npm run build
+npm run check       # lint + typecheck + test + build
+npm run doctor      # 主动诊断，不进入 check
+npm run audit:history  # 历史 84 项台账审计，不进入 check
 npm run test:perf   # 性能预算，需要先 build
-npm run check       # 上面大部分串起来
 ```
 
 ## 你的数据放在哪

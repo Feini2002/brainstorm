@@ -120,6 +120,7 @@ export async function runConnectionTest(
     inputHash: requestHash,
     configRevision: input.configRevision,
     promptVersion: CONNECTION_TEST_PROMPT_VERSION,
+    requestIntentHash: requestHash,
     configSnapshot: configSnapshot(callSnapshot(callConfig, input.apiKey)),
     candidateIds: [],
   });

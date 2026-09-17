@@ -69,7 +69,7 @@ import {
 } from '@/server/repositories/runs';
 import { nowIso } from '@/server/repositories/shared';
 import { insertView } from '@/server/repositories/views';
-import { findReplayRun, registerRun, runRequestHash } from './runs/registerRun';
+import { lookupReplayRun, registerRun, runIntentHash } from './runs/registerRun';
 import { assertWithinBudget, captureSources, type CapturedSources } from './views/captureSources';
 import { getView, viewContentHash } from './views/views';
 
@@ -103,8 +103,24 @@ export async function generateFlow(
   db: DatabaseSync,
   input: GenerateFlowInput,
 ): Promise<GenerateFlowResult> {
-  // Configuration is checked first: it is the one failure that must cost no run
-  // row, no slot and no request.
+  const intentHash = runIntentHash({
+    kind: 'flow',
+    subjectId: null,
+    expectedRevision: null,
+    selection: { selection: input.selection, direction: input.direction },
+    intent: input.intent,
+    promptVersion: FLOW_PROMPT_VERSION,
+  });
+
+  const replay = lookupReplayRun(db, { requestKey: input.requestKey, intentHash });
+  if (replay.status === 'hit' || replay.status === 'unconfirmed') {
+    const outcome = replayFlowOutcome(db, replay.run.id);
+    if (replay.status === 'unconfirmed') {
+      outcome.warnings.unshift('旧运行身份无法重新确认，已返回历史结果，没有重新请求模型');
+    }
+    return outcome;
+  }
+
   assertConfigured(input.config);
 
   // ---- Capture: re-read the material from the database --------------------
@@ -158,18 +174,11 @@ export async function generateFlow(
     promptVersion: FLOW_PROMPT_VERSION,
   };
 
-  // A replay is resolved before anything else so a re-sent request is answered
-  // from history without a second paid call.
-  const replay = findReplayRun(db, {
-    requestKey: input.requestKey,
-    requestHash: runRequestHash(fingerprint),
-  });
-  if (replay) return replayFlowOutcome(db, replay.id);
-
   // ---- Step 1: register (short transaction; no network inside) ------------
   const registered = registerRun(db, {
     ...fingerprint,
     requestKey: input.requestKey,
+    requestIntentHash: intentHash,
     configSnapshot: configSnapshot(input.config),
     candidateIds: captured.items.map((item) => item.id),
   });
@@ -475,7 +484,7 @@ export function parseFlowOutput(
     // claimed a cause, and the material did not back it — so the edge is drawn as
     // a guess and the reason is stated rather than left to be discovered.
     warnings.push(
-      `有 ${validated.downgradedCausal} 条边声称因果，但材料里没有已确认的 causes 关系支持，已改成明确标注的推测边`,
+      `有 ${validated.downgradedCausal} 条边声称因果，但既没有匹配的已确认 causes 关系，也没有可引用的材料，已改成明确标注的推测边`,
     );
   }
 

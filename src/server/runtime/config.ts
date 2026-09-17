@@ -33,15 +33,19 @@ export function isLoopbackHost(host: string): boolean {
  * validated so a typo cannot silently disable origin checks.
  */
 export function resolveRuntimeConfig(env: NodeJS.ProcessEnv = process.env): RuntimeConfig {
-  const host = (env.APP_HOST ?? LIMITS.host).trim();
+  const requestedHost = (env.APP_HOST ?? LIMITS.host).trim();
+  if (requestedHost.length === 0) {
+    throw new Error('APP_HOST 不能为空');
+  }
+  if (!isLoopbackHost(requestedHost)) {
+    throw new Error(`本版本只监听本机地址，不支持 APP_HOST=${requestedHost}`);
+  }
+  const host = requestedHost.toLowerCase() === 'localhost' ? '127.0.0.1' : requestedHost;
   const portRaw = env.APP_PORT ?? String(LIMITS.appPort);
   const port = Number.parseInt(portRaw, 10);
 
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
     throw new Error(`APP_PORT 不是合法端口：${portRaw}`);
-  }
-  if (host.length === 0) {
-    throw new Error('APP_HOST 不能为空');
   }
 
   const origin = (env.APP_ORIGIN ?? `http://${host}:${port}`).trim();

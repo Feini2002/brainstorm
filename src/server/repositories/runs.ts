@@ -31,6 +31,8 @@ export interface RegisterRunInput {
   promptVersion: string;
   startedAt: string;
   deadlineAt: string;
+  requestIntentHash: string;
+  intentHashVersion: number;
 }
 
 export class RunBusyError extends AppError {
@@ -73,6 +75,14 @@ export function getRunRequestHash(db: DatabaseSync, requestKey: UUID): string | 
     .prepare('SELECT request_hash FROM ai_runs WHERE request_key = ?')
     .get(requestKey) as { request_hash: string } | undefined;
   return row?.request_hash ?? null;
+}
+
+/** Request identity hash. Null on rows created before migration 002. */
+export function getRunRequestIntentHash(db: DatabaseSync, requestKey: UUID): string | null {
+  const row = db
+    .prepare('SELECT request_intent_hash FROM ai_runs WHERE request_key = ?')
+    .get(requestKey) as { request_intent_hash: string | null } | undefined;
+  return row?.request_intent_hash ?? null;
 }
 
 /**
@@ -165,8 +175,9 @@ export function insertRunningRun(db: DatabaseSync, input: RegisterRunInput): voi
          id, request_key, request_hash, kind, subject_id, input_revision, input_hash,
          state, config_revision, config_snapshot_json, candidate_ids_json,
          result_ref, error_code, error_message, usage_json, prompt_version,
-         attempt_count, started_at, deadline_at, finished_at
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, 'running', ?, ?, ?, NULL, NULL, NULL, NULL, ?, 0, ?, ?, NULL)`,
+         attempt_count, started_at, deadline_at, finished_at,
+         request_intent_hash, intent_hash_version
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, 'running', ?, ?, ?, NULL, NULL, NULL, NULL, ?, 0, ?, ?, NULL, ?, ?)`,
     ).run(
       input.id,
       input.requestKey,
@@ -181,6 +192,8 @@ export function insertRunningRun(db: DatabaseSync, input: RegisterRunInput): voi
       input.promptVersion,
       input.startedAt,
       input.deadlineAt,
+      input.requestIntentHash,
+      input.intentHashVersion,
     );
   } catch (error) {
     if (error instanceof Error && /UNIQUE constraint failed/u.test(error.message)) {

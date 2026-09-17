@@ -60,6 +60,7 @@ export const test = base.extend<E2EFixtures>({
 
 export { expect };
 export { E2E_DATA_DIR };
+export { revealDiagnostics, revealMindmapOutline } from './harness';
 
 /**
  * Put the app on a known route before the case body runs.

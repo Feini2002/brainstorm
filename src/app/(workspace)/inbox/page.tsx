@@ -20,6 +20,8 @@ import type { RunResult } from '@/domain/api';
 import { PageHeader } from '@/components/AppShell';
 import { CaptureBox } from '@/features/inbox/CaptureBox';
 import { RecentItems } from '@/features/inbox/RecentItems';
+import type { OrganizeUiOutcome } from '@/features/inbox/captureSession';
+import { organizeConflictMessage } from '@/features/inbox/captureSession';
 import { ConnectionNotice } from '@/features/shared/ConnectionNotice';
 import { RunDiagnosticsPanel } from '@/features/settings/RunDiagnostics';
 import { ApiClientError, apiRequest } from '@/features/shared/apiClient';
@@ -35,6 +37,7 @@ export default function InboxPage() {
   const { notifyChanged } = workspace;
   const [modelConfigured, setModelConfigured] = useState(false);
   const [organizeRunId, setOrganizeRunId] = useState<string | null>(null);
+  const [showRunDetails, setShowRunDetails] = useState(false);
 
   // The capture box only needs to know whether a key exists, never its value.
   useEffect(() => {
@@ -70,18 +73,44 @@ export default function InboxPage() {
    * why. A failed organize must never be silent (T036-R01).
    */
   const organize = useCallback(
-    async (item: { id: string; revision: number }) => {
+    async (
+      item: { id: string; revision: number },
+      context: { requestKey: string },
+    ): Promise<OrganizeUiOutcome> => {
       try {
         const result = await apiRequest<RunResult>(`/api/items/${item.id}/organize`, {
           method: 'POST',
-          body: { requestKey: crypto.randomUUID(), expectedRevision: item.revision },
+          body: { requestKey: context.requestKey, expectedRevision: item.revision },
         });
         setOrganizeRunId(result.runId);
         notifyChanged();
+        if (result.state === 'conflict') {
+          return {
+            state: 'conflict',
+            itemId: item.id,
+            message: organizeConflictMessage(),
+            warnings: result.warnings,
+          };
+        }
+        if (result.state === 'failed') {
+          return {
+            state: 'failed',
+            itemId: item.id,
+            code: 'ORGANIZE_FAILED',
+            message: result.warnings[0] ?? '整理没有完成',
+            warnings: result.warnings,
+          };
+        }
+        return {
+          state: 'succeeded',
+          itemId: item.id,
+          message: '整理完成',
+          warnings: result.warnings,
+        };
       } catch (caught) {
         if (caught instanceof ApiClientError) {
           if (caught.code !== 'MODEL_NOT_CONFIGURED') setOrganizeRunId(null);
-          throw new Error(caught.message);
+          throw caught;
         }
         throw caught;
       }
@@ -103,10 +132,20 @@ export default function InboxPage() {
         organize={organize}
       />
       {organizeRunId ? (
-        <section className="flex flex-col gap-3 rounded-lg border border-[var(--line)] bg-[var(--surface)] p-4">
-          <h2 className="text-sm font-semibold text-[var(--ink)]">这次整理的运行详情</h2>
-          <RunDiagnosticsPanel runId={organizeRunId} onOpenItem={workspace.openItem} />
-        </section>
+        <details
+          className="rounded-lg border border-[var(--line)] bg-[var(--surface)] p-4"
+          data-testid="organize-run-details"
+          onToggle={(event) => setShowRunDetails((event.target as HTMLDetailsElement).open)}
+        >
+          <summary className="cursor-pointer text-sm font-semibold text-[var(--ink)]">
+            这次整理的详情
+          </summary>
+          {showRunDetails ? (
+            <div className="mt-3">
+              <RunDiagnosticsPanel runId={organizeRunId} onOpenItem={workspace.openItem} />
+            </div>
+          ) : null}
+        </details>
       ) : null}
       <RecentItems onOpen={workspace.openItem} refreshToken={workspace.refreshToken} />
     </>

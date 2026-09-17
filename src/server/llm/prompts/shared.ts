@@ -15,7 +15,14 @@
  */
 import 'server-only';
 
+import { truncateCodePoints } from '@/domain/text';
 import type { ChatMessage } from '@/server/llm/adapter';
+
+/** Bounded verbatim excerpt for prompt material. Truncation is visible. */
+export function excerptMaterial(rawText: string, maxCodePoints: number): string {
+  if (Array.from(rawText).length <= maxCodePoints) return rawText;
+  return `${truncateCodePoints(rawText, maxCodePoints)}…`;
+}
 
 /** Bump the relevant entry whenever the text below changes meaning. */
 export const PROMPT_VERSIONS = {

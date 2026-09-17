@@ -51,7 +51,7 @@ import { logSafe } from '@/server/observability/redaction';
 import { applyOrganizeMetadata } from './applyOrganizeMetadata';
 import { applyRelationSuggestions } from './applyRelationSuggestions';
 import { findCandidates } from './findCandidates';
-import { findReplayRun, registerRun, runRequestHash } from './runs/registerRun';
+import { lookupReplayRun, registerRun, runIntentHash } from './runs/registerRun';
 import { syncItemStatus } from './status';
 
 export interface OrganizeInput {
@@ -107,16 +107,37 @@ export async function organizeItem(
   db: DatabaseSync,
   input: OrganizeInput,
 ): Promise<OrganizeResult> {
-  /**
-   * Configuration completeness is checked before anything else, because it is
-   * the one failure that must cost *nothing*: no run row, no slot, no request.
-   * It is also checked before `configSnapshot`, which needs a parseable endpoint
-   * and would otherwise report an unconfigured model as a bad URL.
-   */
+  const intentHash = runIntentHash({
+    kind: 'organize',
+    subjectId: input.itemId,
+    expectedRevision: input.expectedRevision,
+    promptVersion: ORGANIZE_PROMPT_VERSION,
+  });
+
+  const replay = lookupReplayRun(db, {
+    requestKey: input.requestKey,
+    intentHash,
+  });
+  if (replay.status === 'hit' || replay.status === 'unconfirmed') {
+    const outcome = replayOutcome(db, replay.run.id);
+    if (replay.status === 'unconfirmed') {
+      outcome.warnings.unshift('旧运行身份无法重新确认，已返回历史结果，没有重新请求模型');
+    }
+    return outcome;
+  }
+
   assertConfigured(input.config);
 
   const target = getItem(db, input.itemId);
+  if (target.revision !== input.expectedRevision) {
+    throw new AppError('REVISION_CONFLICT', '该记录已被更新，请重新载入后再整理');
+  }
+
   const candidates = findCandidates(db, target.id);
+  const frozenCandidates = candidates.candidateIds.map((id) => {
+    const item = getItem(db, id);
+    return { id: item.id, revision: item.revision, rawVersion: item.rawVersion };
+  });
 
   const inputHash = organizeInputHash({
     targetId: target.id,
@@ -136,34 +157,14 @@ export async function organizeItem(
     promptVersion: ORGANIZE_PROMPT_VERSION,
   };
 
-  /**
-   * A replay is resolved *before* the revision check.
-   *
-   * This ordering is the contract's, and it is not cosmetic: the previous run
-   * committed a new revision, so validating `expectedRevision` first would reject
-   * the very request the user is re-sending (docs/03_contracts/06 §2 — "相同键…
-   * 不重新检查已经可能改变的Item版本").
-   */
-  const replay = findReplayRun(db, {
-    requestKey: input.requestKey,
-    requestHash: runRequestHash(fingerprint),
-  });
-  if (replay) return replayOutcome(db, replay.id);
-
-  if (target.revision !== input.expectedRevision) {
-    throw new AppError('REVISION_CONFLICT', '该记录已被更新，请重新载入后再整理');
-  }
-
-  // ---- Step 1: register (short transaction; no network inside) -------------
   const registered = registerRun(db, {
     ...fingerprint,
     requestKey: input.requestKey,
+    requestIntentHash: intentHash,
     configSnapshot: configSnapshot(input.config),
     candidateIds: candidates.candidateIds,
   });
 
-  // `registerRun` repeats the replay lookup inside its transaction, so this is
-  // the "already finished, same intent" case arriving from a fresh page load.
   if (!registered.shouldExecute) {
     return replayOutcome(db, registered.run.id);
   }
@@ -216,6 +217,7 @@ export async function organizeItem(
     organized: outcome.value,
     candidateIds: candidates.candidateIds,
     candidates: candidates.candidates,
+    frozenCandidates,
     usageJson,
     retrievalNotes: candidates.notes,
   });
@@ -345,6 +347,7 @@ interface CommitInput {
   organized: NonNullable<ReturnType<typeof parseStructured>['value']>;
   candidateIds: readonly UUID[];
   candidates: ReturnType<typeof findCandidates>['candidates'];
+  frozenCandidates: readonly { id: UUID; revision: number; rawVersion: number }[];
   usageJson: string | null;
   retrievalNotes: string[];
 }
@@ -413,7 +416,7 @@ function commitOrganize(db: DatabaseSync, input: CommitInput): OrganizeResult {
         db,
         runId: input.runId,
         target: { id: live.id, rawText: live.rawText, rawVersion: live.rawVersion },
-        candidates: input.candidates.map((brief) => ({ id: brief.id })),
+        candidates: input.frozenCandidates,
         suggestions: input.organized.relations,
         now,
       });

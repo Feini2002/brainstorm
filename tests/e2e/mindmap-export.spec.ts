@@ -1,5 +1,5 @@
 import { expect, gotoInbox, test } from './support/fixtures';
-import { authHeaders, seedItemViaApi, uniqueText } from './support/harness';
+import { authHeaders, seedItemViaApi, uniqueText, revealMindmapOutline } from './support/harness';
 import { E2E_ORIGIN } from './support/env';
 import { readItem } from './support/graph';
 import { seedView, withSeedDb } from './support/seedData';
@@ -62,7 +62,7 @@ async function openMindmap(page: import('@playwright/test').Page, viewId: string
   await page.goto('/mindmap');
   await expect(page.getByRole('navigation', { name: '主导航' })).toBeVisible();
   await page.getByTestId('mindmap-view-select').selectOption(viewId);
-  await expect(page.getByTestId('mindmap-outline')).toBeVisible();
+  await revealMindmapOutline(page);
 }
 
 async function capture(

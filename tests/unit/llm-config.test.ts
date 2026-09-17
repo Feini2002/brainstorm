@@ -17,6 +17,7 @@ import {
   emptyDraft,
   isKeyTransfer,
   keyStatusText,
+  mergeDraftUpdate,
   validateDraft,
   type LlmConfigDraft,
 } from '@/domain/llmConfig';
@@ -119,6 +120,18 @@ describe('T027 模型设置草稿', () => {
     expect(later.ok).toBe(true);
     if (!later.ok) return;
     expect(later.payload.expectedRevision).toBe(SAVED.revision);
+  });
+
+  it('已有配置后局部编辑从保存值合并，不退回 emptyDraft', () => {
+    const next = mergeDraftUpdate(null, SAVED, (current) => ({
+      ...current,
+      config: { ...current.config, model: 'only-this-changed' },
+    }));
+    expect(next.config.model).toBe('only-this-changed');
+    expect(next.config.baseUrl).toBe(SAVED.config.baseUrl);
+    expect(next.config.structuredMode).toBe(SAVED.config.structuredMode);
+    expect(next.keyAction).toBe('keep');
+    expect(next.apiKey).toBe('');
   });
 
   it('T027-R04 测试请求独立于保存：不写配置，只描述要测的草稿', () => {

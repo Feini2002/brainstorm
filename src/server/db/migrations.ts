@@ -15,7 +15,7 @@ export interface Migration {
   sql: string;
 }
 
-export const LATEST_KNOWN_VERSION = 1;
+export const LATEST_KNOWN_VERSION = 2;
 
 const MIGRATION_PATTERN = /^(\d{3})_([a-z0-9_]+)\.sql$/;
 

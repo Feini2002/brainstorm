@@ -10,9 +10,9 @@
  *   - the limits come from `domain/limits`, which is also what the reference
  *     JSON Schema (`reference/schemas/mindmap.schema.json`) and the SQL CHECK
  *     constraints use, so the three cannot drift;
- *   - `itemIds` is non-empty on every node. A node with no source is a fact the
- *     model invented, and the only reason a "topic" can appear in this view is
- *     that material supports it (T055-R02).
+ *   - `itemIds` is required on `note` nodes. Groups may omit the set; the
+ *     compiler derives it from descendant notes. A note with no source is a fact
+ *     the model invented (T055-R02).
  *
  * What this schema deliberately does *not* check: whether the nodes form a tree.
  * Uniqueness, single root, reachability, acyclicity and depth are graph
@@ -59,8 +59,16 @@ export const mindmapNodeSchema = z.strictObject({
   id: mindmapNodeIdSchema,
   parentId: mindmapNodeIdSchema.nullable(),
   label: bounded(LIMITS.mindmapLabelCodePoints, '节点标题', 1),
-  itemIds: z.array(derivedUuidSchema).min(1).max(LIMITS.selectedItemsPerProjection),
+  itemIds: z.array(derivedUuidSchema).max(LIMITS.selectedItemsPerProjection).default([]),
   kind: mindmapKindSchema,
+}).superRefine((node, context) => {
+  if (node.kind === 'note' && node.itemIds.length === 0) {
+    context.addIssue({
+      code: 'custom',
+      message: 'note 必须引用至少一个来源 id',
+      path: ['itemIds'],
+    });
+  }
 });
 
 export const mindmapOutputSchema = z.strictObject({

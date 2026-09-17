@@ -4,10 +4,11 @@
  * The model returns restricted node/edge JSON; the program alone builds Mermaid
  * syntax from it (docs/03_contracts/09_view_schemas_and_compilers.md §3).
  *
- * Causal edges need machine-checked evidence: an accepted, non-stale
- * `causes` relation whose endpoints fall inside the two nodes' sources. Without
- * that, the edge must be labelled as a hypothesis — the program never upgrades
- * a guess into a knowledge-library `causes`.
+ * Causal edges need machine-checked evidence. An accepted, non-stale `causes`
+ * relation whose endpoints match the two nodes is one basis. Material that
+ * itself states a cause is another. A model guess with neither is a hypothesis.
+ * The program never writes inferred arrows back into the knowledge-library
+ * relation table.
  */
 import { LIMITS } from './limits';
 import type { FlowContent, FlowEdge, FlowEdgeKind, FlowNode, RelationDTO } from './knowledge';
@@ -245,39 +246,47 @@ export function validateFlow(input: FlowValidationInput): FlowValidationResult {
         if (badRelation) continue;
       }
 
+      const sourceNode = nodeById.get(source) as FlowNode;
+      const targetNode = nodeById.get(target) as FlowNode;
+
       if (kind === 'causal') {
         const justified = relationIds.some((relationId) => {
           const relation = relationsById.get(relationId);
-          if (!relation) return false;
-          if (relation.type !== 'causes') return false;
-          if (relation.reviewStatus !== 'accepted') return false;
-          if (relation.isStale) return false;
-          const sourceNode = nodeById.get(source) as FlowNode;
-          const targetNode = nodeById.get(target) as FlowNode;
-          const forward =
-            sourceNode.itemIds.includes(relation.sourceId) &&
-            targetNode.itemIds.includes(relation.targetId);
-          const backward =
-            sourceNode.itemIds.includes(relation.targetId) &&
-            targetNode.itemIds.includes(relation.sourceId);
-          return forward || backward;
+          return relation ? relationJustifiesCausal(relation, sourceNode, targetNode) : false;
         });
-        if (!justified) {
+        if (justified) {
+          // Keep only the relations that actually support this direction.
+          const matching = relationIds.filter((relationId) => {
+            const relation = relationsById.get(relationId);
+            return relation ? relationJustifiesCausal(relation, sourceNode, targetNode) : false;
+          });
+          relationIds.length = 0;
+          relationIds.push(...matching);
+        } else if (edgeItemIds.length > 0) {
+          // Material itself stated the cause; do not require a pre-accepted relation.
+          relationIds.length = 0;
+        } else {
           kind = 'hypothesis';
           downgradedCausal += 1;
         }
       }
 
       if (kind === 'dependency') {
-        const justified = relationIds.some((relationId) => {
+        const matching = relationIds.filter((relationId) => {
           const relation = relationsById.get(relationId);
-          return relation?.type === 'depends_on' && !relation.isStale;
+          return relation ? relationJustifiesDependency(relation, sourceNode, targetNode) : false;
         });
-        if (!justified && relationIds.length > 0) {
-          // Keep the model's claim only when the referenced relation supports
-          // it; otherwise fall back to the neutral association kind.
+        relationIds.length = 0;
+        if (matching.length > 0) {
+          relationIds.push(...matching);
+        } else if (edgeItemIds.length === 0) {
           kind = 'association';
         }
+      }
+
+      const basis = inferBasis(kind, relationIds, edgeItemIds);
+      if (kind !== 'hypothesis' && basis === 'inference') {
+        kind = kind === 'causal' ? 'hypothesis' : 'association';
       }
 
       const dedupeKey = `${source}\u0000${target}\u0000${kind}\u0000${label}`;
@@ -291,6 +300,7 @@ export function validateFlow(input: FlowValidationInput): FlowValidationResult {
         label,
         itemIds: edgeItemIds,
         relationIds,
+        basis: inferBasis(kind, relationIds, edgeItemIds),
       });
     }
   }
@@ -306,6 +316,44 @@ export function validateFlow(input: FlowValidationInput): FlowValidationResult {
     edges,
   };
   return { ok: true, content, issues: [], downgradedCausal };
+}
+
+function relationJustifiesCausal(
+  relation: RelationDTO,
+  sourceNode: FlowNode,
+  targetNode: FlowNode,
+): boolean {
+  if (relation.type !== 'causes') return false;
+  if (relation.reviewStatus !== 'accepted') return false;
+  if (relation.isStale) return false;
+  return (
+    sourceNode.itemIds.includes(relation.sourceId) &&
+    targetNode.itemIds.includes(relation.targetId)
+  );
+}
+
+function relationJustifiesDependency(
+  relation: RelationDTO,
+  sourceNode: FlowNode,
+  targetNode: FlowNode,
+): boolean {
+  if (relation.type !== 'depends_on') return false;
+  if (relation.isStale) return false;
+  return (
+    sourceNode.itemIds.includes(relation.sourceId) &&
+    targetNode.itemIds.includes(relation.targetId)
+  );
+}
+
+function inferBasis(
+  kind: FlowEdgeKind,
+  relationIds: string[],
+  itemIds: string[],
+): FlowEdge['basis'] {
+  if (kind === 'hypothesis') return 'inference';
+  if (relationIds.length > 0) return 'relation';
+  if (itemIds.length > 0) return 'material';
+  return 'inference';
 }
 
 /** Re-exported so callers can validate a shared label sanitizer import. */

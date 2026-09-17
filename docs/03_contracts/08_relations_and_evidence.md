@@ -27,11 +27,17 @@ accepted也不是经过外部事实核查的“真关系”，它是用户知识
 
 ## 4. 因果图的额外门槛
 
-Flow AST中的kind='causal'要求relationIds至少包含一条当前accepted、未过期、type='causes'的Relation，且它的端点落在对应源节点与目标节点的itemIds中。仅有模型自述或两条相似笔记不满足机器门槛。无此依据时输出hypothesis，并用明确文字标为“推测/建议顺序”。
+Flow AST 中的 `kind='causal'` 必须带机器可检查的依据，并写入 `basis`：
 
-这比组织普通关系更保守：用户可以先审核或人工建立cause关系，再让流程投影使用；也可以直接接受一张明确标注为假设的探索图。程序不把假设边反写为知识库causes，防止一次生成让未证实关系变成下一次生成的“证据”。
+- **已确认关系**：`relationIds` 含一条当前 accepted、未过期、`type='causes'` 的 Relation，且端点方向与边一致（A causes B 不能认证 B→A）。
+- **材料表述**：边引用了允许集合内的原文 `itemIds`，材料本身写出因果或步骤；不要求事先存在人工 accepted 关系，也不能拿 `related_to`、反向 causes 或无关 `depends_on` 来认证。
+- **推测**：既没有匹配关系、也没有可引用材料时，降为 `hypothesis`，并用「推测/建议」标明。
 
-sequence只表示材料中描述的步骤顺序，association表示联系，dependency可以引用已确认depends_on。它们的文字同样不能冒充事实证明；缺少明确依据的新增排列一律hypothesis。边类型不由CSS颜色决定，而由canonical数据决定，导出时也保留假设标签。
+仅有模型自述、两条相似笔记或一条被拒绝的 AI 关系，都不能按关系认证。程序不把图上的推断边反写为知识库 `causes`，防止一次生成让未证实关系变成下一次生成的“证据”。
+
+这比组织普通关系更保守：用户可以先审核或人工建立 cause 关系，也可以直接根据一段自带因果的原文出图；图例区分已确认关系、材料表述与推测。
+
+sequence只表示材料中描述的步骤顺序，association表示联系，dependency可以引用两端匹配的已确认depends_on。它们的文字同样不能冒充事实证明；缺少明确依据的新增排列一律hypothesis。边类型不由CSS颜色决定，而由canonical数据决定，导出时也保留依据标签。
 
 ## 5. 拒绝、删除和再生成
 

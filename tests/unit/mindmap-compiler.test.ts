@@ -306,6 +306,18 @@ describe('T056 脑图树校验与编译', () => {
     expect(isLabelStable('')).toBe(false);
   });
 
+  it('group 可省略来源集合，由编译器从子树 note 归并', () => {
+    const omitted = doc([
+      { id: 'm1', parentId: null, label: '主题', itemIds: [], kind: 'group' },
+      { id: 'm2', parentId: 'm1', label: '要点甲', itemIds: [A], kind: 'note' },
+      { id: 'm3', parentId: 'm1', label: '要点乙', itemIds: [B], kind: 'note' },
+    ]);
+    const result = ok(omitted);
+    const root = result.content!.nodes.find((node) => node.id === 'm1');
+    expect(root?.itemIds.sort()).toEqual([A, B].sort());
+    expect(result.correctedNodeIds).toContain('m1');
+  });
+
   it('T056-R05 编译只使用标题与列表两种结构', () => {
     const { content } = ok(sampleTree());
     const markdown = compileMindmap(content!);

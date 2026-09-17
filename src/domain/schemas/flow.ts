@@ -15,9 +15,8 @@
  * What this schema deliberately does **not** check, because Zod cannot express it:
  * whether the edge endpoints are nodes in the same document, whether the cited
  * `itemIds`/`relationIds` are inside this run's selection, and whether a `causal`
- * edge is actually justified by an accepted `causes` relation. Those are graph and
- * evidence properties, and they live in `domain/flow.ts` (`validateFlow`), which is
- * the authority the pipeline calls after this schema accepts the shape.
+ * edge is justified by a matching relation or by cited material. Those are graph
+ * and evidence properties, and they live in `domain/flow.ts` (`validateFlow`).
  */
 import { z } from 'zod';
 

@@ -1,5 +1,5 @@
 import { expect, gotoInbox, test } from './support/fixtures';
-import { seedItemViaApi, uniqueText } from './support/harness';
+import { seedItemViaApi, uniqueText, revealMindmapOutline } from './support/harness';
 import { seedView, withSeedDb } from './support/seedData';
 
 /**
@@ -196,6 +196,7 @@ test.describe('T057 Markmap 挂载、净化与本地资源', () => {
 
     // "A source text exists" is explicitly not enough (T057-C01「必须排除」): the
     // outline and the canvas must both be populated from the same AST.
+    await revealMindmapOutline(page);
     await expect(page.getByTestId('mindmap-outline-node')).toHaveCount(3);
   });
 
@@ -275,6 +276,7 @@ test.describe('T057 Markmap 挂载、净化与本地资源', () => {
     expect(traffic.blockedRequests()).toEqual([]);
 
     // And the page is still a working page afterwards, not a half-rendered one.
+    await revealMindmapOutline(page);
     await expect(page.getByTestId('mindmap-outline-node')).toHaveCount(2);
   });
 
@@ -307,6 +309,7 @@ test.describe('T057 Markmap 挂载、净化与本地资源', () => {
     // "Edit an unrelated field": the expand-level control and node selection both
     // re-render the page around the canvas. Selecting a node is the sharpest form
     // of this — it is the interaction most likely to be implemented by remounting.
+    await revealMindmapOutline(page);
     await page.getByTestId('mindmap-outline-select').first().click();
     await expect(page.getByTestId('mindmap-outline-select').first()).toHaveAttribute(
       'aria-current',
@@ -428,7 +431,7 @@ test.describe('T057 Markmap 挂载、净化与本地资源', () => {
     // The outline is the safe fallback (T057-C06「显示安全大纲」): still rendered,
     // still readable, and it says the structure was incomplete rather than
     // silently showing a plausible-looking flat list.
-    await expect(page.getByTestId('mindmap-outline')).toBeVisible();
+    await revealMindmapOutline(page);
     await expect(page.getByTestId('mindmap-outline-malformed')).toBeVisible();
     // Every stored row is listed, including both rows that share the duplicated id.
     // The flat fallback is required to lose nothing: a walk that deduplicates by id

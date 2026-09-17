@@ -66,6 +66,8 @@ export interface MindmapRendererProps {
   selectedNodeId?: string | null;
   /** Changes when the caller wants the viewport re-fitted to the whole map. */
   fitToken?: number;
+  /** Called when the picture cannot be drawn, or with null once it can. */
+  onRenderError?: (message: string | null) => void;
 }
 
 interface RendererHandle {
@@ -181,6 +183,7 @@ export function MindmapRenderer({
   onNodeSelect,
   selectedNodeId = null,
   fitToken = 0,
+  onRenderError,
 }: MindmapRendererProps) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   /**
@@ -285,6 +288,10 @@ export function MindmapRenderer({
     compiled.failure ??
     (mount?.key === mountKey && mount.phase === 'failed' ? mount.message : null);
   const mounted = mount?.key === mountKey && mount.phase === 'mounted';
+
+  useEffect(() => {
+    onRenderError?.(error);
+  }, [error, onRenderError]);
 
   const lastFitToken = useRef(fitToken);
 

@@ -165,8 +165,8 @@ export function readNpmVersion(env = process.env) {
  * real arguments, so a path with spaces or CJK cannot be re-parsed (T080-R01).
  */
 export function probePathInterpreter(env = process.env, platform = process.platform) {
-  const command = platform === 'win32' ? 'where.exe' : 'command';
-  const args = platform === 'win32' ? ['node'] : ['-v', 'node'];
+  const command = platform === 'win32' ? 'where.exe' : 'which';
+  const args = ['node'];
   let found = [];
   let ok = false;
   try {
@@ -366,9 +366,11 @@ export async function runDoctor(options = {}) {
 
 /** Keep a bounded machine-readable record beside the app for support. */
 function record(projectRoot, report, env = process.env) {
-  if (env.FEINI_DOCTOR_RECORD === 'off') return;
+  if (env.FEINI_DOCTOR_RECORD !== 'on') return;
   try {
-    const file = path.join(projectRoot, 'implementation', 'progress', 'runtime-report.json');
+    const file =
+      env.FEINI_DOCTOR_REPORT?.trim() ||
+      path.join(tmpdir(), 'feini-doctor-report.json');
     mkdirSync(path.dirname(file), { recursive: true });
     writeFileSync(
       file,

@@ -15,13 +15,11 @@
  *  3. **The key is never echoed.** The form holds a typed value only while the
  *     user chooses `replace`, and drops it the moment the save succeeds.
  */
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { PublicLlmSettings } from '@/domain/knowledge';
 import { ApiClientError, apiRequest } from '@/features/shared/apiClient';
 import {
-  ADAPTER_LABELS,
-  LLM_ADAPTERS,
   MODEL_SUGGESTIONS,
   STRUCTURED_MODES,
   STRUCTURED_MODE_HINTS,
@@ -33,10 +31,10 @@ import {
   buildTestPayload,
   canSubmit,
   draftFromSettings,
-  emptyDraft,
   isFirstConfiguration,
   isKeyTransfer,
   issueFor,
+  mergeDraftUpdate,
   validateDraft,
   type KeyAction,
   type LlmConfigDraft,
@@ -79,6 +77,10 @@ interface TestOutcome {
 export function LlmSettingsForm({ onSaved, refreshToken = 0 }: LlmSettingsFormProps) {
   const state = useApiQuery<PublicLlmSettings>('/api/settings/llm', { version: refreshToken });
   const settings = state.data;
+  const settingsRef = useRef(settings);
+  useEffect(() => {
+    settingsRef.current = settings;
+  }, [settings]);
 
   const [userDraft, setUserDraft] = useState<LlmConfigDraft | null>(null);
   const [confirmedTransfer, setConfirmedTransfer] = useState(false);
@@ -106,17 +108,16 @@ export function LlmSettingsForm({ onSaved, refreshToken = 0 }: LlmSettingsFormPr
   const transfer = isKeyTransfer(draft, settings);
   const submittable = canSubmit(draft) && (!transfer || confirmedTransfer);
 
+  const updateDraft = useCallback((update: (draft: LlmConfigDraft) => LlmConfigDraft) => {
+    setUserDraft((existing) => mergeDraftUpdate(existing, settingsRef.current, update));
+  }, []);
+
   const patchConfig = useCallback((patch: Partial<LlmConfigDraft['config']>) => {
-    setUserDraft((existing) => {
-      const base = existing ?? emptyDraft();
-      return { ...base, config: { ...base.config, ...patch } };
-    });
-    // Any config change invalidates a previous test result and a previous
-    // transfer confirmation: both were about a different destination.
+    updateDraft((base) => ({ ...base, config: { ...base.config, ...patch } }));
     setOutcome(null);
     setConfirmedTransfer(false);
     setSavedNotice(null);
-  }, []);
+  }, [updateDraft]);
 
   /**
    * Change the key intention.
@@ -127,14 +128,15 @@ export function LlmSettingsForm({ onSaved, refreshToken = 0 }: LlmSettingsFormPr
    * unambiguous (T027-C02/R03).
    */
   const changeKeyAction = useCallback((action: KeyAction) => {
-    setUserDraft((existing) => {
-      const base = existing ?? emptyDraft();
-      return { ...base, keyAction: action, apiKey: action === 'replace' ? base.apiKey : '' };
-    });
+    updateDraft((base) => ({
+      ...base,
+      keyAction: action,
+      apiKey: action === 'replace' ? base.apiKey : '',
+    }));
     setOutcome(null);
     setSavedNotice(null);
     if (action !== 'delete') setConfirmedTransfer(false);
-  }, []);
+  }, [updateDraft]);
 
   const submit = useCallback(async () => {
     if (saving) return;
@@ -256,8 +258,10 @@ export function LlmSettingsForm({ onSaved, refreshToken = 0 }: LlmSettingsFormPr
               variant="secondary"
               data-testid="settings-reload"
               onClick={() => {
-                state.reload();
+                setUserDraft(null);
                 setConflict(false);
+                setSaveError(null);
+                state.reload();
               }}
             >
               载入服务端最新配置
@@ -266,12 +270,37 @@ export function LlmSettingsForm({ onSaved, refreshToken = 0 }: LlmSettingsFormPr
               variant="ghost"
               data-testid="settings-keep-draft"
               onClick={() => {
-                // Re-reading refreshes `settings` (and therefore
-                // `expectedRevision`) without touching the draft: `userDraft`
-                // still holds the user's edits, so nothing typed is lost and no
-                // fake save success is reported.
-                state.reload();
-                setConflict(false);
+                void (async () => {
+                  try {
+                    const latest = await apiRequest<PublicLlmSettings>('/api/settings/llm');
+                    state.setData(latest);
+                    setConflict(false);
+                    setSaveError(null);
+                    const built = buildSavePayload(draft, {
+                      settings: latest,
+                      confirmKeyTransfer: confirmedTransfer,
+                    });
+                    if (!built.ok) return;
+                    setSaving(true);
+                    const saved = await apiRequest<PublicLlmSettings>('/api/settings/llm', {
+                      method: 'PUT',
+                      body: built.payload,
+                    });
+                    setUserDraft(draftFromSettings(saved));
+                    setConfirmedTransfer(false);
+                    setOutcome(null);
+                    setSavedNotice('已保存。下面的配置与 Key 状态来自服务端返回的结果。');
+                    onSaved?.(saved);
+                    state.setData(saved);
+                  } catch (caught) {
+                    if (caught instanceof ApiClientError) {
+                      setSaveError(caught);
+                      if (caught.code === 'REVISION_CONFLICT') setConflict(true);
+                    }
+                  } finally {
+                    setSaving(false);
+                  }
+                })();
               }}
             >
               保留我的输入并重试
@@ -295,22 +324,9 @@ export function LlmSettingsForm({ onSaved, refreshToken = 0 }: LlmSettingsFormPr
         description="首版只支持 OpenAI 兼容的聊天补全接口。模型能力不由供应商名字推断，请按服务商文档填写。"
       >
         <div className="grid gap-3">
-          <Field label="接口类型" htmlFor="llm-adapter">
-            <Select
-              id="llm-adapter"
-              data-testid="llm-adapter"
-              value={draft.config.adapter}
-              onChange={() => {
-                /* Only one adapter exists; the control documents that fact. */
-              }}
-            >
-              {LLM_ADAPTERS.map((value) => (
-                <option key={value} value={value}>
-                  {ADAPTER_LABELS[value]}
-                </option>
-              ))}
-            </Select>
-          </Field>
+          <p className="text-sm text-[var(--ink)]" data-testid="llm-adapter">
+            OpenAI 兼容接口。首版只支持这一种聊天补全协议，模型能力不由供应商名字推断。
+          </p>
 
           <Field
             label="Base URL"
@@ -350,6 +366,11 @@ export function LlmSettingsForm({ onSaved, refreshToken = 0 }: LlmSettingsFormPr
             ))}
           </datalist>
 
+          <details className="rounded-md border border-[var(--line)] p-3" data-testid="llm-advanced">
+            <summary className="cursor-pointer text-sm text-[var(--ink-muted)]">
+              高级输出参数
+            </summary>
+            <div className="mt-3 grid gap-3">
           <Field
             label="结构化输出方式"
             htmlFor="llm-structured-mode"
@@ -429,6 +450,8 @@ export function LlmSettingsForm({ onSaved, refreshToken = 0 }: LlmSettingsFormPr
               </span>
             </span>
           </label>
+            </div>
+          </details>
         </div>
       </SectionCard>
 
@@ -447,7 +470,7 @@ export function LlmSettingsForm({ onSaved, refreshToken = 0 }: LlmSettingsFormPr
           disabled={saving}
           onKeyAction={changeKeyAction}
           onApiKey={(value) => {
-            setUserDraft((existing) => ({ ...(existing ?? emptyDraft()), apiKey: value }));
+            updateDraft((base) => ({ ...base, apiKey: value }));
             setOutcome(null);
           }}
           onShowNotice={() => setOutcome(null)}
@@ -501,10 +524,13 @@ export function LlmSettingsForm({ onSaved, refreshToken = 0 }: LlmSettingsFormPr
         </span>
       </div>
 
-      <p className="text-xs text-[var(--ink-muted)]" data-testid="settings-revision">
-        当前配置版本：revision {settings?.revision ?? 0}
-        {settings?.apiKeyConfigured ? ' · 已保存 Key' : ' · 未保存 Key'}
-      </p>
+      <details className="text-xs text-[var(--ink-muted)]">
+        <summary className="cursor-pointer">技术信息</summary>
+        <p className="mt-2" data-testid="settings-revision">
+          当前配置版本：revision {settings?.revision ?? 0}
+          {settings?.apiKeyConfigured ? ' · 已保存 Key' : ' · 未保存 Key'}
+        </p>
+      </details>
 
       {savedNotice ? (
         <div

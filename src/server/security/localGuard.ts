@@ -12,9 +12,11 @@ import 'server-only';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 
 import { LIMITS } from '@/domain/limits';
+import { resolveRuntimeConfig } from '@/server/runtime/config';
 
-export const APP_ORIGIN = process.env.APP_ORIGIN ?? `http://127.0.0.1:${LIMITS.appPort}`;
-export const APP_HOST = process.env.APP_HOST ?? LIMITS.host;
+const runtime = resolveRuntimeConfig();
+export const APP_ORIGIN = runtime.origin;
+export const APP_HOST = runtime.host;
 
 /** 32 cryptographically random bytes, regenerated per process start. */
 const sessionToken = randomBytes(LIMITS.tokenBytes).toString('base64url');

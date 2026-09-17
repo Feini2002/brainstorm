@@ -718,6 +718,33 @@ describe('T036 规则落点', () => {
     expect(second.runId).toBe(first.runId);
   });
 
+  it('同一请求键在新增候选或改配置后仍重放，不发新模型请求', async () => {
+    const target = seedTarget();
+    const requestKey = newId();
+    const transport = new ScriptedTransport({ replies: [() => chatOk(organizedJson())] });
+
+    const first = await organize({
+      itemId: target.id,
+      expectedRevision: target.revision,
+      requestKey,
+      transport,
+    });
+    expect(first.state).toBe('succeeded');
+
+    seedOther('后来才写入的另一条候选笔记');
+
+    const second = await organize({
+      itemId: target.id,
+      expectedRevision: target.revision,
+      requestKey,
+      transport,
+    });
+
+    expect(transport.calls).toBe(1);
+    expect(second.replayed).toBe(true);
+    expect(second.runId).toBe(first.runId);
+  });
+
   it('T036-R05 换了请求键但 revision 过期时仍返回 409，不被误当成重放', async () => {
     const target = seedTarget();
     const transport = new ScriptedTransport({ replies: [() => chatOk(organizedJson())] });

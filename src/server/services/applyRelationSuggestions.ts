@@ -43,8 +43,8 @@ export interface RelationApplyInput {
   runId: UUID;
   /** The item being organized: the source endpoint the model was told about. */
   target: { id: UUID; rawText: string; rawVersion: number };
-  /** Candidate briefs actually sent, in send order. */
-  candidates: readonly { id: UUID }[];
+  /** Candidate snapshots actually sent, including the versions the model saw. */
+  candidates: readonly { id: UUID; rawVersion?: number; revision?: number }[];
   suggestions: readonly OrganizeOutputRelation[];
   now: string;
 }
@@ -76,16 +76,17 @@ export function applyRelationSuggestions(input: RelationApplyInput): RelationApp
   liveText.set(target.id, target.rawText);
   liveVersion.set(target.id, target.rawVersion);
 
-  const briefed = new Map<UUID, { rawText: string; rawVersion: number }>();
+  const briefed = new Map<UUID, { rawText: string; rawVersion: number; revision: number }>();
   for (const candidateId of allowedCandidateIds) {
     const item = getItemOrNull(db, candidateId);
     if (!item) continue;
-    // A candidate edited since retrieval is compared against its *current*
-    // text, so a quote from the older version correctly fails the verbatim
-    // check instead of being stored against text that has since changed.
     liveText.set(item.id, item.rawText);
     liveVersion.set(item.id, item.rawVersion);
-    briefed.set(item.id, { rawText: item.rawText, rawVersion: item.rawVersion });
+    briefed.set(item.id, {
+      rawText: item.rawText,
+      rawVersion: item.rawVersion,
+      revision: item.revision,
+    });
   }
 
   const result: RelationApplyResult = {
@@ -117,9 +118,17 @@ export function applyRelationSuggestions(input: RelationApplyInput): RelationApp
 
     const candidate = briefed.get(candidateId);
     if (!candidate) {
-      // Deleted between retrieval and commit: the metadata still applies, only
-      // the relations that referenced it lapse (docs/03_contracts/06 §3).
       result.droppedReasons.push('候选条目已被删除');
+      continue;
+    }
+
+    const frozen = candidates.find((entry) => entry.id === candidateId);
+    if (
+      frozen &&
+      ((frozen.rawVersion !== undefined && frozen.rawVersion !== candidate.rawVersion) ||
+        (frozen.revision !== undefined && frozen.revision !== candidate.revision))
+    ) {
+      result.droppedReasons.push('候选已变化，旧建议未按新版本入库');
       continue;
     }
 

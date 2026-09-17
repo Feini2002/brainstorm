@@ -51,6 +51,8 @@ export interface FlowCaseExpectation {
   hypothesisLabels?: string[];
   /** Item ids (placeholder form) the edge/edges must cite. */
   itemIds?: string[];
+  /** Evidence basis after server-side certification. */
+  basis?: 'relation' | 'material' | 'inference';
 }
 
 export interface ValidFlowCase {

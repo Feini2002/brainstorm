@@ -218,6 +218,11 @@ export interface FlowEdge {
   label: string;
   itemIds: UUID[];
   relationIds: UUID[];
+  /**
+   * Why this edge is on the picture. Absent on views generated before the
+   * evidence split; readers infer it from kind + relationIds.
+   */
+  basis?: 'relation' | 'material' | 'inference';
 }
 
 export interface FlowContent {

@@ -60,7 +60,7 @@ import {
 import { insertView } from '@/server/repositories/views';
 import { nowIso } from '@/server/repositories/shared';
 import { captureSources, assertWithinBudget, type CapturedSources } from './views/captureSources';
-import { findReplayRun, registerRun, runRequestHash } from './runs/registerRun';
+import { lookupReplayRun, registerRun, runIntentHash } from './runs/registerRun';
 import { getView, viewContentHash } from './views/views';
 import { sourceInputHash } from '@/domain/sourceSnapshot';
 
@@ -95,8 +95,24 @@ export async function generateMindmap(
   db: DatabaseSync,
   input: GenerateMindmapInput,
 ): Promise<GenerateMindmapResult> {
-  // Configuration is checked before anything else: it is the one failure that
-  // must cost no run row, no slot and no request.
+  const intentHash = runIntentHash({
+    kind: 'mindmap',
+    subjectId: null,
+    expectedRevision: null,
+    selection: input.selection,
+    intent: input.intent ?? null,
+    promptVersion: MINDMAP_PROMPT_VERSION,
+  });
+
+  const replay = lookupReplayRun(db, { requestKey: input.requestKey, intentHash });
+  if (replay.status === 'hit' || replay.status === 'unconfirmed') {
+    const outcome = replayMindmapOutcome(db, replay.run.id);
+    if (replay.status === 'unconfirmed') {
+      outcome.warnings.unshift('旧运行身份无法重新确认，已返回历史结果，没有重新请求模型');
+    }
+    return outcome;
+  }
+
   assertConfigured(input.config);
 
   // ---- Capture: re-read the material from the database --------------------
@@ -138,18 +154,11 @@ export async function generateMindmap(
     promptVersion: MINDMAP_PROMPT_VERSION,
   };
 
-  // A replay is resolved before anything else so a re-sent request is answered
-  // from history without a second paid call.
-  const replay = findReplayRun(db, {
-    requestKey: input.requestKey,
-    requestHash: runRequestHash(fingerprint),
-  });
-  if (replay) return replayMindmapOutcome(db, replay.id);
-
   // ---- Step 1: register (short transaction; no network inside) ------------
   const registered = registerRun(db, {
     ...fingerprint,
     requestKey: input.requestKey,
+    requestIntentHash: intentHash,
     configSnapshot: configSnapshot(input.config),
     candidateIds: captured.items.map((item) => item.id),
   });

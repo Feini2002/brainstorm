@@ -204,7 +204,7 @@ describe('T062 流程意图', () => {
   it('T062-C01 引导性提问仍走同一字段：材料不足时的结论由服务端证据门槛决定', () => {
     // 用户写下「证明 A 一定导致 B」，意图字段照原样进入请求——这里不做关键词
     // 过滤，因为把用户的问题静默改写会让人以为模型确实被限制了。真正的保护在
-    // 服务端：causal 边需要已确认且未过期的 causes 关系（T063）。
+    // 服务端：causal 边可以由匹配的已确认关系或材料表述支持；纯推断只能是 hypothesis。
     const built = buildFlowGenerationRequest({
       requestKey: KEY,
       itemIds: [ID_A, ID_B],

@@ -246,3 +246,19 @@ export async function deleteItemViaApi(page: Page, id: string): Promise<DeleteIt
   expect(deleted.status(), `DELETE /api/items/${id} 应返回 200，实际 ${deleted.status()}`).toBe(200);
   return 'deleted';
 }
+
+/** Open the on-demand mindmap outline so sources stay reachable without occupying the main canvas. */
+export async function revealMindmapOutline(page: Page): Promise<void> {
+  const outline = page.getByTestId('mindmap-outline');
+  if (await outline.isVisible()) return;
+  await page.getByTestId('mindmap-outline-panel').locator('summary').click();
+  await expect(outline).toBeVisible();
+}
+
+/** Mount the settings diagnostics panel; it is not loaded until the user opens it. */
+export async function revealDiagnostics(page: Page): Promise<void> {
+  const panel = page.getByTestId('diagnostics-panel');
+  if (await panel.isVisible()) return;
+  await page.getByTestId('settings-diagnostics').locator('summary').click();
+  await expect(panel).toBeVisible();
+}

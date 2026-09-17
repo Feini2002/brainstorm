@@ -476,6 +476,8 @@ describe('T040 运行恢复', () => {
       promptVersion: 'mindmap-v1',
       startedAt: '2026-01-01T00:00:00.000Z',
       deadlineAt: '2999-01-01T00:00:00.000Z',
+      requestIntentHash: 'intent',
+      intentHashVersion: 1,
     });
 
     const recovered = recoverExpiredRuns(db);

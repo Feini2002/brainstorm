@@ -1,21 +1,10 @@
 /**
  * Run registration, idempotency and the global concurrency slot (T035).
  *
- * One module owns "may this request talk to a provider right now?", because the
- * contract gives every paid operation — connection test, organize, mindmap,
- * flow — a *single* shared slot. That is enforced by
- * `idx_one_global_running WHERE state='running'`, not by a process variable, so
- * two browser tabs cannot each start a paid call (T035-R03).
- *
- * Order inside the one `BEGIN IMMEDIATE` transaction, which is the whole point:
- *
- *   1. recover expired leases,  so a dead request does not block the slot forever
- *   2. look up the request key, so a replay is answered without a second call
- *   3. compare the fingerprint, so the same key with a different intent is 409
- *   4. insert the running row,  which is what occupies the slot
- *
- * The transaction commits *before* the caller issues any network request
- * (T035-R04). An insertion failure means the provider call count is zero.
+ * Request identity (`requestIntentHash`) is what the user submitted. The
+ * execution snapshot (`inputHash` / `request_hash`) is what the first execution
+ * actually used. A replay looks up identity first and must not re-read candidates
+ * or settings to decide who the request is.
  */
 import 'server-only';
 
@@ -32,22 +21,41 @@ import type { ConfigSnapshot } from '@/server/llm/adapter';
 import {
   RunKeyConflictError,
   findRunByRequestKey,
-  getRunRequestHash,
+  getRunRequestIntentHash,
   insertRunningRun,
 } from '@/server/repositories/runs';
 import { nowIso } from '@/server/repositories/shared';
 import { recoverExpiredRunsTx } from './recoverExpiredRuns';
 
+export const INTENT_HASH_VERSION = 1;
+
+export interface RunIntentInput {
+  kind: RunKind;
+  subjectId: UUID | null;
+  expectedRevision: number | null;
+  selection?: unknown;
+  intent?: string | null;
+  promptVersion: string;
+}
+
+export function runIntentHash(input: RunIntentInput): string {
+  return hashSha256(
+    canonicalJson({
+      v: INTENT_HASH_VERSION,
+      kind: input.kind,
+      subjectId: input.subjectId,
+      expectedRevision: input.expectedRevision,
+      selection: input.selection ?? null,
+      intent: input.intent ?? null,
+      promptVersion: input.promptVersion,
+    }),
+  );
+}
+
 /**
- * The request fingerprint (T035-R01).
- *
- * Every field that would change what the provider is asked to do participates:
- * the kind of operation, its target, the input revision, the resolved selection,
- * the user's own intent text, the config revision and the prompt version.
- *
- * The *values* are hashed, not the key: `fingerprint` produces a stable digest
- * that can be compared on replay, and the raw intent text never has to be stored
- * on the run row.
+ * Execution fingerprint: materials, model and prompt actually used the first time.
+ * Stored as `request_hash` / `input_hash` for write-back checks. Not used to
+ * decide whether a later delivery is "the same request".
  */
 export interface RunFingerprintInput {
   kind: RunKind;
@@ -77,47 +85,51 @@ export function runRequestHash(input: RunFingerprintInput): string {
 
 export interface RegisterRunInput extends RunFingerprintInput {
   requestKey: UUID;
+  requestIntentHash?: string;
   configSnapshot: ConfigSnapshot;
   candidateIds: readonly UUID[];
 }
 
-/**
- * What happened, from the caller's point of view.
- *
- * `replayed` covers *every* prior state, not just success: a finished run is
- * reported as its stored outcome and a failed run is reported as that same
- * failure. Neither path may issue a new paid request (T035-R02), and a failure
- * is never silently retried (T035-C05).
- */
 export type RunDisposition = 'execute' | 'replayed' | 'replay_failed' | 'replay_in_flight';
 
 export interface RegisterRunResult {
   run: RunDTO;
   disposition: RunDisposition;
-  /** True when the caller must issue the provider request. */
   shouldExecute: boolean;
+  identityUnconfirmed: boolean;
 }
 
 export function registerRun(db: DatabaseSync, input: RegisterRunInput): RegisterRunResult {
   const requestHash = runRequestHash(input);
+  const requestIntentHash =
+    input.requestIntentHash ??
+    runIntentHash({
+      kind: input.kind,
+      subjectId: input.subjectId,
+      expectedRevision: input.inputRevision,
+      intent: input.intent ?? null,
+      promptVersion: input.promptVersion,
+      selection: input.selectionItemIds ?? null,
+    });
 
   return withTransaction(db, () => {
     const now = nowIso();
-
-    // 1. Leases that already expired stop occupying the slot.
     recoverExpiredRunsTx(db, now);
 
-    // 2 + 3. Idempotency: same key, same intent => reuse; different => 409.
     const existing = findRunByRequestKey(db, input.requestKey);
     if (existing) {
-      const storedHash = getRunRequestHash(db, input.requestKey);
-      if (storedHash !== requestHash) throw new RunKeyConflictError();
-      return { run: existing, disposition: classifyReplay(existing), shouldExecute: false };
+      const storedIntent = getRunRequestIntentHash(db, input.requestKey);
+      if (storedIntent && storedIntent !== requestIntentHash) {
+        throw new RunKeyConflictError();
+      }
+      return {
+        run: existing,
+        disposition: classifyReplay(existing),
+        shouldExecute: false,
+        identityUnconfirmed: storedIntent === null || storedIntent.length === 0,
+      };
     }
 
-    // 4. Occupy the slot. A UNIQUE violation here is RUN_BUSY (mapped in the
-    // repository), and because this insert failed the transaction, the count of
-    // provider requests this registration caused is exactly zero.
     const id = randomUUID();
     const deadlineAt = addMilliseconds(now, LIMITS.operationDeadlineMs);
 
@@ -135,6 +147,8 @@ export function registerRun(db: DatabaseSync, input: RegisterRunInput): Register
       promptVersion: input.promptVersion,
       startedAt: now,
       deadlineAt,
+      requestIntentHash,
+      intentHashVersion: INTENT_HASH_VERSION,
     });
 
     return {
@@ -154,49 +168,46 @@ export function registerRun(db: DatabaseSync, input: RegisterRunInput): Register
       },
       disposition: 'execute',
       shouldExecute: true,
+      identityUnconfirmed: false,
     };
   });
 }
 
-export interface RunReplayLookup {
-  requestKey: UUID;
-  requestHash: string;
+export type ReplayLookup =
+  | { status: 'miss' }
+  | { status: 'hit'; run: RunDTO }
+  | { status: 'unconfirmed'; run: RunDTO };
+
+export function lookupReplayRun(
+  db: DatabaseSync,
+  input: { requestKey: UUID; intentHash: string },
+): ReplayLookup {
+  const existing = findRunByRequestKey(db, input.requestKey);
+  if (!existing) return { status: 'miss' };
+  const storedIntent = getRunRequestIntentHash(db, input.requestKey);
+  if (storedIntent === null || storedIntent.length === 0) {
+    return { status: 'unconfirmed', run: existing };
+  }
+  if (storedIntent !== input.intentHash) throw new RunKeyConflictError();
+  return { status: 'hit', run: existing };
 }
 
 /**
- * Resolve an existing run for this request key *before* the caller inspects any
- * mutable state.
- *
- * This exists because of a specific contract rule (docs/03_contracts/06 §2): a
- * replay must not re-check the item revision, the config or the key, all of which
- * may legitimately have changed since the original request. An organize run
- * bumps the item's revision when it commits, so re-validating `expectedRevision`
- * before looking up the key would turn every intended replay into a spurious
- * conflict.
- *
- * The check here is read-only and therefore not authoritative — a concurrent
- * writer can still slip in. `registerRun` repeats it inside the transaction that
- * occupies the slot, and that repetition is what actually enforces uniqueness.
- * This lookup only guarantees that the *validation the caller performs next* is
- * skipped in the replay case.
+ * @deprecated Use lookupReplayRun. Kept so older call sites compile during the
+ * cut-over; identity is now the intent hash, not the execution snapshot.
  */
-export function findReplayRun(db: DatabaseSync, lookup: RunReplayLookup): RunDTO | null {
-  const existing = findRunByRequestKey(db, lookup.requestKey);
-  if (!existing) return null;
-  const storedHash = getRunRequestHash(db, lookup.requestKey);
-  // Same key aimed at different work is a conflict, and it is reported here so a
-  // caller cannot "discover" it only after doing retrieval work.
-  if (storedHash !== lookup.requestHash) throw new RunKeyConflictError();
-  return existing;
+export function findReplayRun(
+  db: DatabaseSync,
+  lookup: { requestKey: UUID; requestHash?: string; intentHash?: string },
+): RunDTO | null {
+  const result = lookupReplayRun(db, {
+    requestKey: lookup.requestKey,
+    intentHash: lookup.intentHash ?? lookup.requestHash ?? '',
+  });
+  if (result.status === 'miss') return null;
+  return result.run;
 }
 
-/**
- * Map a stored run to what the caller may do next.
- *
- * A `running` row replay is deliberately *not* treated as "your request is
- * executing": it is either this same request still in flight or a lease awaiting
- * recovery, and the caller must not start a second paid call either way.
- */
 function classifyReplay(run: RunDTO): RunDisposition {
   switch (run.state) {
     case 'succeeded':

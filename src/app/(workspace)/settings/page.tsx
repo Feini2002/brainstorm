@@ -23,6 +23,7 @@ import { LlmSettingsForm } from '@/features/settings/LlmSettingsForm';
 export default function SettingsPage() {
   const { refreshToken, notifyChanged } = useWorkspace();
   const [savedRevision, setSavedRevision] = useState<number | null>(null);
+  const [showDiagnostics, setShowDiagnostics] = useState(false);
 
   const onSaved = useCallback(
     (settings: PublicLlmSettings) => {
@@ -80,12 +81,23 @@ export default function SettingsPage() {
 
       <BackupPanel />
 
-      <SectionCard
-        title="本地诊断"
-        description="版本、计数、耗时、失败层级与日志保留策略。只读取本机状态，不接第三方遥测。"
+      <details
+        className="rounded-lg border border-[var(--line)] bg-[var(--surface)] p-4"
+        data-testid="settings-diagnostics"
+        onToggle={(event) => setShowDiagnostics((event.target as HTMLDetailsElement).open)}
       >
-        <DiagnosticsPanel />
-      </SectionCard>
+        <summary className="cursor-pointer text-sm font-semibold text-[var(--ink)]">
+          技术诊断（按需加载）
+        </summary>
+        <p className="mt-2 text-xs text-[var(--ink-muted)]">
+          版本、计数、耗时与失败层级。只读取本机状态，不接第三方遥测。
+        </p>
+        {showDiagnostics ? (
+          <div className="mt-3">
+            <DiagnosticsPanel />
+          </div>
+        ) : null}
+      </details>
     </>
   );
 }

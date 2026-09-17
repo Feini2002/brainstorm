@@ -75,7 +75,7 @@ import { LIMITS } from './limits';
 import { inspectFlow, type FlowStructureIssue } from './validateFlow';
 
 /** Bumped whenever the escaping or the emitted shape changes (T064-R05 analogue). */
-export const FLOW_COMPILER_VERSION = 'flow-compiler-v3';
+export const FLOW_COMPILER_VERSION = 'flow-compiler-v4';
 
 /** The only two first lines this compiler can emit. */
 export const FLOWCHART_HEADER_DIRECTIONS = ['LR', 'TB'] as const;
@@ -116,8 +116,9 @@ const LABEL_ENTITIES: Record<string, string> = {
  * expected, and a quoted label at the start of a line is such a place: the label
  * `direction TB` was observed to **delete the node it belonged to** and set the
  * graph direction. The rest of the quoted text cannot do this — `end`, `graph`,
- * `subgraph`, `click`, `classDef`, `style`, `linkStyle`, `init`, `flowchart`,
- * `accTitle` and `%%` were all measured to render as ordinary text.
+ * `subgraph`, `click`, `classDef`, `style`, `linkStyle`, `flowchart` and
+ * `accTitle` were measured to render as ordinary text. `%%{` is still an init
+ * fence even inside a quoted label, so it is broken below.
  *
  * A zero-width space is inserted between the word and its argument. It is
  * invisible, it breaks the lexer's lookahead, and the label still reads
@@ -125,6 +126,7 @@ const LABEL_ENTITIES: Record<string, string> = {
  * already rejected once on this module (see the note on `escapeFlowLabel`).
  */
 const DIRECTION_KEYWORD = /(\bdirection)(\s+)(?=(?:TB|BT|LR|RL|TD)\b)/gu;
+const INIT_FENCE = /%%\{/gu;
 const ZERO_WIDTH_SPACE = '\u200b';
 
 /** C0/C1 controls plus DEL. A newline is how a label would become a second line. */
@@ -151,7 +153,9 @@ export function normalizeFlowLabel(value: string): string {
  * cannot be re-encoded either.
  */
 export function escapeFlowLabel(value: string): string {
-  const folded = normalizeFlowLabel(value).replace(DIRECTION_KEYWORD, `$1${ZERO_WIDTH_SPACE}$2`);
+  const folded = normalizeFlowLabel(value)
+    .replace(DIRECTION_KEYWORD, `$1${ZERO_WIDTH_SPACE}$2`)
+    .replace(INIT_FENCE, `%${ZERO_WIDTH_SPACE}%{`);
   let result = '';
   for (const character of folded) {
     result += LABEL_ENTITIES[character] ?? character;
@@ -209,13 +213,35 @@ export function arrowFor(kind: FlowEdgeKind): '-->' | '-.->' {
  * A label already beginning with its own word is left alone so a model that
  * followed the prompt (`推测：材料不足`) is not rendered as `推测：推测：材料不足`.
  */
-export function labelForKind(kind: FlowEdgeKind, label: string): string {
+export function labelForKind(
+  kind: FlowEdgeKind,
+  label: string,
+  basis?: 'relation' | 'material' | 'inference',
+): string {
   const style = FLOW_EDGE_STYLES[kind];
   const normalized = normalizeFlowLabel(label);
   const word = style.prefix.slice(0, -1);
   const marks = [word, ...(style.altWords ?? [])];
-  if (marks.some((mark) => normalized.startsWith(mark))) return normalized;
-  return `${style.prefix}${normalized}`;
+  let prefixed = marks.some((mark) => normalized.startsWith(mark))
+    ? normalized
+    : `${style.prefix}${normalized}`;
+  if (basis === 'material') {
+    prefixed = prefixed.replace(/^因果：/u, '');
+    if (!prefixed.startsWith('材料表述')) prefixed = `材料表述：${prefixed}`;
+  } else if (basis === 'relation' && kind === 'causal') {
+    prefixed = prefixed.replace(/^因果：/u, '已确认关系：');
+    if (!prefixed.startsWith('已确认关系')) prefixed = `已确认关系：${prefixed}`;
+  }
+  return prefixed;
+}
+
+function legendPrefix(
+  kind: FlowEdgeKind,
+  basis?: 'relation' | 'material' | 'inference',
+): string {
+  if (basis === 'material') return '材料表述：';
+  if (basis === 'relation' && kind === 'causal') return '已确认关系：';
+  return FLOW_EDGE_STYLES[kind].prefix;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -246,6 +272,7 @@ export interface CompiledFlowEdge {
   displayLabel: string;
   itemIds: UUID[];
   relationIds: UUID[];
+  basis?: 'relation' | 'material' | 'inference';
 }
 
 /** One row of the on-screen legend, derived from the table rather than retyped. */
@@ -336,9 +363,10 @@ export function compileFlow(content: FlowContent): CompileFlowResult {
       target: edge.target,
       kind: edge.kind,
       label: edge.label,
-      displayLabel: labelForKind(edge.kind, edge.label),
+      displayLabel: labelForKind(edge.kind, edge.label, edge.basis),
       itemIds: [...edge.itemIds],
       relationIds: [...edge.relationIds],
+      basis: edge.basis,
     });
   }
 
@@ -367,16 +395,22 @@ export function compileFlow(content: FlowContent): CompileFlowResult {
     };
   }
 
-  const present = new Set(edges.map((edge) => edge.kind));
-  const legend: FlowLegendEntry[] = (
-    Object.keys(FLOW_EDGE_STYLES) as FlowEdgeKind[]
-  )
-    .filter((kind) => present.has(kind))
-    .map((kind) => ({
-      kind,
-      line: FLOW_EDGE_STYLES[kind].line,
-      prefix: FLOW_EDGE_STYLES[kind].prefix,
-    }));
+  const legend: FlowLegendEntry[] = [];
+  const seenLegend = new Set<string>();
+  for (const kind of Object.keys(FLOW_EDGE_STYLES) as FlowEdgeKind[]) {
+    for (const edge of edges) {
+      if (edge.kind !== kind) continue;
+      const prefix = legendPrefix(kind, edge.basis);
+      const key = `${kind}\u0000${prefix}`;
+      if (seenLegend.has(key)) continue;
+      seenLegend.add(key);
+      legend.push({
+        kind,
+        line: FLOW_EDGE_STYLES[kind].line,
+        prefix,
+      });
+    }
+  }
 
   return {
     ok: true,

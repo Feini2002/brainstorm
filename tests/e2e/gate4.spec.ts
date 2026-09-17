@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
 import { expect, gotoInbox, test } from './support/fixtures';
-import { authHeaders, uniqueText } from './support/harness';
+import { authHeaders, uniqueText, revealMindmapOutline } from './support/harness';
 import { E2E_ORIGIN } from './support/env';
 import {
   captureNote,
@@ -136,7 +136,7 @@ async function openMindmap(page: import('@playwright/test').Page, viewId: string
   await page.goto('/mindmap');
   await expect(page.getByRole('navigation', { name: '主导航' })).toBeVisible();
   await page.getByTestId('mindmap-view-select').selectOption(viewId);
-  await expect(page.getByTestId('mindmap-outline')).toBeVisible();
+  await revealMindmapOutline(page);
 }
 
 /**
@@ -348,7 +348,7 @@ test.describe('T061 脑图闭环验收', () => {
       await page.goto(`${origin}/mindmap`);
       await expect(page.getByRole('navigation', { name: '主导航' })).toBeVisible();
       await page.getByTestId('mindmap-view-select').selectOption(viewId);
-      await expect(page.getByTestId('mindmap-outline')).toBeVisible();
+      await revealMindmapOutline(page);
 
       // 打开: the tree survived as a row and the page read it.
       const reloaded = await readView(page, after, viewId, origin);

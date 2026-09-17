@@ -8,7 +8,7 @@ import type { ItemDTO, RelationDTO } from '@/domain/knowledge';
 import { expect, test } from './support/fixtures';
 import { drawnTexts, waitForDrawnSvg } from './support/goflow';
 import { headersAt, writeScript } from './support/gomindmap';
-import { captureViaUi, uniqueText, WORKSPACE_ROUTES } from './support/harness';
+import { captureViaUi, uniqueText, WORKSPACE_ROUTES, revealMindmapOutline } from './support/harness';
 import {
   isPortFree,
   type ManagedServer,
@@ -448,6 +448,7 @@ test.describe('T084 最终用户旅程', () => {
     mindmapViewId = mindmaps[0]!;
 
     // 脑图来源：叶节点 m2 的来源列表里正是甲的 id，并且能回跳到同一条记录。
+    await revealMindmapOutline(page);
     await expect(page.getByTestId('mindmap-outline-select').first()).toBeVisible();
     await page.getByTestId('mindmap-outline-select').nth(1).click();
     await expect(page.getByTestId('source-list-item')).toHaveCount(1);
@@ -463,8 +464,7 @@ test.describe('T084 最终用户旅程', () => {
 
     // ---- 流程图：同一选择条，写观察问题，点生成 ----------------------------------
     //
-    // 边 n2→n3 声称 causal 却不带任何关系依据：产品必须把它降级为「推测」并在结果里说明
-    // （T063/T069-C01）。这里让它出现在旅程里，是因为「不确定性被显式标出」是 R03 的要求。
+    // 边 n2→n3 声称 causal 却不带关系 id：按材料表述保留，不降成推测，也不写回知识库。
     writeScript(
       JSON.stringify({
         title: '旅程流程',
@@ -489,20 +489,21 @@ test.describe('T084 最终用户旅程', () => {
     await expect(page.getByTestId('flow-outcome')).toContainText('已经生成流程视图', {
       timeout: 30_000,
     });
-    await expect(page.getByTestId('flow-outcome')).toContainText('推测');
+    await expect(page.getByTestId('flow-outcome')).not.toContainText('改成');
     const flows = await listViewIds(page, 'flow');
     expect(flows, '应恰好保存了一张流程图').toHaveLength(1);
     flowViewId = flows[0]!;
 
-    // 画面上推测边写明「推测：」；来源面板里节点 n1 的来源就是甲的 id。
+    // 画面上材料表述写明依据；来源面板里节点 n1 的来源就是甲的 id。
     await waitForDrawnSvg(page);
-    expect((await drawnTexts(page)).join(' | ')).toContain('推测：');
+    expect((await drawnTexts(page)).join(' | ')).toContain('材料表述');
+    expect((await drawnTexts(page)).join(' | ')).not.toContain('推测：');
     await page.getByTestId('flow-source-node').selectOption('n1');
     await expect(page.getByTestId('source-list-item')).toHaveCount(1);
     await expect(page.getByTestId('source-list-item').first()).toHaveAttribute('data-item-id', jia.id);
     await expect(page.getByTestId('source-list-item').first()).toContainText(ORGANIZED.title);
     await page.getByTestId('flow-source-node').selectOption('n3');
-    await expect(page.getByTestId('flow-hypothesis-row')).toHaveCount(1);
+    await expect(page.getByTestId('flow-hypothesis-row')).toHaveCount(0);
 
     // ---- 同源：两张图存的都是引用，知识本体只有三行、一条关系 --------------------
     const mindmap = await getJson<StoredView>(page, `/api/views/${mindmapViewId}`);
@@ -523,7 +524,7 @@ test.describe('T084 最终用户旅程', () => {
     }
     expect((await listItems(page)).length, '画图不应复制出新的记录').toBe(3);
     expect((await relationsOf(page, jia.id)).length, '画图不应写入新的知识关系').toBe(1);
-    expect((await relationsOf(page, bing.id)).length, '推测边不得变成关系').toBe(0);
+    expect((await relationsOf(page, bing.id)).length, '材料表述边不得写成知识关系').toBe(0);
   });
 
   test('T084-C04 人工控制：手动改摘要并拒绝一条边之后再次整理，修改与拒绝都保持', async ({
@@ -798,6 +799,7 @@ test.describe('T084 最终用户旅程', () => {
     await openWorkspace(page, '/mindmap');
     await page.getByTestId('mindmap-view-select').selectOption(mindmapViewId);
     await expect(page.getByTestId('mindmap-renderer')).toBeVisible();
+    await revealMindmapOutline(page);
     await page.getByTestId('mindmap-outline-select').nth(1).click();
     await expect(page.getByTestId('source-list-item').first()).toHaveAttribute('data-item-id', notes[0]!.id);
 

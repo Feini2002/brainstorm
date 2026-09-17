@@ -1,5 +1,5 @@
 import { expect, gotoInbox, test } from './support/fixtures';
-import { authHeaders, seedItemViaApi, uniqueText } from './support/harness';
+import { authHeaders, seedItemViaApi, uniqueText, revealMindmapOutline } from './support/harness';
 import { E2E_ORIGIN } from './support/env';
 import { readItem } from './support/graph';
 import { seedView, tagItems, withSeedDb } from './support/seedData';
@@ -79,7 +79,7 @@ async function openMindmap(page: import('@playwright/test').Page, viewId: string
   await page.goto('/mindmap');
   await expect(page.getByRole('navigation', { name: '主导航' })).toBeVisible();
   await page.getByTestId('mindmap-view-select').selectOption(viewId);
-  await expect(page.getByTestId('mindmap-outline')).toBeVisible();
+  await revealMindmapOutline(page);
 }
 
 async function capture(
@@ -268,7 +268,7 @@ test.describe('T059 视图过期、再生成与历史保留', () => {
 
     // The map is still readable, which is the point of the case: an error must not
     // destroy an existing result.
-    await expect(page.getByTestId('mindmap-outline')).toBeVisible();
+    await revealMindmapOutline(page);
   });
 
   test('T059-C04 标签成员变化：显示新的选择数量供确认', async ({ page }) => {
@@ -393,7 +393,7 @@ test.describe('T059 视图过期、再生成与历史保留', () => {
     ).toEqual([]);
 
     // The old map is still readable and still lists its now-missing source.
-    await expect(page.getByTestId('mindmap-outline')).toBeVisible();
+    await revealMindmapOutline(page);
     await expect(page.getByTestId('mindmap-outline-node')).toHaveCount(2);
     await page.getByTestId('mindmap-outline-select').nth(1).click();
     await expect(page.getByTestId('source-missing')).toBeVisible();

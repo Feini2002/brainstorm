@@ -71,6 +71,10 @@ export interface GraphScope {
    */
   suggestedEdgeCount: number;
   truncated: boolean;
+  /** Items loaded for this query (may be a 500-row window). */
+  readWindowCount?: number;
+  /** Full library matches for the current filter. */
+  libraryMatchedCount?: number;
 }
 
 export interface GraphData {

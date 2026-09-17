@@ -21,7 +21,7 @@ import 'server-only';
 
 import { LIMITS } from '@/domain/limits';
 import { MINDMAP_PROMPT_VERSION } from '@/domain/view';
-import { composeMessages, type MaterialBlock } from './shared';
+import { composeMessages, excerptMaterial, type MaterialBlock } from './shared';
 
 export { PROMPT_VERSIONS } from './shared';
 
@@ -88,7 +88,7 @@ export function buildMindmapMessages(input: MindmapPromptInput): MindmapPrompt {
     '1. 只输出一个 JSON 对象，字段只有 title 和 nodes；不要 Markdown、HTML、SVG、链接、脚本或解释。',
     `2. 恰好一个节点的 parentId 为 null（根节点），其他节点都必须连接到这个根；层级从根算第 1 层，最多 ${LIMITS.mindmapMaxDepth} 层。`,
     `3. 节点总数不超过 ${LIMITS.mindmapNodes} 个。内部 id 用短标识（例如 m1、m2），不要用资料 UUID 当节点 id —— 同一条资料可以在不同主题下出现。`,
-    '4. kind 为 group 或 note。note 至少引用一个来源 id；group 的 itemIds 写它子树覆盖的来源集合。每个节点的 itemIds 都不能为空，且只能写上面实际给出的来源 id，不能编造、不能引用未给出的内容。',
+    '4. kind 为 group 或 note。note 必须引用至少一个真实来源 id。group 的 itemIds 可以省略，由程序从子树 note 归并。每个出现的 itemIds 只能写上面实际给出的来源 id，不能编造。',
     '5. 标签是对材料的忠实概括。可以概括、可以分组，但不能加入材料没有支持的事实、数据、结论或建议。',
     '6. 允许同一条资料出现在多个分支下，那是不同角度的观察，不是重复条目。',
     '7. 材料很短时给一个小脑图（两三个节点也完全正常），不要为了显得完整而扩充空洞分支。',
@@ -118,7 +118,7 @@ export function buildMindmapMessages(input: MindmapPromptInput): MindmapPrompt {
         `摘要: ${source.summary.trim().length > 0 ? source.summary : '（无）'}`,
         `标签: ${source.tags.length > 0 ? source.tags.join('、') : '（无）'}`,
         '原文片段:',
-        excerpt(source.rawText),
+        excerptMaterial(source.rawText, MINDMAP_LIMITS.excerptCodePoints),
       ].join('\n'),
     });
   }
@@ -135,12 +135,6 @@ export function buildMindmapMessages(input: MindmapPromptInput): MindmapPrompt {
   };
 }
 
-/** Longest prefix that fits, never a mid-word cut where a boundary is available. */
-function excerpt(rawText: string): string {
-  const points = Array.from(rawText);
-  if (points.length <= MINDMAP_LIMITS.excerptCodePoints) return rawText;
-  return `${points.slice(0, MINDMAP_LIMITS.excerptCodePoints).join('')}…`;
-}
 
 /** Code-point total of everything that will be sent, for the budget check. */
 export function estimateMindmapCodePoints(
